@@ -1,0 +1,55 @@
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Body style */
+body {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Poppins", sans-serif;
+  background-color: #f9f9f9;
+}
+
+/* Error box */
+.error-container {
+  text-align: center;
+  padding: 40px 60px;
+  background-color: #fff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+}
+
+/* Title */
+.error-title {
+  color: #e74c3c;
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+
+/* Message */
+.error-message {
+  color: #555;
+  font-size: 16px;
+  margin-bottom: 25px;
+}
+
+/* Button */
+.home-btn {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: background 0.3s;
+}
+
+.home-btn:hover {
+  background-color: #0056b3;
+}
