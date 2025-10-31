@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blumeva - My Account</title>
+  <link rel="stylesheet" href="style/user/login.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/simple-icons/15.16.0/simpleicons.svg">
+</head>
+<body>
+  <div class="container">
+    <header>
+       <div class="logo">
+         <img src="/images/Frame.svg" alt="Logo" class="logo-icon" />
+         <span>Blumeva</span>
+        </div>
+    </header>
+
+    <main>
+      <h5>My Account</h5>
+      <p class="subtitle">Log in or create an account to enjoy personalized recommendations and faster checkout.</p>
+
+      <div class="tabs">
+        <button class="tab active">Login</button>
+        <button onclick="window.location.href='/signup'" class="tab">Create Account</button>
+      </div>
+         <% if (typeof message !== "undefined" && message) { %>
+      <div class="backend-message">
+        <%= message %>
+      </div>
+    <% } %>
+      <form method="POST" action="/login">
+      
+        <label>Email</label>
+        <input type="email" placeholder="Enter your email" required />
+
+        <label>Password</label>
+        <div class="password-field">
+          <input type="password" placeholder="Enter your password" required />
+          <span class="eye">👁</span>
+        </div>
+
+        <div class="forgot"><a href="#">Forgot Password?</a></div>
+
+        <button class="btn-primary" type="submit">Login</button>
+
+        <div class="divider">
+          <hr><span>OR</span><hr>
+        </div>
+
+        <button type="button" class="btn-social google">
+          <img src="https://cdnjs.cloudflare.com/ajax/libs/simple-icons/15.16.0/google.svg" alt="Google" />
+          <span>Login with Google</span>
+        </button>
+
+
+      </form>
+    </main>
+  </div>
+</body>
+</html>
+
+

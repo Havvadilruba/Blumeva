@@ -34,9 +34,7 @@ body {
       margin-bottom:35px
       ;
     }
-.icon {
-  font-size: 28px;
-}
+
 
 
 /* h1 {
@@ -95,6 +93,17 @@ input:focus {
   cursor: pointer;
   font-weight: 600;
   font-size: 15px;
+}
+
+.backend-message {
+  background-color: #fde2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+  padding: 10px 15px;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 15px;
+  font-size: 14px;
 }
 
 .create-btn:hover {

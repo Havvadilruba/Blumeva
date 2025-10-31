@@ -22,6 +22,13 @@
     </header>
     <h4 class="ph4">Create Your Blumeva Account</h4>
 
+    
+<% if (message) { %>
+  <div class="backend-message">
+    <%= message %>
+  </div>
+<% } %>
+
     <form class="form" id="signform" method="post" action="/signup" novalidate>
       <label for="name">Full Name</label>
       <input type="text" name="name" id="name" placeholder="Enter your full name" />

@@ -18,7 +18,7 @@
       </p>
       <p class="email">user@example.com</p>
 
-      <form action="/verify-otp" method="POST" class="otp-form" onsubmit="return validateOTPForm">
+      <form action="/verifyOtp" method="POST" class="otp-form" onsubmit="return validateOTPForm(event)">
         <div class="otp-inputs">
           <input type="text" maxlength="1" id="otp1" />
           <input type="text" maxlength="1" id="otp2" />
@@ -35,7 +35,7 @@
           Didn’t receive the OTP?
           <span id="timer">01:00</span>
         </p>
-        <a href="/resend-otp" id="resendLink" class="disabled">Resend OTP</a>
+        <a href="/resendOtp" id="resendOtp" class="disabled"  onclick="return resendOtp(event)">Resend OTP</a>
         <a href="/signup" class="back-link">← Back to Registration</a>
       </div>
     </div>
@@ -45,9 +45,15 @@
     </footer>
   </div>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
+
     // --- OTP Auto ---
+    const timerDisplay = document.getElementById("timer");
+    const resendLink = document.getElementById("resendOtp");
     const inputs = document.querySelectorAll(".otp-inputs input");
+    let timerInterval;
     inputs.forEach((input, index) => {
       input.addEventListener("input", () => {
         if (input.value && index < inputs.length - 1) {
@@ -61,25 +67,27 @@
       });
     });
 
-    // --- Timer ---
-    let timeLeft = 60; // seconds
-    const timerDisplay = document.getElementById("timer");
-    const resendLink = document.getElementById("resendLink");
+   function startTimer() {
+      let timeLeft = 60;
+      resendLink.classList.add("disabled");
+      resendLink.style.pointerEvents = "none";
+      clearInterval(timerInterval);
 
-    const countdown = setInterval(() => {
-      const minutes = String(Math.floor(timeLeft / 60)).padStart(2, "0");
-      const seconds = String(timeLeft % 60).padStart(2, "0");
-      timerDisplay.textContent = `${minutes}:${seconds}`;
+      timerInterval = setInterval(() => {
+        const minutes = String(Math.floor(timeLeft / 60)).padStart(2, "0");
+        const seconds = String(timeLeft % 60).padStart(2, "0");
+         timerDisplay.textContent = `${minutes}:${seconds}`;
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          timerDisplay.textContent = "00:00";
+          resendLink.classList.remove("disabled");
+          resendLink.style.pointerEvents = "auto";
+        }
+        timeLeft--;
+      }, 1000);
+    }
 
-      if (timeLeft <= 0) {
-        clearInterval(countdown);
-        timerDisplay.textContent = "00:00";
-        resendLink.classList.remove("disabled");
-        resendLink.removeAttribute("disabled");
-      }
-
-      timeLeft--;
-    }, 1000);
+     startTimer();
 
     // Toast: OTP sent
     Toastify({
@@ -90,50 +98,87 @@
       backgroundColor: "linear-gradient(to right, #2563eb, #60a5fa)",
     }).showToast();
 
-    // Verify OTP
-    verifyBtn.addEventListener("click", () => {
-      const otp = Array.from(inputs).map((input) => input.value).join("");
-      if (otp === "123456") {
-        Toastify({
-          text: "✅ OTP verified successfully!",
+      async function validateOTPForm(event){
+        event.preventDefault()
+
+        const otp = Array.from(inputs).map(input => input.value).join("");
+       
+        if (otp.length < 6) {
+          Swal.fire({
+            icon: "warning",
+            title: "Incomplete OTP",
+            text: "Please enter all 6 digits.",
+          });
+          return;
+        }
+         try {
+        const response = await axios.post('/verifyOtp', { otp: otp });
+     
+
+        if (response.data.success) {
+          Swal.fire({
+            icon: "success",
+            title: "OTP Verified Successfully",
+            showConfirmButton: false,
+            timer: 1500
+          }).then(() => {
+            window.location.href = response.data.redirectUrl;
+          });
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: response.data.message || "Invalid OTP",
+          });
+        }
+      } catch (error) {
+        Swal.fire({
+          icon: "error",
+          title: "Request Failed",
+          text: error.response?.data?.message || error.message,
+        });
+      }
+    }
+
+       async function resendOtp(event){
+        event.preventDefault()
+        if(resendLink.classList.contains("disabled")) return
+        
+        try{
+          const response = await axios.post("/resendOtp");
+
+          if(response.data.success){
+             Toastify({
+            text: "📨 New OTP sent successfully!",
+            duration: 4000,
+            gravity: "top",
+            position: "center",
+            backgroundColor: "linear-gradient(to right, #2563eb, #60a5fa)",
+          }).showToast();
+
+          startTimer(); 
+          }else{
+
+           Toastify({
+            text: "❌ Failed to resend OTP. Try again later.",
+            duration: 4000,
+            gravity: "top",
+            position: "center",
+            backgroundColor: "linear-gradient(to right, #ef4444, #f87171)",
+          }).showToast();
+        }
+        } catch (error){
+          Toastify({
+          text: "⚠ Server error while resending OTP",
           duration: 4000,
-          gravity: "top",
-          position: "center",
-          backgroundColor: "linear-gradient(to right, #22c55e, #16a34a)",
-        }).showToast();
-      } else {
-        Toastify({
-          text: "❌ Invalid OTP, please try again!",
-          duration: 6000,
           gravity: "top",
           position: "center",
           backgroundColor: "linear-gradient(to right, #ef4444, #f87171)",
         }).showToast();
       }
-    });
 
-    // Resend OTP
-    resendBtn.addEventListener("click", () => {
-      startTimer();
-      Toastify({
-        text: "📨 New OTP sent successfully!",
-        duration: 4000,
-        gravity: "top",
-        position: "center",
-        backgroundColor: "linear-gradient(to right, #2563eb, #60a5fa)",
-      }).showToast();
-    });
-
-    function validateOTPForm(){
-        const otp1 = document.getElementById("otp1").value;
-        const otp2 = document.getElementById("otp2").value;
-        const otp3 = document.getElementById("otp3").value;
-        const otp4 = document.getElementById("otp4").value;
-        const otp5 = document.getElementById("otp5").value;
-        const otp6 = document.getElementById("otp6").value;
-
-        const otp = otp1 + otp2 + otp3 + otp4 + otp5 + otp6;
-    }
+      }
+   
   </script>
 </body>
 </html>

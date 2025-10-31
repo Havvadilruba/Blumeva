@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login - Blumeva</title>
+  <link rel="stylesheet" href="/style/admin/login.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-box">
+     <div class="logo">
+  <img src="/images/Frame.svg" alt="Logo" class="logo-icon" />
+  <span>Blumeva</span>
+</div>
+      <p class="subtitle">Welcome to the Blumeva Administration</p>
+
+      <% if (typeof message !== "undefined" && message) { %>
+        <div class="backend-message"><%= message %></div>
+      <% } %>
+
+      <form method="POST" action="/admin/login">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" placeholder="Enter your email" required>
+
+        <label for="password">Password</label>
+        <div class="password-wrapper">
+          <input type="password" id="password" name="password" placeholder="Enter your password" required>
+          <span class="toggle-password">👁</span>
+        </div>
+
+        <button type="submit" class="login-btn">Login</button>
+      </form>
+
+      <div class="secure">
+        <img src="https://cdn-icons-png.flaticon.com/512/3064/3064197.png" alt="Lock" />
+        <span>Secure Login</span>
+      </div>
+
+      <footer>
+        © 2025 <b>Blumeva</b>. All rights reserved.
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    // Toggle password visibility
+    const toggle = document.querySelector(".toggle-password");
+    const password = document.querySelector("#password");
+    toggle.addEventListener("click", () => {
+      const type = password.getAttribute("type") === "password" ? "text" : "password";
+      password.setAttribute("type", type);
+    });
+  </script>
+</body>
+</html>
