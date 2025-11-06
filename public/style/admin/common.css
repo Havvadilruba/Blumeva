@@ -1,0 +1,194 @@
+/* ===== RESET & BASE ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+
+body {
+  display: flex;
+  min-height: 100vh;
+  background: #f5f7fb;
+  overflow-x: hidden;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  width: 260px;
+  background: #fff;
+  border-right: 1px solid #e6e6e6;
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100%;
+  transition: 0.3s ease;
+  z-index: 1000;
+}
+
+.logo {
+  text-align: center;
+  font-size: 1.5em;
+  font-weight: 600;
+  color: #3b82f6;
+  margin-bottom: 25px;
+}
+
+/* ===== MENU ===== */
+.menu {
+  list-style: none;
+  padding: 0 15px;
+}
+
+.menu li {
+  margin-bottom: 8px;
+}
+
+.menu a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: #333;
+  padding: 10px 14px;
+  border-radius: 8px;
+  transition: 0.3s;
+  font-weight: 500;
+}
+
+.menu a:hover,
+.menu a.active {
+  background: #3b82f6;
+  color: #fff;
+}
+
+.menu a i {
+  font-size: 1.2em;
+}
+
+.menu a .arrow {
+  margin-left: auto;
+  transition: transform 0.3s;
+  font-size: 1.1em;
+}
+
+.menu a .arrow.rotate {
+  transform: rotate(180deg);
+}
+
+/* ===== SUBMENU ===== */
+.submenu {
+  display: none;
+  flex-direction: column;
+  padding-left: 40px;
+  margin-top: 5px;
+}
+
+.submenu.open {
+  display: flex;
+}
+
+.submenu a {
+  color: #555;
+  font-size: 0.9em;
+  padding: 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.submenu a:hover {
+  color: #3b82f6;
+}
+
+/* ===== PROFILE ===== */
+.profile {
+  display: flex;
+  align-items: center;
+  padding: 15px 20px;
+  border-top: 1px solid #e6e6e6;
+  gap: 12px;
+}
+
+.profile img {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-info h4 {
+  font-size: 1em;
+  color: #222;
+  margin-bottom: 3px;
+}
+
+.profile-info p {
+  font-size: 0.85em;
+  color: #777;
+}
+
+/* ===== LOGOUT BUTTON ===== */
+.logout {
+  margin: 10px 20px 20px;
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  padding: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95em;
+  width: calc(100% - 40px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: 0.3s;
+}
+
+.logout:hover {
+  background: #2563eb;
+}
+
+/* ===== MAIN CONTENT ===== */
+.main {
+  margin-left: 260px;
+  flex: 1;
+  padding: 25px;
+  transition: 0.3s ease;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.header h1 {
+  font-size: 1.5em;
+  color: #222;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .sidebar {
+    left: -260px;
+  }
+
+  .sidebar.active {
+    left: 0;
+  }
+
+  .main {
+    margin-left: 0;
+  }
+
+  .menu-toggle {
+    display: block;
+  }
+}

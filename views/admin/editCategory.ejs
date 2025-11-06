@@ -1,0 +1,49 @@
+<%- include('../partials/admin/sidebar') %>
+
+<div class="content">
+  <div class="category-container">
+    <div class="header-section">
+      <h2>Edit Category</h2>
+      <a href="/admin/category" class="btn btn-secondary">
+        <i class="ri-arrow-left-line"></i> Back
+      </a>
+    </div>
+
+    <form id="editCategoryForm" method="POST" action="/admin/category/update/<%= category._id %>">
+      <div class="form-group">
+        <label for="name">Category Name</label>
+        <input type="text" id="name" name="name" value="<%= category.name %>" required />
+      </div>
+
+      <div class="form-group">
+        <label for="image">Category Image</label>
+        <input type="file" id="image" accept="image/*" onchange="previewAndConvert(event)" />
+        <input type="hidden" name="imageBase64" id="imageBase64" />
+        <div class="image-preview">
+          <img id="preview" src="<%= category.image %>" alt="Preview" />
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary">
+        <i class="ri-save-line"></i> Update Category
+      </button>
+    </form>
+  </div>
+</div>
+
+<script>
+  function previewAndConvert(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const preview = document.getElementById("preview");
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = "block";
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById("imageBase64").value = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+</script>

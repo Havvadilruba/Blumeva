@@ -1,0 +1,181 @@
+<%- include("../../views/partials/user/header") %>
+
+<section class="landing-hero">
+  <img src="/images/mainimage.jpg" alt="Hero" />
+  <div class="hero-text">
+    <h1>Pure Care for Your Face</h1>
+    <p>Discover the beauty of healthy skin.</p>
+    <a href="<%= user ? '/products' : '/signup' %>" class="btn">Get Started</a>
+  </div>
+</section>
+
+<section class="about">
+  <h2>Why Blumeva?</h2>
+  <p>Experience the purity of nature with advanced skincare science.</p>
+</section>
+
+<!-- Categories -->
+<section class="categories">
+  <h2>Shop by Category</h2>
+  <div class="category-grid">
+    <% categories.forEach(category => { %>
+      <div class="category">
+        <img src="<%= category.image %>" alt="<%= category.name %>">
+        <p><%= category.name %></p>
+      </div>
+    <% }) %>
+  </div>
+</section>
+
+
+<!-- Latest Products -->
+<section class="latest">
+  <h2>Latest Products</h2>
+  <div class="product-grid">
+
+    <!-- Product 1 -->
+    <div class="product-card">
+      <div class="image-container">
+        <img src="/images/biocule-V_-ZK2wRYdo-unsplash.jpg" alt="Gentle Foaming Cleanser">
+        <span class="offer-badge">20% OFF</span>
+      </div>
+      <h3>Gentle Foaming Cleanser</h3>
+      <p class="category">Face Wash</p>
+      <div class="price">
+        <span class="regular">₹499</span>
+        <span class="sale">₹399</span>
+      </div>
+      <div class="rating">
+        <i class="fa-solid fa-star"></i>
+        <i class="fa-solid fa-star"></i>
+        <i class="fa-solid fa-star"></i>
+        <i class="fa-solid fa-star"></i>
+        <i class="fa-regular fa-star"></i>
+      </div>
+      <button>Add to Cart</button>
+    </div>
+
+    <!-- Product 2 -->
+    <div class="product-card">
+      <div class="image-container">
+        <img src="/images/daniela-chavez-cUy8UUGnsqg-unsplash.jpg" alt="Hydra Balance Moisturizer">
+        <span class="offer-badge">10% OFF</span>
+      </div>
+      <h3>Hydra Balance Moisturizer</h3>
+      <p class="category">Moisturizer</p>
+      <div class="price">
+        <span class="regular">₹699</span>
+        <span class="sale">₹629</span>
+      </div>
+      <div class="rating">
+        <i class="fa-solid fa-star"></i>
+        <i class="fa-solid fa-star"></i>
+        <i class="fa-solid fa-star"></i>
+        <i class="fa-regular fa-star"></i>
+        <i class="fa-regular fa-star"></i>
+      </div>
+      <button>Add to Cart</button>
+    </div>
+
+    <!-- Product 3 -->
+    <div class="product-card">
+      <div class="image-container">
+        <img src="/images/biocule-V_-ZK2wRYdo-unsplash.jpg" alt="SPF 50 Sunscreen Lotion">
+        <span class="offer-badge">15% OFF</span>
+      </div>
+      <h3>SPF 50 Sunscreen Lotion</h3>
+      <p class="category">Sun Care</p>
+      <div class="price">
+        <span class="regular">₹799</span>
+        <span class="sale">₹679</span>
+      </div>
+      <div class="rating">
+        <i class="fa-solid fa-star"></i>
+        <i class="fa-solid fa-star"></i>
+        <i class="fa-solid fa-star"></i>
+        <i class="fa-solid fa-star"></i>
+        <i class="fa-solid fa-star"></i>
+      </div>
+      <button>Add to Cart</button>
+    </div>
+
+    <!-- Product 4 -->
+    <div class="product-card">
+      <div class="image-container">
+        <img src="/images/daniela-chavez-cUy8UUGnsqg-unsplash.jpg" alt="Vitamin C Brightening Serum">
+        <span class="offer-badge">25% OFF</span>
+      </div>
+      <h3>Vitamin C Brightening Serum</h3>
+      <p class="category">Serum</p>
+      <div class="price">
+        <span class="regular">₹999</span>
+        <span class="sale">₹749</span>
+      </div>
+      <div class="rating">
+        <i class="fa-solid fa-star"></i>
+        <i class="fa-solid fa-star"></i>
+        <i class="fa-solid fa-star"></i>
+        <i class="fa-solid fa-star"></i>
+        <i class="fa-regular fa-star"></i>
+      </div>
+      <button>Add to Cart</button>
+    </div>
+
+  </div>
+</section>
+
+
+<!--Coupon -->
+<div class="newsletter">
+  <h3>🎉 Get 10% OFF your first order!</h3>
+  <p>Use code <span class="discount">WELCOME10</span> at checkout and enjoy exclusive updates.</p>
+  <div class="newsletter-box">
+     <a href="<%= user ? '/products' : '/signup' %>" class="btn">Shop Now</a>
+  </div>
+</div>
+
+
+
+<!-- Skin Type -->
+<section class="skin-type">
+  <h2>Understand Your Skin Type</h2>
+  <div class="skin-grid">
+    <div class="skin-box">
+      <img src="/images/PRQL_Blog_Hero_NormalSkin.webp" alt="Normal Skin" />
+      <h4>Normal</h4>
+      <p>Balanced, not too oily or dry. Minimal blemishes and even tone.</p>
+    </div>
+    <div class="skin-box">
+      <img src="/images/PRQL_Blog_Hero_OilySkin.webp" alt="Oily Skin" />
+      <h4>Oily</h4>
+      <p>Produces excess sebum, leading to a shiny appearance and clogged pores.</p>
+    </div>
+    <div class="skin-box">
+      <img src="/images/istockphoto-467680200-612x612.jpg" alt="Dry Skin" />
+      <h4>Dry</h4>
+      <p>Lacks moisture, often feels tight or flaky, may show fine lines.</p>
+    </div>
+    <div class="skin-box">
+      <img src="/images/PRQL_Blog_Hero_CombinationSkin_1.jpg" alt="Combination Skin" />
+      <h4>Combination</h4>
+      <p>Oily in T-zone (forehead, nose, chin) and dry or normal elsewhere.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Brands -->
+<section class="brands">
+  <h2>Brands</h2>
+  <div class="brand-grid">
+    <% brands.forEach(brand => { %>
+      <div class="brand-card">
+        <img src="<%= brand.logo %>" alt="<%= brand.name %>" />
+        <p><%= brand.name %></p>
+      </div>
+    <% }) %>
+  </div>
+</section>
+
+
+
+<%- include("../../views/partials/user/footer") %>

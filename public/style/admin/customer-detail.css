@@ -1,0 +1,183 @@
+/* ====== GENERAL LAYOUT ====== */
+.content {
+
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* top align (not vertical center) */
+  min-height: 100vh;
+  background-color: #f9fafb;
+  font-family: "Poppins", sans-serif;
+  padding: 2rem;
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+}
+
+/* ====== CARD ====== */
+.card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+  max-width: 850px;
+  width: 100%;
+}
+
+
+/* Make the card truly centered horizontally */
+.content .card {
+  margin: auto;
+}
+
+/* ====== CARD HEADER ====== */
+.card-header {
+  border-bottom: 2px solid #f0f0f0;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.card-header h2 {
+  font-size: 1.8rem;
+  color: #222;
+  margin-bottom: 0.3rem;
+}
+
+.card-header p {
+  font-size: 0.95rem;
+  color: #666;
+}
+
+/* ====== INFO GRID ====== */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem 2rem;
+  margin-bottom: 2rem;
+}
+
+.info-grid p {
+  font-size: 1rem;
+  color: #333;
+}
+
+.info-grid strong {
+  color: #111;
+}
+
+/* ====== TABLE ====== */
+.order-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 2rem;
+  background-color: #fff;
+}
+
+.order-table th,
+.order-table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+
+.order-table th {
+  background-color: #f3f4f6;
+  color: #333;
+  font-weight: 600;
+}
+
+.order-table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+/* ====== STATUS TAGS ====== */
+.status {
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status.delivered {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status.pending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.status.cancelled {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+/* ====== BUTTONS ====== */
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.actions form {
+  display: inline;
+}
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-secondary {
+  background: #e5e7eb;
+  color: #333;
+}
+
+.btn-secondary:hover {
+  background: #d1d5db;
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: #fff;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+}
+
+.btn-success {
+  background: #10b981;
+  color: #fff;
+}
+
+.btn-success:hover {
+  background: #059669;
+}
+
+/* ====== RESPONSIVE ====== */
+@media (max-width: 768px) {
+  .content {
+    margin-left: 0;
+    padding: 1rem;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn {
+    width: 100%;
+  }
+}

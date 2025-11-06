@@ -1,0 +1,61 @@
+<%- include('../partials/admin/sidebar') %>
+
+<div class="content">
+  <div class="card">
+    <div class="card-header">
+      <h2>Customer Details</h2>
+      <p>Viewing details for <%= customer.name %></p>
+    </div>
+
+    <div class="card-body">
+      <h3>Personal Information</h3>
+      <div class="info-grid">
+        <p><strong>Full Name:</strong> <%= customer.name %></p>
+        <p><strong>Email Address:</strong> <%= customer.email %></p>
+        <p><strong>Phone Number:</strong> <%= customer.phone || '-' %></p>
+        <p><strong>Address:</strong> <%= customer.address || '-' %></p>
+      </div>
+
+      <h3>Order Information</h3>
+      <table class="order-table">
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Date</th>
+            <th>Amount</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (orders && orders.length > 0) { %>
+            <% orders.forEach(order => { %>
+              <tr>
+                <td>#<%= order._id %></td>
+                <td><%= order.date.toISOString().slice(0,10) %></td>
+                <td>₹<%= order.amount.toFixed(2) %></td>
+                <td><span class="status <%= order.status.toLowerCase() %>"><%= order.status %></span></td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="4" style="text-align:center; color:#888;">No orders found</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+
+      <div class="actions">
+        <a href="/admin/customers" class="btn btn-secondary">Back</a>
+        <% if (customer.isBlocked) { %>
+          <form method="POST" action="/admin/customers/toggle/<%= customer._id %>">
+            <button class="btn btn-success">Unblock Customer</button>
+          </form>
+        <% } else { %>
+          <form method="POST" action="/admin/customers/toggle/<%= customer._id %>">
+            <button class="btn btn-danger">Block Customer</button>
+          </form>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>

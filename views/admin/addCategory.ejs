@@ -1,0 +1,59 @@
+<%- include('../partials/admin/sidebar') %>
+
+<div class="content">
+  <div class="category-container">
+    <div class="header-section">
+      <h2>Add New Category</h2>
+      <a href="/admin/category" class="btn-secondary">
+        <i class="ri-arrow-left-line"></i> Back to List
+      </a>
+    </div>
+
+    <form class="category-form" method="POST" action="/admin/addCategory" onsubmit="convertImageToBase64(event)">
+      <div class="form-group">
+        <label for="name">Category Name</label>
+        <input type="text" name="name" id="name" placeholder="Enter category name" required>
+      </div>
+
+      <div class="form-group">
+        <label for="image">Category Image</label>
+        <input type="file" id="image" accept="image/*" required>
+        <input type="hidden" name="imageBase64" id="imageBase64">
+        <div class="image-preview">
+          <img id="preview" alt="Preview">
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primary">Add Category</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  const fileInput = document.getElementById('image');
+  const previewImg = document.getElementById('preview');
+  const hiddenInput = document.getElementById('imageBase64');
+
+ 
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      previewImg.src = URL.createObjectURL(file);
+      previewImg.style.display = 'block';
+    }
+  });
+
+ 
+  function convertImageToBase64(event) {
+    event.preventDefault();
+    const file = fileInput.files[0];
+    if (!file) return event.target.submit();
+
+    const reader = new FileReader();
+    reader.onloadend = function () {
+      hiddenInput.value = reader.result;
+      event.target.submit();
+    };
+    reader.readAsDataURL(file);
+  }
+</script>

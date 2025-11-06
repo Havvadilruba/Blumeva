@@ -7,7 +7,7 @@ const bcrypt =require("bcrypt")
 // load Sign Up
 const loadSignup=async(req,res)=>{
     try{
-        return res.render("signup",{message:null})
+        return res.render("user/signup",{message:null,layout:false})
     }catch(error){
         console.log("homepage not found",error)
         res.status(500).send("Server Error")
@@ -52,12 +52,12 @@ const signup=async(req,res)=>{
 
         const {name,email,password,cpassword}=req.body
         if(password !==cpassword){
-            return res.render("signup",{message:"Password do not match"})
+            return res.render("user/signup",{message:"Password do not match",layout:false})
         }
 
         const findUser=await User.findOne({email})
         if(findUser){
-            return res.render("signup",{message:"User with this email already exists"})
+            return res.render("user/signup",{message:"User with this email already exists",layout:false})
         }
 
         const otp=generateOtp();
@@ -69,7 +69,7 @@ const signup=async(req,res)=>{
         req.session.userOtp=otp
         req.session.userData={name,email,password}
 
-        res.render("verifyOtp")
+        res.render("user/verifyOtp",{ layout: false })
         console.log("Otp Sent",otp)
 
     }catch(error){
@@ -101,13 +101,11 @@ const verifyOtp=async (req,res)=>{
         const saveUserData = new User({
             name:user.name,
             email:user.email,
-            phone:user.phone,
             password:passwordHash
         })
 
         await saveUserData.save()
-        req.session.user=saveUserData._id;
-        res.json({success:true,redirectUrl:"/"})
+        res.json({success:true,redirectUrl:"/login"})
         }else{
             res.status(400).json({success:false,message:"Invalid OTP,Please try again"})
         }
@@ -148,7 +146,7 @@ const loadLogin =async (req,res)=>{
 
     try{
         if(!req.session.user){
-            return res.render("login" ,{ message: null })
+            return res.render("user/login" ,{ message: null,layout:false})
         }else{
             res.redirect("/")
         }
@@ -163,27 +161,43 @@ const login =async (req,res)=>{
 
         const {email,password}=req.body
 
-        const findUser=await User.findOne({isAdmin:0,email:email})
+        const findUser=await User.findOne({email:email})
 
         if(!findUser){
-            return res.render("login",{message:"User not found"})
+            return res.render("user/login",{message:"User not found", layout:false})
         }
         if(findUser.isBlocked){
-            return res.render("login",{message:"User is blocked by admin"})
+            return res.render("user/login",{message:"User is blocked by admin",layout:false})
         } 
         const passwordMatch=await bcrypt.compare(password,findUser.password)
     
         if(!passwordMatch){
-            return res.render("login",{message:"Incorrect Password"})
+            return res.render("user/login",{message:"Incorrect Password",layout:false})
         }
-    req.session.user=findUser._id
+     req.session.user = findUser._id;
+    req.session.userData = findUser;
     res.redirect("/")
     }catch(error){
         console.log("login error",error)
-        res.render("login",{message:"Login faled"})
+        res.render("user/login",{message:"Login faled",layout:false})
     }
 }
 
+const logout = async (req, res) => {
+  try {
+    req.session.destroy(err => {
+      if (err) {
+        console.log("Logout Error:", err);
+        return res.redirect("/");
+      }
+      res.clearCookie("connect.sid");
+      res.redirect("/login");
+    });
+  } catch (error) {
+    console.log("Logout Error:", error);
+    res.redirect("/");
+  }
+};
 
 
-module.exports = { loadSignup,signup,verifyOtp,resendOtp,loadLogin,login};
+module.exports = { loadSignup,signup,verifyOtp,resendOtp,loadLogin,login,logout};

@@ -1,43 +1,57 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Blumeva | Pure Care for Your Face</title>
-  <link rel="stylesheet" href="/style/user/home.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-</head>
 
-<body>
-  <!-- Top Bar -->
-  <div class="top-bar">
-     <a href="/login">Login</a>
-     <a href="/signup" class="signup">Sign Up</a>
-    <a href="#">Contact Us</a>
-  </div>
-
-  <!-- Middle Bar -->
-  <div class="middle-bar">
-    <div class="logo">
-  <img src="/images/Frame.svg" alt="Logo" class="logo-icon" />
-  <span>Blumeva</span>
+<div class="top-bar">
+  <% if (!user) { %>
+    <a href="/login">Login</a>
+    <a href="/signup" class="signup">Sign Up</a>
+  <% } else { %>
+    <span>Welcome, <%= user.name %></span>
+    <a href="/logout">Logout</a>
+  <% } %>
+  <a href="#">Contact Us</a>
 </div>
-    <div class="search-icons">
-      <input type="text" placeholder="Search" class="search-box" />
-      <div class="icon-links">
-        <i class="fa-regular fa-heart"></i>
-        <i class="fa-solid fa-cart-shopping"></i>
-        <i class="fa-regular fa-user"></i>
-      </div>
-    </div>
+
+
+<div class="middle-bar">
+
+  <div class="logo">
+    <img src="/images/Frame.svg" alt="Logo" class="logo-icon" />
+    <span>Blumeva</span>
   </div>
 
-  <!-- Bottom Nav -->
-  <nav class="bottom-nav">
-    <ul>
-      <li><a href="#">Home</a></li>
-      <li><a href="#">Product</a></li>
-      <li><a href="#">Combo</a></li>
-      <li><a href="#">About</a></li>
-    </ul>
-  </nav>
+
+  <div class="search-icons">
+    <form action="/products" method="GET">
+      <input type="text" name="search" placeholder="Search" class="search-box" value="<%= typeof query !== 'undefined' ? query : '' %>" />
+      <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+    </form>
+
+    <div class="icon-links">
+  <a href="/wishlist"><i class="fa-regular fa-heart"></i></a>
+  <a href="/cart"><i class="fa-solid fa-cart-shopping"></i></a>
+
+  <% if (user) { %>
+   
+    <a href="/profile">
+      <% if (user.avatar) { %>
+        <img src="<%= user.avatar %>" alt="Profile" class="profile-img" />
+      <% } else { %>
+        <i class="fa-regular fa-user"></i>
+      <% } %>
+    </a>
+  <% } else { %>
+    
+    <a href="/login"><i class="fa-regular fa-user"></i></a>
+  <% } %>
+</div>
+  </div>
+</div>
+
+
+<nav class="bottom-nav">
+  <ul>
+    <li><a href="/">Home</a></li>
+    <li><a href="/products">Products</a></li>
+    <li><a href="/combo">Combo</a></li>
+    <li><a href="/about">About</a></li>
+  </ul>
+</nav>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title || "Admin Panel" %></title>
+
+  <!-- Common CSS -->
+  <link rel="stylesheet" href="/style/admin/common.css">
+
+  <!-- Page-specific CSS -->
+  <% if (typeof pageCSS !== 'undefined') { %>
+    <link rel="stylesheet" href="/style/admin/<%= pageCSS %>.css">
+  <% } %>
+
+  <!-- Remix Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet">
+
+  <!-- Toastify -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+
+
+</head>
+
+<body>
+  <!-- Sidebar -->
+  <%- include('../partials/admin/sidebar') %>
+
+  <!-- Main content -->
+  <main class="main">
+    <%- body %>
+  </main>
+
+  <!-- Toastify Script -->
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  
+
+ <script>
+  // flash object provided by middleware: { success: [], error: [], warning: [] }
+  const flash = <%- JSON.stringify(flash || { success: [], error: [], warning: [] }) %>;
+
+  function showToast(text, bg) {
+    Toastify({
+      text,
+      backgroundColor: bg,
+      gravity: "top",
+      position: "right",
+      close: true,
+      duration: 3500
+    }).showToast();
+  }
+
+  (flash.success || []).forEach(msg => showToast(msg, "#16a34a"));
+  (flash.error   || []).forEach(msg => showToast(msg, "#dc2626"));
+  (flash.warning || []).forEach(msg => showToast(msg, "#f59e0b"));
+</script>
+
+</body>
+</html>

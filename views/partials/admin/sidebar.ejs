@@ -1,0 +1,75 @@
+<div class="sidebar">
+  <div>
+    <div class="logo">Blumeva</div>
+
+    <ul class="menu">
+      <li><a href="/admin" class="<%= activePage === 'dashboard' ? 'active' : '' %>">
+  <i class="ri-dashboard-line"></i><span>Dashboard</span>
+</a></li>
+
+<li class="dropdown">
+  <a href="#" class="toggle-submenu">
+    <i class="ri-folder-line"></i><span>Category</span>
+    <i class="ri-arrow-down-s-line arrow"></i>
+  </a>
+  <div class="submenu">
+    <a href="/admin/category" class="<%= activePage === 'categoryList' ? 'active' : '' %>">
+      <i class="ri-list-unordered"></i><span>Category List</span>
+    </a>
+    <a href="/admin/category/add" class="<%= activePage === 'addCategory' ? 'active' : '' %>">
+      <i class="ri-add-line"></i><span>Add Category</span>
+    </a>
+  </div>
+</li>
+
+<li class="dropdown">
+  <a href="#" class="toggle-submenu">
+    <i class="ri-shopping-bag-line"></i><span>Products</span>
+    <i class="ri-arrow-down-s-line arrow"></i>
+  </a>
+  <div class="submenu">
+    <a href="/admin/products" class="<%= activePage === 'productList' ? 'active' : '' %>">
+      <i class="ri-list-check-2"></i><span>Product List</span>
+    </a>
+    <a href="/admin/products/add" class="<%= activePage === 'addProduct' ? 'active' : '' %>">
+      <i class="ri-add-line"></i><span>Add Product</span>
+    </a>
+  </div>
+</li>
+
+
+      <li><a href="/admin/customers"><i class="ri-user-line"></i><span>Customers</span></a></li>
+      <li><a href="#"><i class="ri-file-list-line"></i><span>Orders</span></a></li>
+      <li><a href="/admin/brands"><i class="ri-price-tag-3-line"></i><span>Brands</span></a></li>
+      <li><a href="#"><i class="ri-bank-card-line"></i><span>Payments</span></a></li>
+      <li><a href="#"><i class="ri-gift-line"></i><span>Referrals</span></a></li>
+    </ul>
+  </div>
+
+  <div>
+    <div class="profile">
+      <img src="https://via.placeholder.com/45" alt="Admin Profile">
+      <div class="profile-info">
+        <h4>Admin</h4>
+        <p>admin@blumeva.com</p>
+      </div>
+    </div>
+
+    <form id="logoutForm" action="/admin/logout" method="POST">
+      <button type="submit" class="logout">
+        <i class="ri-logout-box-r-line"></i><span>Logout</span>
+      </button>
+    </form>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.toggle-submenu').forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.preventDefault();
+      const submenu = item.nextElementSibling;
+      submenu.classList.toggle('open');
+      item.querySelector('.arrow').classList.toggle('rotate');
+    });
+  });
+</script>

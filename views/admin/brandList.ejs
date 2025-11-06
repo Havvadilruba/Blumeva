@@ -1,0 +1,150 @@
+<% include('../partials/admin/sidebar') %>
+
+<section class="brand-page">
+  <div class="page-header">
+    <h1>Brands Management</h1>
+    <button class="btn btn-primary" id="openAddBrandModal">+ Add Brand</button>
+  </div>
+
+  <table class="brand-table">
+    <thead>
+      <tr>
+        <th>Logo</th>
+        <th>Brand Name</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% brands.forEach(brand => { %>
+        <tr>
+          <td><img src="<%= brand.logo %>" alt="logo" class="brand-logo"></td>
+          <td><%= brand.name %></td>
+          <td>
+            <button class="toggle-btn <%= brand.status ? 'active' : '' %>"
+                    onclick="toggleStatus('<%= brand._id %>')">
+              <%= brand.status ? 'Active' : 'Inactive' %>
+            </button>
+          </td>
+          <td>
+            <button class="edit-btn"
+              onclick="openEditModal('<%= brand._id %>', '<%= brand.name %>', '<%= brand.logo %>', <%= brand.status %>)">
+              <i class="ri-edit-line"></i>
+            </button>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+
+  <!-- Add Brand Modal -->
+  <div class="modal" id="addBrandModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Add New Brand</h3>
+        <button class="close-btn" id="closeAddBrandModal">&times;</button>
+      </div>
+
+      <form id="addBrandForm" action="/admin/brands/add" method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+          <label>Brand Name <span>*</span></label>
+          <input type="text" name="name" placeholder="Enter brand name" required>
+        </div>
+
+        <div class="form-group">
+          <label>Brand Logo</label>
+          <input type="file" name="logo" accept="image/*" required>
+        </div>
+
+        <div class="form-group">
+          <label>Status</label>
+          <label class="switch">
+            <input type="checkbox" name="status" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn cancel" id="cancelModal">Cancel</button>
+          <button type="submit" class="btn save">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Brand Modal -->
+  <div class="modal" id="editBrandModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Edit Brand</h3>
+        <button class="close-btn" id="closeEditBrandModal">&times;</button>
+      </div>
+
+      <form id="editBrandForm" method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+          <label>Brand Name <span>*</span></label>
+          <input type="text" name="name" id="editBrandName" required>
+        </div>
+
+        <div class="form-group">
+          <label>Current Logo</label>
+          <img id="editBrandLogoPreview" src="" alt="Brand Logo" class="preview-logo">
+        </div>
+
+        <div class="form-group">
+          <label>Change Logo</label>
+          <input type="file" name="logo" accept="image/*">
+        </div>
+
+        <div class="form-group">
+          <label>Status</label>
+          <label class="switch">
+            <input type="checkbox" name="status" id="editBrandStatus">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn cancel" id="cancelEditModal">Cancel</button>
+          <button type="submit" class="btn save">Update</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Add Modal 
+  const addModal = document.getElementById('addBrandModal');
+  document.getElementById('openAddBrandModal').onclick = () => addModal.classList.add('show');
+  document.getElementById('closeAddBrandModal').onclick = () => addModal.classList.remove('show');
+  document.getElementById('cancelModal').onclick = () => addModal.classList.remove('show');
+
+  //  Edit Modal 
+  const editModal = document.getElementById('editBrandModal');
+  const editForm = document.getElementById('editBrandForm');
+
+  function openEditModal(id, name, logo, status) {
+    document.getElementById('editBrandName').value = name;
+    document.getElementById('editBrandLogoPreview').src = logo;
+    document.getElementById('editBrandStatus').checked = status;
+
+    editForm.action = `/admin/brands/edit/${id}`;
+    editModal.classList.add('show');
+  }
+
+  document.getElementById('closeEditBrandModal').onclick = () => editModal.classList.remove('show');
+  document.getElementById('cancelEditModal').onclick = () => editModal.classList.remove('show');
+
+  // Toggle Status 
+  async function toggleStatus(id) {
+    const res = await fetch(`/admin/brands/toggle/${id}`, { method: 'POST' });
+    if (res.ok) location.reload();
+  }
+
+  // Click Outside 
+  window.onclick = (e) => {
+    if (e.target === addModal) addModal.classList.remove('show');
+    if (e.target === editModal) editModal.classList.remove('show');
+  };
+</script>
