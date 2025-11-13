@@ -1,26 +1,39 @@
-const Admin = require("../model/adminSchema"); 
+import Admin from "../model/adminSchema.js";
 
 
 const adminAuth = async (req, res, next) => {
   try {
-    if (!req.session.admin) {
-      return res.redirect("/admin/login");
-    }
-
-    const admin = await Admin.findById(req.session.admin);
-
-    if (admin) {
-      req.admin = admin;
-      next();
+    if (!req.session.admin) return res.redirect("/admin/login");
+    const admin = await Admin.findById(req.session.admin.id);
+    if (!admin) {
+      req.session.destroy(() => res.redirect("/admin/login"));
     } else {
-      req.session.destroy();
-      res.redirect("/admin/login");
+      req.admin = admin;
+      res.locals.admin = admin;
+      next();
     }
-
-  } catch (error) {
-    console.log("Error in adminAuth middleware:", error);
+  } catch (err) {
+    console.error("adminAuth error:", err);
     res.status(500).send("Internal Server Error");
   }
 };
 
-module.exports = adminAuth;
+const checkAdmin = async (req, res, next) => {
+  try {
+    res.locals.admin = null;
+    if (req.session.admin) {
+      const admin = await Admin.findById(req.session.admin.id);
+      if (admin) res.locals.admin = admin;
+      else delete req.session.admin;
+    }
+    next();
+  } catch (err) {
+    console.error("checkAdmin error:", err);
+    res.locals.admin = null;
+    next();
+  }
+};
+
+export { adminAuth, checkAdmin };
+
+

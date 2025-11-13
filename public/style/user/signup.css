@@ -199,3 +199,12 @@ footer a {
     font-size: 0.75rem;
     display:none
 }
+
+.toastify {
+  position: fixed !important;
+  z-index: 9999 !important;
+  right: 1rem !important;
+  top: 1rem !important;
+  width: auto !important;
+  transform: none !important;
+}

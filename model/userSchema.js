@@ -1,5 +1,6 @@
-const mongoose=require("mongoose")
-const {Schema}=mongoose
+import mongoose from "mongoose";
+const { Schema } = mongoose;
+
 
 const userSchema=new Schema({
     name:{
@@ -22,9 +23,14 @@ const userSchema=new Schema({
     isBlocked:{
         type:Boolean,
         default:false
-    }
+    },
+    role: {
+      type: String,
+      default: "user",
+    },
     
-})
+}, { timestamps: true }
+)
 
 const User=mongoose.model("User",userSchema)
-module.exports=User
+export default User;

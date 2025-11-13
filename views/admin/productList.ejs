@@ -1,0 +1,113 @@
+<section class="product-list">
+  <div class="header">
+    <h1>Product List</h1>
+
+    <!-- Search form -->
+    <form id="searchForm" method="GET" class="search-form">
+      <input
+        type="text"
+        name="search"
+        id="searchInput"
+        value="<%= search || '' %>"
+        placeholder="Search products..."
+      />
+      <button type="button" id="clearSearch">Clear</button>
+    </form>
+
+    <a href="/admin/products/add" class="add-btn">+ Add Product</a>
+  </div>
+
+  <!-- Table -->
+  <table class="product-table">
+    <thead>
+      <tr>
+        <th>Image</th>
+        <th>Name</th>
+        <th>Brand</th>
+        <th>Category</th>
+        <th>Variants</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+
+    <tbody id="productTableBody">
+      <% if (products.length > 0) { %>
+        <% products.forEach(product => { %>
+          <tr>
+            <td><img src="<%= product.images[0] %>" class="prod-img" /></td>
+            <td><%= product.name %></td>
+            <td><%= product.brand ? product.brand.name : '-' %></td>
+            <td><%= product.category ? product.category.name : '-' %></td>
+
+            <!--  DROPDOWN -->
+            <td>
+              <% if (product.variants && product.variants.length > 0) { %>
+                <details class="variant-dropdown">
+                  <summary><%= product.variants.length %> Variant(s)</summary>
+                  <ul class="variant-list">
+                    <% product.variants.forEach(v => { %>
+                      <li><strong><%= v.quantityValue %><%= v.quantityType %></strong></li>
+                    <% }) %>
+                  </ul>
+                </details>
+              <% } else { %>
+                <span>No variants</span>
+              <% } %>
+            </td>
+
+            <!--STATUS -->
+            <td>
+              <% if (product.isBlocked) { %>
+                <span class="status blocked">Blocked</span>
+              <% } else { %>
+                <span class="status active">Active</span>
+              <% } %>
+            </td>
+
+            <!--  ACTIONS -->
+            <td>
+              <div class="actions">
+
+                <a href="/admin/products/edit/<%= product._id %>" title="Edit Product" class="edit">
+                  <i class="ri-edit-2-line"></i>
+                </a>
+
+                <a href="/admin/products/toggle/<%= product._id %>" title="Block / Unblock" class="block-btn">
+                  <i class="<%= product.isBlocked ? 'ri-lock-unlock-line' : 'ri-lock-line' %>"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+        <% }) %>
+      <% } else { %>
+        <tr><td colspan="7" class="no-data">No products found</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+
+  <!-- Pagination -->
+  <div class="pagination">
+    <% if (currentPage > 1) { %>
+      <a href="?page=<%= currentPage - 1 %>&search=<%= search %>" class="page-btn prev">« Prev</a>
+    <% } else { %>
+      <button disabled class="page-btn disabled prev">« Prev</button>
+    <% } %>
+
+    <% for (let i = 1; i <= totalPages; i++) { %>
+      <% if (i === currentPage) { %>
+        <button class="page-btn active"><%= i %></button>
+      <% } else { %>
+        <a href="?page=<%= i %>&search=<%= search %>" class="page-btn"><%= i %></a>
+      <% } %>
+    <% } %>
+
+    <% if (currentPage < totalPages) { %>
+      <a href="?page=<%= currentPage + 1 %>&search=<%= search %>" class="page-btn next">Next »</a>
+    <% } else { %>
+      <button disabled class="page-btn disabled next">Next »</button>
+    <% } %>
+  </div>
+</section>
+
+<script src="/js/admin/productList.js"></script>

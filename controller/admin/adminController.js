@@ -14,15 +14,22 @@ const loadDashboard = async (req, res) => {
   }
 };
 
-const logout = async (req, res) => {
+const logout = (req, res) => {
   try {
-    req.session.admin = null;
-    res.redirect("/admin/login");
+    req.session.destroy(err => {
+      if (err) {
+        console.error("Logout Error:", err);
+        return res.redirect("/admin");
+      }
+      res.clearCookie("connect.sid");
+      res.redirect("/admin/login");
+    });
   } catch (error) {
-    console.log("Error during logout:", error);
-    res.redirect("/admin/page-404");
+    console.error("Admin Logout Error:", error);
+    res.redirect("/admin");
   }
 };
+
 
 const pageNotFound = (req, res) => {
   res.status(404).render("admin/page-404", {
@@ -33,11 +40,7 @@ const pageNotFound = (req, res) => {
   });
 };
 
-module.exports = {
-  loadDashboard,
-  logout,
-  pageNotFound,
-};
+export default{ loadDashboard, logout, pageNotFound };
 
 
 

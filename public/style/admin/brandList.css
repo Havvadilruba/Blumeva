@@ -1,9 +1,11 @@
+/* ========== Layout ========== */
 .brand-page {
   padding: 20px;
   background: #f9fafc;
   border-radius: 10px;
 }
 
+/* Header */
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -16,23 +18,40 @@
   color: #333;
 }
 
-.btn {
-  border: none;
-  padding: 10px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: 0.3s;
+.search-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
-.btn-primary {
-  background: #4f46e5;
+.search-form input {
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.btn-search {
+  background: #2563eb;
   color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  cursor: pointer;
 }
 
-.btn-primary:hover {
-  background: #3730a3;
+.btn-clear {
+  text-decoration: none;
+  background: #e5e7eb;
+  color: #333;
+  border-radius: 6px;
+  padding: 8px 14px;
 }
 
+.btn-clear:hover {
+  background: #d1d5db;
+}
+
+/* ========== Table ========== */
 .brand-table {
   width: 100%;
   border-collapse: collapse;
@@ -83,12 +102,40 @@
   cursor: pointer;
 }
 
+/* ========== Pagination ========== */
+.pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  gap: 6px;
+}
+
+.pagination a {
+  padding: 6px 10px;
+  border-radius: 6px;
+  text-decoration: none;
+  color: #2563eb;
+  border: 1px solid #2563eb;
+}
+
+.pagination a.active {
+  background: #2563eb;
+  color: white;
+}
+
+/* ========== Modals ========== */
+
+/* ---------- MODAL STYLES ---------- */
 .modal {
   display: none;
   position: fixed;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0,0,0,0.5);
-  justify-content: center; align-items: center;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.55);
+  backdrop-filter: blur(6px);
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-in-out;
 }
 
 .modal.show {
@@ -96,18 +143,48 @@
 }
 
 .modal-content {
-  background: white;
-  border-radius: 12px;
-  width: 400px;
-  padding: 20px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-  animation: fadeIn 0.3s ease-in-out;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 25px 30px;
+  width: 420px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  animation: scaleUp 0.25s ease;
 }
 
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.modal-content h2 {
+  margin-bottom: 15px;
+  font-size: 20px;
+  color: #1e293b;
+  font-weight: 600;
+  text-align: center;
+}
+
+.form-group {
+  margin: 12px 0;
+}
+
+.form-group label {
+  font-size: 14px;
+  color: #374151;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.form-group input[type="text"],
+.form-group input[type="file"],
+.form-group select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  outline: none;
+  transition: border 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #2563eb;
 }
 
 .preview-logo {
@@ -115,16 +192,84 @@
   height: 80px;
   border-radius: 10px;
   object-fit: cover;
+  border: 1px solid #e5e7eb;
   margin-top: 5px;
 }
 
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.btn.save {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.3s ease;
+}
+
+.btn.save:hover {
+  background: #1d4ed8;
+}
+
+.btn.cancel {
+  background: #f3f4f6;
+  color: #111827;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn.cancel:hover {
+  background: #e5e7eb;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes scaleUp {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Status Badge */
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-weight: 500;
+  font-size: 13px;
+  display: inline-block;
+}
+
+.status-badge.active {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-badge.inactive {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+
+
+/* Toggle Switch */
 .switch {
   position: relative;
   display: inline-block;
   width: 46px;
   height: 24px;
 }
-.switch input { display:none; }
+.switch input { display: none; }
 .slider {
   position: absolute;
   cursor: pointer;
@@ -151,7 +296,92 @@ input:checked + .slider:before {
   transform: translateX(22px);
 }
 
+/* Animation */
 @keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.9); }
+  from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
+}
+/* -------------------- PAGINATION -------------------- */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 25px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.page-btn {
+  display: inline-block;
+  padding: 8px 14px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #f9fafb;
+  color: #333;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.page-btn:hover {
+  background: #eef2ff;
+  border-color: #6366f1;
+  color: #4f46e5;
+}
+
+.page-btn.active {
+  background: #4f46e5;
+  color: #fff;
+  border-color: #4f46e5;
+  cursor: default;
+}
+
+.page-btn.disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  border-color: #e5e7eb;
+  cursor: not-allowed;
+}
+.page-btn.prev,
+.page-btn.next {
+  font-weight: 600;
+  color: #2563eb;
+  border-color: #2563eb;
+}
+
+.page-btn.prev:hover,
+.page-btn.next:hover {
+  background: #2563eb;
+  color: #fff;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .page-btn {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+}
+/* Optional: smooth hover animation */
+.page-btn:not(.disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  color: #fff;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.25s ease-in-out;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
 }

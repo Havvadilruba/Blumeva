@@ -6,11 +6,8 @@
   <title>Create Account | Blumeva</title>
   <link rel="stylesheet" href="style/user/signup.css" />
 
-  <!-- Font Awesome CDN for icons -->
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-  />
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 </head>
 <body>
   <div class="container">
@@ -48,12 +45,7 @@
 
       <label for="confirm">Confirm Password</label>
       <div class="password-field">
-        <input
-          type="password"
-          id="confirm"
-          name="cpassword"
-          placeholder="Confirm your password"
-        />
+        <input type="password" id="confirm" name="cpassword" placeholder="Confirm your password" />
         <i class="fa-regular fa-eye"></i>
       </div>
        <div id="error4" class="error-message"></div>
@@ -66,108 +58,20 @@
     </div>
 
     <div class="social-login">
-      <button class="social-btn google">
+      <a href="auth/google" class="social-btn google">
         <i class="fa-brands fa-google"></i> Google
-      </button>
+      </>
     </div>
 
     <p class="login-link">
       Already have an account?
-      <a href="#">Log in</a>
+      <a href="/login">Log in</a>
     </p>
-
-    <footer>
-      <a href="#">Terms of Service</a> ·
-      <a href="#">Privacy Policy</a>
-    </footer>
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <script src="/js/user/signup.js"></script>
 </body>
 </html>
+  
 
-<script>
-
-const nameid=document.getElementById("name")
-const emailid=document.getElementById("email")
-const passid=document.getElementById("password")
-const cpassid=document.getElementById("confirm")
-const error1=document.getElementById("error1")
-const error2=document.getElementById("error2")
-const error3=document.getElementById("error3")
-const error4=document.getElementById("error4")
-const signform=document.getElementById("signform")
-
-
-function nameValidateChecking(e){
-    const nameval=nameid.value
-    const namepattern=/^[A-Za-z\s]+$/;
-
-    if(nameval.trim()===""){
-        error1.style.display='block';
-        error1.innerHTML="Please enter a valid name"
-    }else if(!namepattern.test(nameval)){
-        error1.style.display='block'
-        error1.innerHTML="Name can only contain albhabets and spaces"
-    }else{
-        error1.style.display='none';
-        error1.innerHTML=""
-    }
-}
-
-function emailValidateChecking(e){
-
-    const emailval=emailid.value
-    const emailpattern=/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
-
-    if(!emailpattern.test(emailval)){
-        error2.style.display="block";
-        error2.innerHTML="Invalid Format"
-    }else{
-    error2.style.display="none"
-    error2.innerHTML=""
-}
-}
-
-
-function passValidateChecking(){
-    const passval=passid.value;
-    const cpassval=cpassid.value;
-    const alpha=/[a-zA-Z]/
-    const digit=/\d/;
-
-    if(passval.length<8){
-        error3.style.display="block"
-        error3.innerHTML="Should contain 8 characters"
-    }else if(!alpha.test(passval) || !digit.test(passval)){
-        error3.style.display="block";
-        error3.innerHTML="Should contain numbers and alphabets"
-    }else{
-        error3.style.display="none"
-        error3.innerHTML=""
-    }
-
-    if(passval !== cpassval){
-        error4.style.display="block"
-        error4.innerHTML="Passwords do not match"
-    }else{
-        error4.style.display="none"
-        error4.innerHTML=""
-    }
-}
-
-document.addEventListener("DOMContentLoaded",function(){
-    signform.addEventListener("submit",function(e){
-
-        nameValidateChecking();
-        emailValidateChecking();
-        passValidateChecking()
-
-        if(!nameid || !emailid ||!passid|| !cpassid ||!error1 ||!error2|| !error3||  !error4 || !signform){
-            console.log("One or more not found")
-        }
-
-        if(error1.innerHTML || error2.innerHTML|| error3.innerHTML ||error4.innerHTML){
-            e.preventDefault()
-        }
-    })
-})
-</script>

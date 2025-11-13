@@ -1,0 +1,259 @@
+/* ===========================
+   🧾 PRODUCT LIST (Blue Theme)
+   =========================== */
+
+.product-list {
+  padding: 2rem;
+  background: #f9fbfd;
+  font-family: "Poppins", sans-serif;
+  color: #111827;
+}
+
+/* ---------- HEADER ---------- */
+.product-list .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.product-list h1 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.search-form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.search-form input {
+  padding: 8px 12px;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  font-size: 15px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.search-form input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.search-form button {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.search-form button:hover {
+  background: #2563eb;
+}
+
+#clearSearch {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+#clearSearch:hover {
+  background: #bae6fd;
+}
+
+.add-btn {
+  background: #3b82f6;
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.add-btn:hover {
+  background: #2563eb;
+  box-shadow: 0 3px 8px rgba(59, 130, 246, 0.3);
+}
+
+/* ---------- TABLE ---------- */
+.product-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.product-table th,
+.product-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid #f0f4f8;
+  text-align: center;
+  font-size: 15px;
+}
+
+.product-table th {
+  background: #eff6ff;
+  font-weight: 600;
+  color: #111827;
+}
+
+.product-table tr:hover {
+  background-color: #f8fafc;
+  transition: background 0.3s ease;
+}
+
+.prod-img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid #dbeafe;
+}
+
+/* ---------- VARIANTS ---------- */
+.variant-dropdown summary {
+  cursor: pointer;
+  color: #111827;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.variant-list {
+  list-style: none;
+  padding: 6px 0 0 12px;
+  text-align: left;
+}
+
+.variant-list li {
+  font-size: 14px;
+  color: #475569;
+  padding: 2px 0;
+}
+
+/* ---------- STATUS ---------- */
+.status {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.status.active {
+  background: #e0f2fe;
+  color: #111827;
+}
+
+.status.blocked {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* ---------- ACTIONS COLUMN (with curved background) ---------- */
+.actions {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.6rem;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-radius: 50px; /* curved pill shape */
+  padding: 8px 14px;
+  box-shadow: 0 3px 10px rgba(59, 130, 246, 0.1);
+  border: 1px solid #dbeafe;
+  transition: all 0.3s ease;
+}
+
+/* subtle lift when hovering over the group */
+.actions:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(59, 130, 246, 0.18);
+}
+
+/* ---------- INDIVIDUAL ICON BUTTONS ---------- */
+.actions a {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1e3a8a;
+  background: #ffffff;
+  border: 1px solid #bfdbfe;
+  text-decoration: none;
+  font-size: 1.15rem;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 5px rgba(59, 130, 246, 0.1);
+}
+
+/* hover effect */
+.actions a:hover {
+  background: #3b82f6;
+  color: #ffffff;
+  border-color: #3b82f6;
+  transform: scale(1.08);
+  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.25);
+}
+
+/* ---------- ICON STYLE ---------- */
+.actions i {
+  font-size: 1.2rem;
+  pointer-events: none;
+}
+  
+/* ---------- PAGINATION ---------- */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 1.5rem;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.pagination .page-btn,
+.pagination button {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #dbeafe;
+  background: #f0f9ff;
+  color: #2563eb;
+  font-size: 14px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.pagination .page-btn:hover {
+  background: #bfdbfe;
+  color: #1e3a8a;
+}
+
+.pagination .active {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+}
+
+.pagination .disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.no-data {
+  text-align: center;
+  color: #94a3b8;
+  padding: 20px;
+  font-size: 15px;
+}

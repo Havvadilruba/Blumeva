@@ -12,174 +12,56 @@
     <h1 class="brand">Blumeva</h1>
 
     <div class="card">
-      <h2>Verify Your Account</h2>
-      <p class="sub-text">
-        An OTP has been sent to your email address. Please check your inbox.
-      </p>
-      <p class="email">user@example.com</p>
+     <h2><%= isReset ? "Verify OTP to Reset Password" : "Verify Your Account" %></h2>
+<p class="sub-text">
+  <%= isReset
+      ? "An OTP has been sent to your email to reset your password."
+      : "An OTP has been sent to your email to verify your account." %>
+</p>
+<p class="email"><%= email %></p>
 
-      <form action="/verifyOtp" method="POST" class="otp-form" onsubmit="return validateOTPForm(event)">
-        <div class="otp-inputs">
-          <input type="text" maxlength="1" id="otp1" />
-          <input type="text" maxlength="1" id="otp2" />
-          <input type="text" maxlength="1" id="otp3"  />
-          <input type="text" maxlength="1" id="otp4" />
-          <input type="text" maxlength="1" id="otp5" />
-          <input type="text" maxlength="1" id="otp6" />
-        </div>
-        <button type="submit" class="btn">Verify OTP</button>
-      </form>
+<form
+  action="<%= isReset ? '/verify-reset' : '/verifyOtp' %>"
+  method="POST"
+  class="otp-form"
+  onsubmit="return validateOTPForm(event)"
+>
+  <div class="otp-inputs">
+    <input type="text" maxlength="1" id="otp1" />
+    <input type="text" maxlength="1" id="otp2" />
+    <input type="text" maxlength="1" id="otp3" />
+    <input type="text" maxlength="1" id="otp4" />
+    <input type="text" maxlength="1" id="otp5" />
+    <input type="text" maxlength="1" id="otp6" />
+  </div>
+  <button type="submit" class="btn">Verify OTP</button>
+</form>
 
-      <div class="links">
-        <p class="timer-text">
-          Didn’t receive the OTP?
-          <span id="timer">01:00</span>
-        </p>
-        <a href="/resendOtp" id="resendOtp" class="disabled"  onclick="return resendOtp(event)">Resend OTP</a>
-        <a href="/signup" class="back-link">← Back to Registration</a>
+<div class="links">
+  <p class="timer-text">
+    Didn’t receive the OTP? <span id="timer">01:00</span>
+  </p>
+  <a
+    href="<%= isReset ? '/resend-reset' : '/resendOtp' %>"
+    id="resendOtp"
+    class="disabled"
+    onclick="return resendOtp(event)"
+  >
+    Resend OTP
+  </a>
+  <a href="<%= isReset ? '/forgot-password' : '/signup' %>" class="back-link">
+    ← Back
+  </a>
+</div>
+
       </div>
     </div>
 
-    <footer>
-      <a href="#">Terms of Service</a> • <a href="#">Privacy Policy</a>
-    </footer>
   </div>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script>
-
-    // --- OTP Auto ---
-    const timerDisplay = document.getElementById("timer");
-    const resendLink = document.getElementById("resendOtp");
-    const inputs = document.querySelectorAll(".otp-inputs input");
-    let timerInterval;
-    inputs.forEach((input, index) => {
-      input.addEventListener("input", () => {
-        if (input.value && index < inputs.length - 1) {
-          inputs[index + 1].focus();
-        }
-      });
-      input.addEventListener("keydown", (e) => {
-        if (e.key === "Backspace" && !input.value && index > 0) {
-          inputs[index - 1].focus();
-        }
-      });
-    });
-
-   function startTimer() {
-      let timeLeft = 60;
-      resendLink.classList.add("disabled");
-      resendLink.style.pointerEvents = "none";
-      clearInterval(timerInterval);
-
-      timerInterval = setInterval(() => {
-        const minutes = String(Math.floor(timeLeft / 60)).padStart(2, "0");
-        const seconds = String(timeLeft % 60).padStart(2, "0");
-         timerDisplay.textContent = `${minutes}:${seconds}`;
-        if (timeLeft <= 0) {
-          clearInterval(timerInterval);
-          timerDisplay.textContent = "00:00";
-          resendLink.classList.remove("disabled");
-          resendLink.style.pointerEvents = "auto";
-        }
-        timeLeft--;
-      }, 1000);
-    }
-
-     startTimer();
-
-    // Toast: OTP sent
-    Toastify({
-      text: "📩 OTP sent successfully to your email",
-      duration: 4000,
-      gravity: "top",
-      position: "center",
-      backgroundColor: "linear-gradient(to right, #2563eb, #60a5fa)",
-    }).showToast();
-
-      async function validateOTPForm(event){
-        event.preventDefault()
-
-        const otp = Array.from(inputs).map(input => input.value).join("");
-       
-        if (otp.length < 6) {
-          Swal.fire({
-            icon: "warning",
-            title: "Incomplete OTP",
-            text: "Please enter all 6 digits.",
-          });
-          return;
-        }
-         try {
-        const response = await axios.post('/verifyOtp', { otp: otp });
-     
-
-        if (response.data.success) {
-          Swal.fire({
-            icon: "success",
-            title: "OTP Verified Successfully",
-            showConfirmButton: false,
-            timer: 1500
-          }).then(() => {
-            window.location.href = response.data.redirectUrl;
-          });
-        } else {
-          Swal.fire({
-            icon: "error",
-            title: "Error",
-            text: response.data.message || "Invalid OTP",
-          });
-        }
-      } catch (error) {
-        Swal.fire({
-          icon: "error",
-          title: "Request Failed",
-          text: error.response?.data?.message || error.message,
-        });
-      }
-    }
-
-       async function resendOtp(event){
-        event.preventDefault()
-        if(resendLink.classList.contains("disabled")) return
-        
-        try{
-          const response = await axios.post("/resendOtp");
-
-          if(response.data.success){
-             Toastify({
-            text: "📨 New OTP sent successfully!",
-            duration: 4000,
-            gravity: "top",
-            position: "center",
-            backgroundColor: "linear-gradient(to right, #2563eb, #60a5fa)",
-          }).showToast();
-
-          startTimer(); 
-          }else{
-
-           Toastify({
-            text: "❌ Failed to resend OTP. Try again later.",
-            duration: 4000,
-            gravity: "top",
-            position: "center",
-            backgroundColor: "linear-gradient(to right, #ef4444, #f87171)",
-          }).showToast();
-        }
-        } catch (error){
-          Toastify({
-          text: "⚠ Server error while resending OTP",
-          duration: 4000,
-          gravity: "top",
-          position: "center",
-          backgroundColor: "linear-gradient(to right, #ef4444, #f87171)",
-        }).showToast();
-      }
-
-      }
-   
-  </script>
+  <script src="/js/user/verifyOtp.js"></script>
 </body>
 </html>
 

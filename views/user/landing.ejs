@@ -18,111 +18,66 @@
 <section class="categories">
   <h2>Shop by Category</h2>
   <div class="category-grid">
-    <% categories.forEach(category => { %>
-      <div class="category">
-        <img src="<%= category.image %>" alt="<%= category.name %>">
-        <p><%= category.name %></p>
+  <% categories.forEach(category => { %>
+    <a href="/products?category=<%= category.name %>" class="category">
+      <img src="<%= category.image %>" alt="<%= category.name %>">
+      <p><%= category.name %></p>
+    </a>
+  <% }) %>
+</div>
+</section>
+
+<section class="latest">
+  <h2>Latest Products</h2>
+  <div class="product-grid">
+    <% latestProducts.forEach(product => { %>
+      <div class="product-card" onclick="goToProduct('<%= product._id %>')">
+        <div class="image-container">
+          <img src="<%= product.images[0] %>" alt="<%= product.name %>">
+
+          <% 
+            const regular = product.variants.regularPrice;
+            const sale = product.variants.salePrice;
+            const hasDiscount = regular > sale;
+            const discountPercent = hasDiscount 
+              ? Math.round(((regular - sale) / regular) * 100) 
+              : 0;
+          %>
+
+          <% if (hasDiscount) { %>
+            <span class="offer-badge"><%= discountPercent %>% OFF</span>
+          <% } %>
+        </div>
+
+        <h3><%= product.name %></h3>
+        <p class="category"><%= product.category.name %></p>
+
+        <div class="price">
+          <span class="sale">₹<%= sale %></span>
+          <% if (hasDiscount) { %>
+            <span class="regular">₹<%= regular %></span>
+          <% } %>
+        </div>
+
+        <!-- Rating -->
+        <div class="rating">
+          <% for (let i = 1; i <= 5; i++) { %>
+            <% if (i <= product.avgRating) { %>
+              <i class="fa-solid fa-star"></i>
+            <% } else { %>
+              <i class="fa-regular fa-star"></i>
+            <% } %>
+          <% } %>
+        </div>
+
+        <!-- Add to Cart Button -->
+        <button 
+          class="add-to-cart">Add to Cart</button>
       </div>
     <% }) %>
   </div>
 </section>
 
-
-<!-- Latest Products -->
-<section class="latest">
-  <h2>Latest Products</h2>
-  <div class="product-grid">
-
-    <!-- Product 1 -->
-    <div class="product-card">
-      <div class="image-container">
-        <img src="/images/biocule-V_-ZK2wRYdo-unsplash.jpg" alt="Gentle Foaming Cleanser">
-        <span class="offer-badge">20% OFF</span>
-      </div>
-      <h3>Gentle Foaming Cleanser</h3>
-      <p class="category">Face Wash</p>
-      <div class="price">
-        <span class="regular">₹499</span>
-        <span class="sale">₹399</span>
-      </div>
-      <div class="rating">
-        <i class="fa-solid fa-star"></i>
-        <i class="fa-solid fa-star"></i>
-        <i class="fa-solid fa-star"></i>
-        <i class="fa-solid fa-star"></i>
-        <i class="fa-regular fa-star"></i>
-      </div>
-      <button>Add to Cart</button>
-    </div>
-
-    <!-- Product 2 -->
-    <div class="product-card">
-      <div class="image-container">
-        <img src="/images/daniela-chavez-cUy8UUGnsqg-unsplash.jpg" alt="Hydra Balance Moisturizer">
-        <span class="offer-badge">10% OFF</span>
-      </div>
-      <h3>Hydra Balance Moisturizer</h3>
-      <p class="category">Moisturizer</p>
-      <div class="price">
-        <span class="regular">₹699</span>
-        <span class="sale">₹629</span>
-      </div>
-      <div class="rating">
-        <i class="fa-solid fa-star"></i>
-        <i class="fa-solid fa-star"></i>
-        <i class="fa-solid fa-star"></i>
-        <i class="fa-regular fa-star"></i>
-        <i class="fa-regular fa-star"></i>
-      </div>
-      <button>Add to Cart</button>
-    </div>
-
-    <!-- Product 3 -->
-    <div class="product-card">
-      <div class="image-container">
-        <img src="/images/biocule-V_-ZK2wRYdo-unsplash.jpg" alt="SPF 50 Sunscreen Lotion">
-        <span class="offer-badge">15% OFF</span>
-      </div>
-      <h3>SPF 50 Sunscreen Lotion</h3>
-      <p class="category">Sun Care</p>
-      <div class="price">
-        <span class="regular">₹799</span>
-        <span class="sale">₹679</span>
-      </div>
-      <div class="rating">
-        <i class="fa-solid fa-star"></i>
-        <i class="fa-solid fa-star"></i>
-        <i class="fa-solid fa-star"></i>
-        <i class="fa-solid fa-star"></i>
-        <i class="fa-solid fa-star"></i>
-      </div>
-      <button>Add to Cart</button>
-    </div>
-
-    <!-- Product 4 -->
-    <div class="product-card">
-      <div class="image-container">
-        <img src="/images/daniela-chavez-cUy8UUGnsqg-unsplash.jpg" alt="Vitamin C Brightening Serum">
-        <span class="offer-badge">25% OFF</span>
-      </div>
-      <h3>Vitamin C Brightening Serum</h3>
-      <p class="category">Serum</p>
-      <div class="price">
-        <span class="regular">₹999</span>
-        <span class="sale">₹749</span>
-      </div>
-      <div class="rating">
-        <i class="fa-solid fa-star"></i>
-        <i class="fa-solid fa-star"></i>
-        <i class="fa-solid fa-star"></i>
-        <i class="fa-solid fa-star"></i>
-        <i class="fa-regular fa-star"></i>
-      </div>
-      <button>Add to Cart</button>
-    </div>
-
-  </div>
-</section>
 
 
 <!--Coupon -->
@@ -179,3 +134,8 @@
 
 
 <%- include("../../views/partials/user/footer") %>
+<script>
+  function goToProduct(productId) {
+  window.location.href = `/product/${productId}`;
+}
+</script>

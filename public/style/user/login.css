@@ -232,5 +232,13 @@ input:focus {
   text-decoration: none;
 }
 
-
+.toastify {
+  position: fixed !important;
+  z-index: 9999 !important;
+  right: 1rem !important;
+  top: 1rem !important;
+  transform: none !important;
+  width: auto !important;
+  animation: slideInRight 0.4s ease;
+}
 

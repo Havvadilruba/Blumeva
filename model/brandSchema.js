@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const brandSchema = new mongoose.Schema({
   name: {
@@ -21,4 +21,5 @@ const brandSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-module.exports = mongoose.model("Brand", brandSchema);
+export default mongoose.model("Brand", brandSchema);
+

@@ -1,52 +1,52 @@
-const User=require("../model/userSchema")
+import User from "../model/userSchema.js";
+import mongoose from "mongoose";
+
 
 const userAuth = async (req, res, next) => {
   try {
-    if (req.session.admin) {
-      return res.redirect("/admin");
+    if (!req.session.user) return res.redirect("/login");
+
+    const user = await User.findById(req.session.user.id);
+    if (!user || user.isBlocked) {
+      delete req.session.user;
+      return res.redirect("/login?message=blocked");
     }
 
-    if (!req.session.user) {
-      return res.redirect("/login");
-    }
-
-    const user = await User.findById(req.session.user);
-    if (!user) {
-      req.session.destroy(() => res.redirect("/login"));
-    } else {
-      req.user = user;
-      next();
-    }
-  } catch (error) {
-    console.log("Error in userAuth middleware:", error);
+    req.user = user;
+    res.locals.user = user;
+    next();
+  } catch (err) {
+    console.error("userAuth error:", err);
     res.status(500).send("Internal Server Error");
   }
 };
-function checkUser(req, res, next) {
-  if (req.session.user) {
-    if (!req.session.userData) {
-      User.findById(req.session.user)
-        .then(user => {
-          if (user) {
-            res.locals.user = user; 
-            req.session.userData = user; 
-          } else {
-            res.locals.user = null;
-          }
-          next();
-        })
-        .catch(err => {
-          console.log("Error in checkUser middleware:", err);
-          res.locals.user = null;
-          next();
-        });
-    } else {
-      res.locals.user = req.session.userData;
-      next();
+
+const checkUser = async (req, res, next) => {
+  try {
+    res.locals.user = null;
+
+    if (req.session && req.session.user && req.session.user.id) {
+      const userId = req.session.user.id;
+
+      if (mongoose.Types.ObjectId.isValid(userId)) {
+        const user = await User.findById(userId).lean();
+
+        if (user && !user.isBlocked) {
+          res.locals.user = user;
+        } else {
+          delete req.session.user; 
+        }
+      } else {
+        delete req.session.user;
+      }
     }
-  } else {
+
+    next();
+  } catch (err) {
+    console.error("checkUser error:", err);
     res.locals.user = null;
     next();
   }
-}
-module.exports={userAuth,checkUser}
+};
+export { userAuth, checkUser };
+

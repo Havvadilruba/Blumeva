@@ -1,0 +1,150 @@
+<section class="main-content">
+  <div class="page-header">
+    <h1>Edit Product</h1>
+  </div>
+
+  <form
+    id="editProductForm"
+    method="POST"
+    enctype="multipart/form-data"
+    class="product-form"
+    data-id="<%= product._id %>"
+  >
+    <!--  Basic Details -->
+    <div class="form-section">
+      <h3>Basic Details</h3>
+      <div class="form-grid">
+        <div>
+          <label>Product Name</label>
+          <input
+            type="text"
+            name="name"
+            value="<%= product.name %>"
+            placeholder="Enter product name"
+            required
+          />
+        </div>
+
+        <div>
+          <label>Brand</label>
+          <select name="brand" required>
+            <% brands.forEach(b => { %>
+              <option
+                value="<%= b._id %>"
+                <%= product.brand && product.brand._id.toString() === b._id.toString() ? "selected" : "" %>
+              >
+                <%= b.name %>
+              </option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div>
+          <label>Category</label>
+          <select name="category" required>
+            <% categories.forEach(c => { %>
+              <option
+                value="<%= c._id %>"
+                <%= product.category && product.category._id.toString() === c._id.toString() ? "selected" : "" %>
+              >
+                <%= c.name %>
+              </option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div class="full-width">
+          <label>Description</label>
+          <textarea
+            name="description"
+            rows="3"
+            placeholder="Describe your product"
+          ><%= product.description %></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Product Images -->
+<div class="form-section">
+  <h3>Product Images</h3>
+  <p class="note">Delete images (❌) or upload new ones below:</p>
+
+
+  <input type="hidden" name="deletedImages" id="deletedImages" />
+
+  <!-- upload new images -->
+  <input id="imageInput" type="file" accept="image/*" multiple />
+
+  <!-- preview images -->
+  <div id="previewContainer" class="preview-grid">
+    <% if (product.images && product.images.length > 0) { %>
+      <% product.images.forEach(img => { %>
+        <div class="preview-box existing">
+          <img src="<%= img %>" class="preview-img" />
+          <button type="button" class="delete-img-btn" data-url="<%= img %>" title="Remove image">❌</button>
+        </div>
+      <% }) %>
+    <% } %>
+  </div>
+</div>
+
+
+    <!--  Variants -->
+    <div class="form-section">
+      <h3>Variants</h3>
+      <div id="variantContainer">
+        <% if (variants && variants.length > 0) { %>
+          <% variants.forEach(v => { %>
+            <div class="variant-row">
+              <input type="number" name="quantityValue[]" placeholder="Value (100)" value="<%= v.quantityValue %>"/>
+              <select name="quantityType[]">
+                <option value="ml" <%= v.quantityType === "ml" ? "selected" : "" %>>ml</option>
+                <option value="g" <%= v.quantityType === "g" ? "selected" : "" %>>g</option>
+              </select>
+              <input type="number" name="regularPrice[]" placeholder="Regular Price ₹" value="<%= v.regularPrice %>"/>
+              <input type="number" name="salePrice[]" placeholder="Sale Price ₹" value="<%= v.salePrice %>"/>
+              <input type="number" name="stock[]" placeholder="Stock" value="<%= v.stock %>"/>
+              <button type="button" class="remove-variant">🗑</button>
+            </div>
+          <% }) %>
+        <% } else { %>
+          <!-- if no variant found -->
+          <div class="variant-row">
+            <input type="number" name="quantityValue[]" placeholder="Value (100)" />
+            <select name="quantityType[]">
+              <option value="ml">ml</option>
+              <option value="g">g</option>
+            </select>
+            <input type="number" name="regularPrice[]" placeholder="Regular Price ₹" />
+            <input type="number" name="salePrice[]" placeholder="Sale Price ₹" />
+            <input type="number" name="stock[]" placeholder="Stock" />
+            <button type="button" class="remove-variant">🗑</button>
+          </div>
+        <% } %>
+      </div>
+
+      <button type="button" id="addVariantBtn" class="add-variant">
+        + Add Variant
+      </button>
+    </div>
+
+    <!-- Submit Button -->
+    <div class="form-actions">
+      <button type="submit" class="btn-primary">Update Product</button>
+    </div>
+  </form>
+</section>
+
+<!-- Crop Modal -->
+<div id="cropModal" class="crop-modal">
+  <div class="crop-container">
+    <h3>Crop Image</h3>
+    <img id="cropImage" alt="Crop Image" />
+    <div class="crop-footer">
+      <button id="cropSave" type="button" class="btn-primary">Crop & Save</button>
+      <button id="cancelCrop" type="button" class="btn-secondary">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/admin/productEdit.js"></script>

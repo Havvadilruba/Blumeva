@@ -1,0 +1,109 @@
+<%- include("../partials/user/header") %>
+
+<nav class="breadcrumb">
+  <a href="/">Home</a> ›
+  <a href="/products?category=<%= product.category.name %>"><%= product.category.name %></a> ›
+  <a href="/products?category=<%= product.category.name %>&brand=<%= product.brand.name %>"><%= product.brand.name %></a> ›
+  <span><%= product.name %></span>
+</nav>
+
+
+<section class="product-detail-container">
+
+  <!-- Main Image  -->
+  <div class="left-section">
+    <div id="imageContainer" class="main-image-box">
+      <img id="mainImage" src="<%= product.images[0] %>" alt="<%= product.name %>">
+      <div id="zoomLens"></div>
+    </div>
+
+    <div class="thumbnails">
+      <% product.images.forEach((img, i) => { %>
+        <img src="<%= img %>"
+             onclick="changeImage('<%= img %>', event)"
+             class="thumbnail <%= i===0 ? 'active' : '' %>">
+      <% }) %>
+    </div>
+  </div>
+
+  <!-- Details -->
+  <div class="right-section">
+    <h1 class="product-title"><%= product.name %></h1>
+    <p class="brand">Brand: <span><%= product.brand.name %></span></p>
+
+    <!-- Rating -->
+    <div class="rating">
+      <% for (let i = 1; i <= 5; i++) { %>
+        <i class="fa-star <%= i <= Math.round(product.avgRating || 0) ? 'fas' : 'far' %>"></i>
+      <% } %>
+      <span>(Rating: <%= (product.avgRating || 0).toFixed(1) %>/5)</span>
+    </div>
+    <% if (variant) { %>
+
+  <!-- PRICE -->
+  <div id="priceSection" class="price">
+    <span class="sale">₹<%= variant.salePrice %></span>
+    <% if (variant.salePrice < variant.regularPrice) { %>
+      <span class="regular">₹<%= variant.regularPrice %></span>
+      <span class="discount">
+        <%= Math.round(((variant.regularPrice - variant.salePrice) / variant.regularPrice) * 100) %>% OFF
+      </span>
+    <% } %>
+  </div>
+
+  <!-- STOCK  -->
+  <div id="stockInfo">
+    <% if (variant.stock <= 0) { %>
+      <div class="stock"><span class="out-stock">Out of Stock</span></div>
+    <% } else if (variant.stock < 20) { %>
+      <div class="stock"><span class="in-stock">Only <%= variant.stock %> left!</span></div>
+    <% } else { %>
+      <div class="stock"><span class="in-stock">In Stock</span></div>
+    <% } %>
+  </div>
+
+  <!-- VARIANT BADGES -->
+  <div class="variant-badges">
+  <% product.variants.forEach((v, i) => { %>
+    <span 
+      class="variant-badge <%= v._id.toString() === variant._id.toString() ? 'active' : '' %>" 
+      data-variantid="<%= v._id %>"
+      data-saleprice="<%= (v.salePrice ?? v.saleprice ?? 0) %>"
+      data-regularprice="<%= (v.regularPrice ?? v.regularprice ?? 0) %>"
+      data-stock="<%= (v.stock ?? 0) %>">
+      <%= v.quantityValue %> <%= v.quantityType %>
+    </span>
+  <% }) %>
+</div>
+
+
+  <!-- QUANTITY -->
+  <div class="quantity-selector">
+    <button type="button" onclick="decreaseQty()">-</button>
+    <input type="number" id="quantityInput" value="1" min="1" max="<%= variant.stock %>">
+    <button type="button" onclick="increaseQty(<%= variant.stock %>)">+</button>
+  </div>
+
+  <!-- ACTION BUTTON -->
+  <div class="actions">
+    <button class="add-cart" data-productid="<%= product._id %>" data-variantid="<%= variant._id %>">
+      Add to Cart
+    </button>
+  </div>
+
+<% } else { %>
+  <button class="sold-out" disabled>Sold Out</button>
+<% } %>
+
+
+    <div class="product-description">
+      <h3>Description</h3>
+      <p><%= product.description || 'No description available.' %></p>
+    </div>
+  </div>
+
+</section>
+
+<%- include("../partials/user/footer") %>
+<script src="/js/user/product-detail.js"></script>
+

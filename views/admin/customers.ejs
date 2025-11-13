@@ -29,52 +29,71 @@
   </div>
 </div>
 
-<!-- SEARCH BAR -->
-<div class="customer-table">
-  <div class="table-header">
-    <input type="text" id="searchInput" placeholder="🔍 Search by name or email" />
+<div class="table-header">
+  <form id="searchForm" method="GET" action="/admin/customers">
+    <input
+      type="text"
+      id="searchInput"
+      name="search"
+      value="<%= search || '' %>"
+      placeholder="🔍 Search by name or email"
+      autocomplete="off"
+    />
+    <button type="button" id="clearSearch" class="clear-btn">✖ Clear</button>
+  </form>
+</div>
+
+ <!-- CUSTOMER TABLE CONTAINER -->
+<div class="customer-table-container">
+  <div class="customer-table-wrapper">
+    <table class="customer-table">
+      <thead>
+        <tr>
+          <th>Customer Name</th>
+          <th>Email</th>
+          <th>Orders</th>
+          <th>Total Spent</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <% if (customers.length === 0) { %>
+          <tr>
+            <td colspan="6" class="no-results">
+              No customers found for "<%= search %>"
+            </td>
+          </tr>
+        <% } else { %>
+          <% customers.forEach((customer) => { %>
+            <tr>
+              <td class="customer-info">
+                <img src="<%= customer.avatar || 'https://via.placeholder.com/40' %>" alt="Avatar" />
+                <span><%= customer.name %></span>
+              </td>
+              <td><%= customer.email %></td>
+              <td><%= customer.orders || 0 %></td>
+              <td>₹<%= customer.totalSpent?.toFixed(2) || '0.00' %></td>
+              <td>
+                <span class="status <%= customer.isBlocked ? 'blocked' : 'active' %>">
+                  <%= customer.isBlocked ? 'Blocked' : 'Active' %>
+                </span>
+              </td>
+              <td class="actions">
+                <a href="/admin/customers/<%= customer._id %>" class="view" title="View Details">
+                  <i class="ri-eye-line"></i>
+                </a>
+              </td>
+            </tr>
+          <% }) %>
+        <% } %>
+      </tbody>
+    </table>
   </div>
 
-  <!-- CUSTOMER TABLE -->
-  <table>
-    <thead>
-      <tr>
-        <th>Customer Name</th>
-        <th>Email</th>
-        <th>Orders</th>
-        <th>Total Spent</th>
-        <th>Status</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-
-    <tbody>
-      <% customers.forEach((customer) => { %>
-        <tr>
-          <td class="customer-info">
-            <img src="<%= customer.avatar || 'https://via.placeholder.com/40' %>" alt="Avatar" />
-            <span><%= customer.name %></span>
-          </td>
-          <td><%= customer.email %></td>
-          <td><%= customer.orders || 0 %></td>
-          <td>₹<%= customer.totalSpent?.toFixed(2) || '0.00' %></td>
-          <td>
-            <span class="status <%= customer.isBlocked ? 'blocked' : 'active' %>">
-              <%= customer.isBlocked ? 'Blocked' : 'Active' %>
-            </span>
-          </td>
-          <td class="actions">
-            <a href="/admin/customers/<%= customer._id %>" class="view" title="View Details">
-              <i class="ri-eye-line"></i>
-            </a>
-          </td>
-        </tr>
-      <% }) %>
-    </tbody>
-  </table>
-
-  <!-- PAGINATION -->
-  <div class="pagination">
+   <!-- PAGINATION -->
+  <div class="pagination-container">
     <% if (currentPage > 1) { %>
       <a href="?page=<%= currentPage - 1 %>&search=<%= search %>" class="page-btn">« Previous</a>
     <% } else { %>
@@ -97,23 +116,5 @@
   </div>
 </div>
 
-<script>
-  const searchInput = document.getElementById('searchInput');
-  const tbody = document.querySelector('.customer-table tbody');
-  const rows = Array.from(tbody.querySelectorAll('tr'));
-
-  searchInput.addEventListener('input', function () {
-    const searchValue = this.value.toLowerCase().trim();
-
-    rows.forEach(row => {
-      const name = row.querySelector('.customer-info span').innerText.toLowerCase().trim();
-      
-      if (name.startsWith(searchValue) || searchValue === '') {
-        row.style.display = '';
-      } else {
-        row.style.display = 'none';
-      }
-    });
-  });
-</script>
+<script src="/js/admin/customer.js"></script>
 

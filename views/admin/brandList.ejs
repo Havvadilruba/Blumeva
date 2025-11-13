@@ -1,11 +1,18 @@
-<% include('../partials/admin/sidebar') %>
-
 <section class="brand-page">
   <div class="page-header">
     <h1>Brands Management</h1>
+
+    <form id="searchForm" method="GET" action="/admin/brands" class="search-form">
+      <input type="text" id="searchInput" name="search" value="<%= search %>" placeholder="🔍 Search brands..."autocomplete="off"/>
+      <button type="button" id="clearSearch" class="btn-clear">✖ Clear</button>
+    </form>
+
+
+
     <button class="btn btn-primary" id="openAddBrandModal">+ Add Brand</button>
   </div>
 
+  <!-- Brand Table -->
   <table class="brand-table">
     <thead>
       <tr>
@@ -16,135 +23,119 @@
       </tr>
     </thead>
     <tbody>
-      <% brands.forEach(brand => { %>
-        <tr>
-          <td><img src="<%= brand.logo %>" alt="logo" class="brand-logo"></td>
-          <td><%= brand.name %></td>
-          <td>
-            <button class="toggle-btn <%= brand.status ? 'active' : '' %>"
-                    onclick="toggleStatus('<%= brand._id %>')">
-              <%= brand.status ? 'Active' : 'Inactive' %>
-            </button>
-          </td>
-          <td>
-            <button class="edit-btn"
-              onclick="openEditModal('<%= brand._id %>', '<%= brand.name %>', '<%= brand.logo %>', <%= brand.status %>)">
-              <i class="ri-edit-line"></i>
-            </button>
-          </td>
-        </tr>
-      <% }) %>
+      <% if (brands.length > 0) { %>
+        <% brands.forEach(brand => { %>
+          <tr>
+            <td><img src="<%= brand.logo %>" class="brand-logo" /></td>
+            <td><%= brand.name %></td>
+            <td>
+              <span class="status-badge <%= brand.status ? 'active' : 'inactive' %>">
+                <%= brand.status ? 'Active' : 'Inactive' %>
+              </span>
+            </td>
+            <td>
+              <button class="edit-btn"
+                onclick="openEditModal('<%= brand._id %>', '<%= brand.name %>', '<%= brand.logo %>', <%= brand.status %>)">
+                <i class="ri-edit-line"></i> Edit
+              </button>
+            </td>
+          </tr>
+        <% }) %>
+      <% } else { %>
+        <tr><td colspan="4">No brands found</td></tr>
+      <% } %>
     </tbody>
   </table>
 
-  <!-- Add Brand Modal -->
-  <div class="modal" id="addBrandModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>Add New Brand</h3>
-        <button class="close-btn" id="closeAddBrandModal">&times;</button>
-      </div>
+  <!-- Pagination -->
+  <div class="pagination">
+     <% if (currentPage > 1) { %>
+    <a href="?page=<%= currentPage - 1 %>&search=<%= search %>" class="page-btn prev">« Prev</a>
+  <% } else { %>
+    <button disabled class="page-btn disabled prev">« Prev</button>
+  <% } %>
 
-      <form id="addBrandForm" action="/admin/brands/add" method="POST" enctype="multipart/form-data">
-        <div class="form-group">
-          <label>Brand Name <span>*</span></label>
-          <input type="text" name="name" placeholder="Enter brand name" required>
-        </div>
+    <% for (let i = 1; i <= totalPages; i++) { %>
+      <% if (i === currentPage) { %>
+        <button class="page-btn active"><%= i %></button>
+      <% } else { %>
+        <a href="?page=<%= i %>&search=<%= search %>" class="page-btn"><%= i %></a>
+      <% } %>
+    <% } %>
 
-        <div class="form-group">
-          <label>Brand Logo</label>
-          <input type="file" name="logo" accept="image/*" required>
-        </div>
-
-        <div class="form-group">
-          <label>Status</label>
-          <label class="switch">
-            <input type="checkbox" name="status" checked>
-            <span class="slider"></span>
-          </label>
-        </div>
-
-        <div class="form-actions">
-          <button type="button" class="btn cancel" id="cancelModal">Cancel</button>
-          <button type="submit" class="btn save">Save</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Edit Brand Modal -->
-  <div class="modal" id="editBrandModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>Edit Brand</h3>
-        <button class="close-btn" id="closeEditBrandModal">&times;</button>
-      </div>
-
-      <form id="editBrandForm" method="POST" enctype="multipart/form-data">
-        <div class="form-group">
-          <label>Brand Name <span>*</span></label>
-          <input type="text" name="name" id="editBrandName" required>
-        </div>
-
-        <div class="form-group">
-          <label>Current Logo</label>
-          <img id="editBrandLogoPreview" src="" alt="Brand Logo" class="preview-logo">
-        </div>
-
-        <div class="form-group">
-          <label>Change Logo</label>
-          <input type="file" name="logo" accept="image/*">
-        </div>
-
-        <div class="form-group">
-          <label>Status</label>
-          <label class="switch">
-            <input type="checkbox" name="status" id="editBrandStatus">
-            <span class="slider"></span>
-          </label>
-        </div>
-
-        <div class="form-actions">
-          <button type="button" class="btn cancel" id="cancelEditModal">Cancel</button>
-          <button type="submit" class="btn save">Update</button>
-        </div>
-      </form>
-    </div>
+    <% if (currentPage < totalPages) { %>
+    <a href="?page=<%= currentPage + 1 %>&search=<%= search %>" class="page-btn next">Next »</a>
+  <% } else { %>
+    <button disabled class="page-btn disabled next">Next »</button>
+  <% } %>
   </div>
 </section>
 
-<script>
-  // Add Modal 
-  const addModal = document.getElementById('addBrandModal');
-  document.getElementById('openAddBrandModal').onclick = () => addModal.classList.add('show');
-  document.getElementById('closeAddBrandModal').onclick = () => addModal.classList.remove('show');
-  document.getElementById('cancelModal').onclick = () => addModal.classList.remove('show');
+<!-- Add Brand Modal -->
+<div class="modal" id="addBrandModal">
+  <div class="modal-content">
+    <h2>Add Brand</h2>
+    <form id="addBrandForm" enctype="multipart/form-data">
+      <div class="form-group">
+        <label>Brand Name</label>
+        <input type="text" name="name" placeholder="Enter brand name" required>
+      </div>
 
-  //  Edit Modal 
-  const editModal = document.getElementById('editBrandModal');
-  const editForm = document.getElementById('editBrandForm');
+      <div class="form-group">
+        <label>Logo</label>
+        <input type="file" name="logo" accept="image/*" required>
+      </div>
 
-  function openEditModal(id, name, logo, status) {
-    document.getElementById('editBrandName').value = name;
-    document.getElementById('editBrandLogoPreview').src = logo;
-    document.getElementById('editBrandStatus').checked = status;
+      <div class="form-group">
+        <label>Status</label>
+        <select name="status">
+          <option value="on">Active</option>
+          <option value="off">Inactive</option>
+        </select>
+      </div>
 
-    editForm.action = `/admin/brands/edit/${id}`;
-    editModal.classList.add('show');
-  }
+      <div class="form-actions">
+        <button type="button" id="cancelAddModal" class="btn cancel">Cancel</button>
+        <button type="submit" class="btn save">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
 
-  document.getElementById('closeEditBrandModal').onclick = () => editModal.classList.remove('show');
-  document.getElementById('cancelEditModal').onclick = () => editModal.classList.remove('show');
+<!-- Edit Brand Modal -->
+<div class="modal" id="editBrandModal">
+  <div class="modal-content">
+    <h2>Edit Brand</h2>
+    <form id="editBrandForm" enctype="multipart/form-data">
+      <div class="form-group">
+        <label>Brand Name</label>
+        <input type="text" id="editBrandName" name="name" required>
+      </div>
 
-  // Toggle Status 
-  async function toggleStatus(id) {
-    const res = await fetch(`/admin/brands/toggle/${id}`, { method: 'POST' });
-    if (res.ok) location.reload();
-  }
+      <div class="form-group">
+        <label>Current Logo</label>
+        <img id="editBrandLogoPreview" src="" class="preview-logo" />
+      </div>
 
-  // Click Outside 
-  window.onclick = (e) => {
-    if (e.target === addModal) addModal.classList.remove('show');
-    if (e.target === editModal) editModal.classList.remove('show');
-  };
-</script>
+      <div class="form-group">
+        <label>Change Logo</label>
+        <input type="file" name="logo" accept="image/*">
+      </div>
+
+      <div class="form-group">
+        <label>Status</label>
+        <select name="status" id="editBrandStatusSelect">
+          <option value="on">Active</option>
+          <option value="off">Inactive</option>
+        </select>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" id="cancelEditModal" class="btn cancel">Cancel</button>
+        <button type="submit" class="btn save">Update</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="/js/admin/brand.js"></script>

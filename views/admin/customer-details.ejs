@@ -16,46 +16,34 @@
         <p><strong>Address:</strong> <%= customer.address || '-' %></p>
       </div>
 
-      <h3>Order Information</h3>
-      <table class="order-table">
-        <thead>
-          <tr>
-            <th>Order ID</th>
-            <th>Date</th>
-            <th>Amount</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% if (orders && orders.length > 0) { %>
-            <% orders.forEach(order => { %>
-              <tr>
-                <td>#<%= order._id %></td>
-                <td><%= order.date.toISOString().slice(0,10) %></td>
-                <td>₹<%= order.amount.toFixed(2) %></td>
-                <td><span class="status <%= order.status.toLowerCase() %>"><%= order.status %></span></td>
-              </tr>
-            <% }) %>
-          <% } else { %>
-            <tr>
-              <td colspan="4" style="text-align:center; color:#888;">No orders found</td>
-            </tr>
-          <% } %>
-        </tbody>
-      </table>
-
       <div class="actions">
         <a href="/admin/customers" class="btn btn-secondary">Back</a>
-        <% if (customer.isBlocked) { %>
-          <form method="POST" action="/admin/customers/toggle/<%= customer._id %>">
-            <button class="btn btn-success">Unblock Customer</button>
-          </form>
-        <% } else { %>
-          <form method="POST" action="/admin/customers/toggle/<%= customer._id %>">
-            <button class="btn btn-danger">Block Customer</button>
-          </form>
-        <% } %>
+
+        <!-- Button -->
+        <button
+          id="blockToggleBtn"
+          class="btn <%= customer.isBlocked ? 'btn-success' : 'btn-danger' %>"
+          data-id="<%= customer._id %>"
+          data-status="<%= customer.isBlocked %>">
+          <%= customer.isBlocked ? 'Unblock Customer' : 'Block Customer' %>
+        </button>
       </div>
     </div>
   </div>
 </div>
+
+<!-- Confirmation Modal -->
+<div id="confirmModal" class="modal">
+  <div class="modal-content">
+    <h3 id="confirmTitle">Confirm Action</h3>
+    <p id="confirmMessage">Are you sure you want to do this?</p>
+    <div class="modal-actions">
+      <button id="confirmCancel" class="btn cancel">Cancel</button>
+      <button id="confirmOk" class="btn confirm">Yes, Confirm</button>
+    </div>
+  </div>
+</div>
+
+
+<script src="/js/admin/customer.js"></script>
+

@@ -1,0 +1,91 @@
+<section class="main-content">
+  <div class="page-header">
+    <h1>Add New Product</h1>
+  </div>
+
+  <form id="productForm" action="/admin/products/add" method="POST" enctype="multipart/form-data"  class="product-form">
+    <!-- Basic Details -->
+    <div class="form-section">
+      <h3>Basic Details</h3>
+      <div class="form-grid">
+        <div>
+          <label>Product Name</label>
+          <input type="text" name="name"  placeholder="Enter product name" />
+        </div>
+
+        <div>
+          <label>Brand</label>
+          <select name="brand" required>
+            <% brands.forEach(b => { %>
+            <option value="<%= b._id %>"><%= b.name %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div>
+          <label>Category</label>
+          <select name="category" required>
+            <% categories.forEach(c => { %>
+            <option value="<%= c._id %>"><%= c.name %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div class="full-width">
+          <label>Description</label>
+          <textarea name="description" rows="3" placeholder="Describe your product"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!--  Product Images -->
+    <div class="form-section">
+      <h3>Product Images</h3>
+      <p class="note">Upload at least 3 images (crop before saving)</p>
+      <input id="imageInput" type="file" accept="image/*" multiple />
+      <div id="previewContainer" class="preview-grid"></div>
+    </div>
+
+    <!--  Variants -->
+    <div class="form-section">
+      <h3>Variants</h3>
+      <div id="variantContainer">
+        <div class="variant-row">
+          <input type="number" name="quantityValue[]" placeholder="Value (100)" />
+          <select name="quantityType[]">
+            <option value="ml">ml</option>
+            <option value="g">g</option>
+          </select>
+          <input type="number" name="regularPrice[]" placeholder="Regular Price ₹" />
+          <input type="number" name="salePrice[]" placeholder="Sale Price ₹"/>
+          <input type="number" name="stock[]" placeholder="Stock"  />
+          <button type="button" class="remove-variant">🗑</button>
+        </div>
+      </div>
+
+      <button type="button" id="addVariantBtn" class="add-variant">
+        + Add Variant
+      </button>
+    </div>
+
+    <!--  Submit Button -->
+    <div class="form-actions">
+      <button type="submit" class="btn-primary">Save Product</button>
+    </div>
+  </form>
+</section>
+
+<!--  Crop Modal -->
+<div id="cropModal" class="crop-modal">
+  <div class="crop-container">
+    <h3>Crop Image</h3>
+    <img id="cropImage" alt="Crop Image" />
+    <div class="crop-footer">
+      <button id="cropSave" type="button" class="btn-primary">Crop & Save</button>
+      <button id="cancelCrop" type="button" class="btn-secondary">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/admin/productAdd.js"></script>
+

@@ -1,37 +1,45 @@
-const Category = require("../../model/categorySchema");
-const cloudinary = require("../../config/cloudinary");
+import Category from "../../model/categorySchema.js";
+import categoryValidation from "../../validations/categoryValidation.js";
 
-// Categories
+
+// CATEGORY LIST
 const categoryInfo = async (req, res) => {
   try {
+    const search = req.query.search?.trim() || "";
     const page = parseInt(req.query.page) || 1;
     const limit = 5;
-    const skip = (page - 1) * limit;
 
-    const categoryData = await Category.find({})
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+    const filter = search
+      ? { name: { $regex: new RegExp(`^${search}`, "i") } }
+      : {};
 
-    const totalCategories = await Category.countDocuments();
+    const totalCategories = await Category.countDocuments(filter);
     const totalPages = Math.ceil(totalCategories / limit);
 
+    const categories = await Category.find(filter)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
     res.render("admin/categoryList", {
-      layout: "layouts/admin",           
+      layout: "layouts/admin",
       title: "Manage Categories",
-      categories: categoryData,
+      categories,
       currentPage: page,
       totalPages,
-      pageCSS: "categoryList",               
-      activePage: "categoryList",        
+      search,
+      pageCSS: "categoryList",
+      activePage: "categoryList",
     });
   } catch (error) {
-    console.log("Error loading categories:", error);
+    console.error("Error :", error);
     res.redirect("/admin/page-404");
   }
 };
 
-// Add Category Page
+
+
+//  ADD CATEGORY PAGE
 const loadAddCategory = async (req, res) => {
   try {
     res.render("admin/addCategory", {
@@ -40,54 +48,61 @@ const loadAddCategory = async (req, res) => {
       pageCSS: "addCategory",
       activePage: "addCategory",
     });
-  } catch (error) {
-    console.log("Error loading Add Category page:", error);
+  } catch {
     res.redirect("/admin/page-404");
   }
 };
 
-//Add Category
+
+// ADD CATEGORY 
 const addCategory = async (req, res) => {
   try {
-    const { name, imageBase64 } = req.body;
+    const { name } = req.body;
 
-    if (!name || !imageBase64) {
-      return res.status(400).json({ error: "Please fill all fields" });
+    const { error } = categoryValidation.validate({ name });
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: error.details[0].message,
+      });
     }
-
-    const existingCategory = await Category.findOne({
+    const existing = await Category.findOne({
       name: { $regex: new RegExp(`^${name}$`, "i") },
     });
-    if (existingCategory) {
-      return res.status(400).json({ error: "Category already exists" });
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        message: "Category already exists",
+      });
+    }
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "Please upload a category image",
+      });
     }
 
-    
-    let imageToUpload = imageBase64;
-    if (!imageBase64.startsWith("data:image")) {
-      imageToUpload = `data:image/jpeg;base64,${imageBase64}`;
-    }
-
-  
-    const uploadResponse = await cloudinary.uploader.upload(imageToUpload, {
-      folder: "blumeva/categories",
-    });
-
-    const newCategory = new Category({
+    await Category.create({
       name,
-      image: uploadResponse.secure_url,
+      image: req.file.path,
       isListed: true,
     });
 
-    await newCategory.save();
-    res.redirect("/admin/category");
+    res.status(201).json({
+      success: true,
+      message: "Category added successfully ",
+      redirectUrl: "/admin/category",
+    });
   } catch (error) {
-    console.log("Error adding category:", error);
-    res.redirect("/admin/page-404");
+    res.status(500).json({
+      success: false,
+      message: "Server error while adding category",
+    });
   }
 };
 
-// Edit Page
+// EDIT CATEGORY PAGE
+
 const editCategory = async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
@@ -100,62 +115,96 @@ const editCategory = async (req, res) => {
       activePage: "categoryList",
       category,
     });
-  } catch (error) {
-    console.log("Error loading edit page:", error);
+  } catch {
     res.redirect("/admin/page-404");
   }
 };
 
-//Update Category
+
+// UPDATE CATEGORY (PATCH)
+
 const updateCategory = async (req, res) => {
   try {
-    const { name, imageBase64 } = req.body;
-    const categoryId = req.params.id;
+    const { name } = req.body;
+    const id = req.params.id;
 
-    const category = await Category.findById(categoryId);
-    if (!category) return res.redirect("/admin/page-404");
-
-    let image = category.image;
-
-    if (imageBase64 && imageBase64.startsWith("data:image")) {
-      const uploadResponse = await cloudinary.uploader.upload(imageBase64, {
-        folder: "blumeva/categories",
+    const category = await Category.findById(id);
+    if (!category) {
+      return res.status(404).json({
+        success: false,
+        message: "Category not found",
       });
-      image = uploadResponse.secure_url;
     }
 
-    await Category.findByIdAndUpdate(categoryId, { name, image });
-    res.redirect("/admin/category");
+    const { error } = categoryValidation.validate({ name });
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: error.details[0].message,
+      });
+    }
+    const existing = await Category.findOne({
+      name: { $regex: new RegExp(`^${name}$`, "i") },
+      _id: { $ne: id }, 
+    });
+
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        message: " this name already exists.",
+      });
+    }
+
+    if (req.file) {
+      category.image = req.file.path;
+    }
+
+    category.name = name;
+    await category.save();
+
+    res.json({
+      success: true,
+      message: "Category updated successfully ",
+      redirectUrl: "/admin/category",
+    });
   } catch (error) {
-    console.log("Error updating category:", error);
-    res.redirect("/admin/page-404");
+    res.status(500).json({
+      success: false,
+      message: "Server error while updating category",
+    });
   }
 };
 
 
-// Toggle
+
 const toggleListStatus = async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
-    if (!category) return res.redirect("/admin/page-404");
+
+    if (!category) {
+      return res.status(404).json({
+        success: false,
+        message: "Category not found",
+      });
+    }
 
     category.isListed = !category.isListed;
     await category.save();
 
-    res.redirect("/admin/category");
+    res.status(200).json({
+      success: true,
+      message: `Category ${category.isListed ? "unblocked " : "blocked "} successfully`,
+      isListed: category.isListed,
+    });
   } catch (error) {
-    console.log("Error toggling list status:", error);
-    res.redirect("/admin/page-404");
+    console.error(" Toggle category error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while toggling category",
+    });
   }
 };
 
-module.exports = {
-  categoryInfo,
-  loadAddCategory,
-  addCategory,
-  editCategory,
-  updateCategory,
-  toggleListStatus,
-};
 
+export default{ categoryInfo, loadAddCategory, addCategory, editCategory, updateCategory, toggleListStatus };
 

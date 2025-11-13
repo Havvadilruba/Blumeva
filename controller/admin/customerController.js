@@ -1,93 +1,96 @@
-const User = require("../../model/userSchema");
-const Order = require("../../model/orderSchema");
+import User from "../../model/userSchema.js";
 
 const customerInfo = async (req, res) => {
   try {
-    let search = req.query.search || "";
-    let page = parseInt(req.query.page) || 1;
+    const search = req.query.search?.trim() || "";
+    const page = parseInt(req.query.page) || 1;
     const limit = 3;
 
-    const query = {
-      $or: [
-        { name: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-      ],
-    };
+    const filter = search
+      ? {
+          $or: [
+            { name: { $regex: new RegExp(`^${search}`, "i") } },
+            { email: { $regex: new RegExp(`^${search}`, "i") } },
+          ],
+        }
+      : {};
 
-    console.log("Fetching customers...");
+    const totalCustomers = await User.countDocuments(filter);
+    const totalPages = Math.ceil(totalCustomers / limit);
 
-    const userData = await User.find(query)
-      .limit(limit)
+    const customers = await User.find(filter)
+      .collation({ locale: "en", strength: 2 }) 
+      .sort({ name: 1 })
       .skip((page - 1) * limit)
-      .exec();
+      .limit(limit)
+      .lean();
 
-    console.log("Users found:", userData.length);
-    const count = await User.countDocuments(query);
-
-    // cards
-    const totalCustomers = await User.countDocuments();
+    const allCount = await User.countDocuments();
     const blockedCustomers = await User.countDocuments({ isBlocked: true });
-    const activeCustomers = totalCustomers - blockedCustomers;
+    const activeCustomers = allCount - blockedCustomers;
 
     res.render("admin/customers", {
-      title: "Customers",
       layout: "layouts/admin",
+      title: "Customers",
       pageCSS: "customer",
-      activePage: "customers", 
-      customers: userData,
-      currentPage: page,
-      totalPages: Math.ceil(count / limit),
-      totalCustomers,
-      blockedCustomers,
-      activeCustomers,
+      activePage: "customers",
+      customers,
       search,
+      currentPage: page,
+      totalPages,
+      totalCustomers: allCount,
+      activeCustomers,
+      blockedCustomers,
     });
-  } catch (error) {
-    console.log("Customer load error:", error);
-    return res.redirect("/admin/page-404");
+  } catch (err) {
+    console.error("Customer error:", err);
+    res.redirect("/admin/page-404");
   }
 };
 
+
 const viewCustomer = async (req, res) => {
   try {
-    const customerId = req.params.id;
+    const id = req.params.id;
+    const customer = await User.findById(id);
 
-    const customer = await User.findById(customerId);
-    if (!customer) {
-      return res.redirect("/admin/page-404");
-    }
-
-    const orders = await Order.find({ userId: customerId })
-      .sort({ createdAt: -1 })
-      .lean();
+    if (!customer) return res.redirect("/admin/page-404");
 
     res.render("admin/customer-details", {
       layout: "layouts/admin",
       title: `Customer Details - ${customer.name}`,
-      customer,
       pageCSS: "customer-detail",
-      activePage: "customers", 
-      orders,
+      activePage: "customers",
+      customer,
     });
-  } catch (error) {
-    console.error("View customer error:", error);
+  } catch (err) {
+    console.error("View customer error:", err);
     res.redirect("/admin/page-404");
   }
 };
+
 
 const toggleBlock = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
-    if (!user) return res.redirect("/admin/page-404");
+    if (!user)
+      return res.status(404).json({ success: false, message: "User not found" });
 
     user.isBlocked = !user.isBlocked;
     await user.save();
 
-    res.redirect("/admin/customers/" + req.params.id);
+    res.json({
+      success: true,
+      message: `User ${user.isBlocked ? "blocked" : "unblocked"} successfully.`,
+      isBlocked: user.isBlocked,
+    });
   } catch (error) {
-    console.log("Block toggle error:", error);
-    res.redirect("/admin/page-404");
+    console.error("  error:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Server error ." });
   }
 };
 
-module.exports = { customerInfo, viewCustomer, toggleBlock };
+export default { customerInfo, viewCustomer, toggleBlock };
+

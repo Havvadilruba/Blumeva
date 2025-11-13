@@ -1,79 +1,173 @@
-const Brand = require("../../model/brandSchema");
+import Brand from "../../model/brandSchema.js";
+import brandValidation from "../../validations/brandValidation.js";
 
-// Brand List
+
 const getBrands = async (req, res) => {
   try {
-    const brands = await Brand.find().sort({ createdAt: -1 });
-      res.render("admin/brandList", {
+    const search = req.query.search?.trim() || "";
+    const page = parseInt(req.query.page) || 1;
+    const limit = 5;
+
+    const filter = search
+      ? { name: { $regex: new RegExp(`^${search}`, "i") } }
+      : {};
+
+    const total = await Brand.countDocuments(filter);
+
+    const brands = await Brand.find(filter)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
+
+    res.render("admin/brandList", {
       layout: "layouts/admin",
       title: "Brands Management",
-      pageCSS: "brandList",  
-      activePage: "brands",  
+      activePage: "brands",
+      pageCSS: "brandList",
       brands,
+      search,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
     });
   } catch (error) {
-    console.error("Error loading brands:", error);
-    req.flash("error_msg", "Unable to load brands");
-    res.redirect("/admin");
+    console.error("Error:", error);
+    res.render("admin/brandList", {
+      layout: "layouts/admin",
+      title: "Brands Management",
+      activePage: "brands",
+      brands: [],
+      search: "",
+      currentPage: 1,
+      totalPages: 1,
+    });
   }
 };
 
-// Add Brand
 const addBrand = async (req, res) => {
   try {
-    const { name } = req.body;
-
-    if (!req.file) {
-      req.flash("error_msg", "Please upload a brand logo");
-      return res.redirect("/admin/brands");
+    const { error } = brandValidation.validate(req.body);
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: error.details[0].message,
+      });
     }
 
-    const logo = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+    const { name, status } = req.body;
 
-    await Brand.create({ name, logo });
-    req.flash("success_msg", "Brand added successfully!");
-    res.redirect("/admin/brands");
+    const existing = await Brand.findOne({ name: new RegExp(`^${name}$`, "i") });
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        message: "Brand name already exists",
+      });
+    }
+
+    if (!req.file?.path) {
+      return res.status(400).json({
+        success: false,
+        message: "Please upload a brand logo",
+      });
+    }
+
+    const brand = await Brand.create({
+      name,
+      logo: req.file.path,
+      status: status === "on",
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Brand added successfully",
+      brand,
+    });
   } catch (error) {
     console.error("Error adding brand:", error);
-    req.flash("error_msg", "Error adding brand");
-    res.redirect("/admin/brands");
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
   }
 };
+
 const editBrand = async (req, res) => {
   try {
     const { name, status } = req.body;
-    const updateData = {
-      name,
-      status: status === 'on',
-    };
 
-    if (req.file) {
-      updateData.logo = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+    const { error } = brandValidation.validate({ name });
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: error.details[0].message,
+      });
     }
 
-    await Brand.findByIdAndUpdate(req.params.id, updateData);
-    req.flash("success_msg", "Brand updated successfully!");
-    res.redirect("/admin/brands");
+    const brand = await Brand.findById(req.params.id);
+    if (!brand) {
+      return res.status(404).json({
+        success: false,
+        message: "Brand not found",
+      });
+    }
+
+    if (brand.name.toLowerCase() !== name.toLowerCase()) {
+      const existing = await Brand.findOne({ name: new RegExp(`^${name}$`, "i") });
+      if (existing) {
+        return res.status(400).json({
+          success: false,
+          message: "Brand name already exists",
+        });
+      }
+    }
+
+    brand.name = name;
+    brand.status = status === "on";
+    if (req.file?.path) brand.logo = req.file.path; 
+
+    await brand.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Brand updated successfully",
+    });
   } catch (error) {
-    console.error("Error editing brand:", error);
-    req.flash("error_msg", "Error updating brand");
-    res.redirect("/admin/brands");
+    console.error(" Error editing brand:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while editing brand",
+    });
   }
 };
-// Toggle 
+
 const toggleBrandStatus = async (req, res) => {
   try {
-    const brand = await Brand.findById(req.params.id);
-    if (!brand) return res.status(404).json({ success: false, message: "Brand not found" });
+    const { id } = req.params;
+    const brand = await Brand.findById(id);
+
+    if (!brand) {
+      return res.status(404).json({
+        success: false,
+        message: "Brand not found",
+      });
+    }
 
     brand.status = !brand.status;
     await brand.save();
 
-    res.json({ success: true, status: brand.status });
+    res.json({
+      success: true,
+      message: `Brand ${brand.status ? "activated " : "deactivated "} successfully`,
+      status: brand.status,
+    });
   } catch (error) {
     console.error("Toggle status error:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(500).json({
+      success: false,
+      message: "Server error ",
+    });
   }
 };
 
-module.exports = { getBrands, editBrand,addBrand, toggleBrandStatus };
+export default{ getBrands, addBrand, editBrand, toggleBrandStatus };
+

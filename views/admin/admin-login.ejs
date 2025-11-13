@@ -5,28 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Login - Blumeva</title>
   <link rel="stylesheet" href="/style/admin/login.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="login-container">
     <div class="login-box">
-     <div class="logo">
-  <img src="/images/Frame.svg" alt="Logo" class="logo-icon" />
-  <span>Blumeva</span>
-</div>
+      <div class="logo">
+        <img src="/images/Frame.svg" alt="Logo" class="logo-icon" />
+        <span>Blumeva</span>
+      </div>
       <p class="subtitle">Welcome to the Blumeva Administration</p>
 
-      <% if (typeof message !== "undefined" && message) { %>
-        <div class="backend-message"><%= message %></div>
-      <% } %>
-
-      <form method="POST" action="/admin/login">
+      <form id="adminLoginForm">
         <label for="email">Email</label>
-        <input type="email" id="email" name="email" placeholder="Enter your email" required>
+        <input type="email" id="email" name="email" placeholder="Enter your email" required />
 
         <label for="password">Password</label>
         <div class="password-wrapper">
-          <input type="password" id="password" name="password" placeholder="Enter your password" required>
+          <input type="password" id="password" name="password" placeholder="Enter your password" required />
           <span class="toggle-password">👁</span>
         </div>
 
@@ -44,14 +41,62 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
   <script>
-    // Toggle 
     const toggle = document.querySelector(".toggle-password");
-    const password = document.querySelector("#password");
+    const passwordInput = document.querySelector("#password");
     toggle.addEventListener("click", () => {
-      const type = password.getAttribute("type") === "password" ? "text" : "password";
-      password.setAttribute("type", type);
+      const type = passwordInput.getAttribute("type") === "password" ? "text" : "password";
+      passwordInput.setAttribute("type", type);
     });
+    const form = document.getElementById("adminLoginForm");
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      try {
+        const response = await axios.post("/admin/login", { email, password });
+        const result = response.data;
+
+        if (result.success) {
+          Toastify({
+            text: result.message,
+            backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
+            duration: 2000,
+          }).showToast();
+
+          setTimeout(() => {
+            window.location.href = result.redirect;
+          }, 1000);
+        } else {
+          Toastify({
+            text: result.message || "Login failed",
+            backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
+            duration: 3000,
+          }).showToast();
+        }
+      } catch (error) {
+        const msg = error.response?.data?.message || "Server error. Try again later.";
+        Toastify({
+          text: msg,
+          backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
+          duration: 3000,
+        }).showToast();
+      }
+    });
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("logout")) {
+      Toastify({
+        text: "Logged out successfully",
+        backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
+        duration: 2000,
+      }).showToast();
+    }
   </script>
 </body>
 </html>

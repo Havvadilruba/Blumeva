@@ -7,9 +7,21 @@
       <i class="ri-add-line"></i> Add New Category
     </a>
   </header>
+
   <div class="search-bar">
-  <input type="text" id="searchInput" placeholder="🔍 Search category by name" />
+  <form id="searchForm" method="GET" action="/admin/category">
+    <input
+      type="text"
+      id="searchInput"
+      name="search"
+      value="<%= search || '' %>"
+      placeholder="🔍 Search category by name"
+      autocomplete="off"
+    />
+    <button type="button" id="clearSearch" class="clear-btn">✖ Clear</button>
+  </form>
 </div>
+
   <section class="category-container">
     <table class="category-table">
       <thead>
@@ -36,12 +48,16 @@
                   <i class="ri-edit-line"></i>
                 </a>
 
-                <form action="/admin/category/toggle/<%= cat._id %>" method="POST" style="display:inline;">
-                  <button type="submit" class="btn-toggle <%= cat.isListed ? 'btn-block' : 'btn-unblock' %>">
+                <form style="display:inline;">
+                  <button 
+                    type="button"
+                    class="btn-toggle <%= cat.isListed ? 'btn-block' : 'btn-unblock' %>"
+                    data-id="<%= cat._id %>">
                     <i class="<%= cat.isListed ? 'ri-close-circle-line' : 'ri-check-line' %>"></i>
                     <%= cat.isListed ? 'Block' : 'Unblock' %>
                   </button>
                 </form>
+
               </td>
             </tr>
           <% }) %>
@@ -54,23 +70,27 @@
     </table>
 
     <div class="pagination">
-      <% for (let i = 1; i <= totalPages; i++) { %>
-        <a href="?page=<%= i %>" class="<%= currentPage === i ? 'active' : '' %>"><%= i %></a>
-      <% } %>
-    </div>
+  <% if (currentPage > 1) { %>
+    <a href="?page=<%= currentPage - 1 %>&search=<%= search %>">« Prev</a>
+  <% } else { %>
+    <button disabled class="disabled">« Prev</button>
+  <% } %>
+
+  <% for (let i = 1; i <= totalPages; i++) { %>
+    <% if (i === currentPage) { %>
+      <button class="active"><%= i %></button>
+    <% } else { %>
+      <a href="?page=<%= i %>&search=<%= search %>"><%= i %></a>
+    <% } %>
+  <% } %>
+
+  <% if (currentPage < totalPages) { %>
+    <a href="?page=<%= currentPage + 1 %>&search=<%= search %>">Next »</a>
+  <% } else { %>
+    <button disabled class="disabled">Next »</button>
+  <% } %>
+</div>
+
   </section>
 </div>
-<script>
-  // Search 
-  const searchInput = document.getElementById('searchInput');
-  const tableRows = document.querySelectorAll('.category-table tbody tr');
-
-  searchInput.addEventListener('input', function () {
-    const searchValue = this.value.toLowerCase().trim();
-
-    tableRows.forEach(row => {
-      const categoryName = row.querySelector('td:nth-child(2)').innerText.toLowerCase();
-      row.style.display = categoryName.startsWith(searchValue) || searchValue === '' ? '' : 'none';
-    });
-  });
-</script>
+<script src="/js/admin/category.js"></script>
