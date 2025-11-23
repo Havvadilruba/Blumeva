@@ -1,0 +1,303 @@
+<%- include("../partials/user/header") %>
+
+
+<div class="checkout-page">
+  <div class="checkout-container">
+
+    <h1 class="checkout-title">Checkout</h1>
+
+    <div class="checkout-grid">
+      <!-- LEFT SIDE (2/3) -->
+      <div class="checkout-main">
+
+        <!-- 1. Shipping Address -->
+        <section class="card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <i class="bi bi-geo-alt-fill card-icon"></i>
+              Shipping Address
+            </h2>
+            <button class="link-button" onclick="openModal()">
+  <i class="bi bi-plus-circle"></i>
+  Add New
+</button>
+
+          </div>
+
+          <% if (addresses && addresses.length > 0) { %>
+            <div class="address-list">
+              <% addresses.forEach(function(address){ %>
+                <label class="address-item">
+                  <input
+                    type="radio"
+                    name="selectedAddress"
+                    value="<%= address._id %>"
+                    <%= address.setDefault ? 'checked' : '' %>
+                  />
+                  <div class="address-card">
+                    <div class="address-icon-wrap">
+                      <% if(address.addressType === 'home'){ %>
+                        <i class="bi bi-house-door-fill address-icon"></i>
+                      <% } else if(address.addressType === 'office'){ %>
+                        <i class="bi bi-briefcase-fill address-icon"></i>
+                      <% } else { %>
+                        <i class="bi bi-geo-alt-fill address-icon"></i>
+                      <% } %>
+                    </div>
+
+                    <div class="address-content">
+                      <div class="address-title-row">
+                        <span class="address-type">
+                          <%= address.addressType || 'Address' %>
+                        </span>
+                        <% if(address.setDefault){ %>
+                          <span class="badge-default">Default</span>
+                        <% } %>
+                      </div>
+
+                      <p class="address-name"><%= address.fullName %></p>
+                      <p class="address-text">
+                        <%= address.address1 %>
+                        <% if(address.address2){ %>, <%= address.address2 %><% } %><br/>
+                        <%= address.city %>, <%= address.state %> - <%= address.pincode %><br/>
+                        <%= address.country || "India" %>
+                      </p>
+                      <p class="address-phone">
+                        <i class="bi bi-telephone"></i>
+                        <%= address.phone %>
+                      </p>
+                    </div>
+                  </div>
+                </label>
+              <% }) %>
+            </div>
+          <% } else { %>
+            <div class="card-empty">
+              <p>No addresses found. Please add a shipping address.</p>
+              <button class="btn-primary" onclick="openModal()">
+  <i class="bi bi-plus-circle"></i>
+  Add Address
+</button>
+
+            </div>
+          <% } %>
+        </section>
+
+        <!-- 2. Payment Method -->
+        <section class="card">
+  <h2 class="card-title mb-16">
+    <i class="bi bi-credit-card-2-front-fill card-icon"></i>
+    Payment Method
+  </h2>
+
+  <div class="payment-list">
+
+    <!-- Online Payment -->
+    <label class="payment-item">
+      <input type="radio" name="paymentMethod" value="razorpay" checked />
+      <div class="payment-card">
+        <div class="payment-icon-wrap payment-online">
+          <i class="bi bi-credit-card-2-front"></i>
+        </div>
+        <div class="payment-content">
+          <h4>Online Payment (Razorpay)</h4>
+        </div>
+        <span class="badge-secure">Secure</span>
+      </div>
+    </label>
+
+    <!-- Wallet -->
+    <label class="payment-item">
+      <input type="radio" name="paymentMethod" value="wallet" />
+      <div class="payment-card">
+        <div class="payment-icon-wrap payment-wallet">
+          <i class="bi bi-wallet-fill"></i>
+        </div>
+        <div class="payment-content">
+          <h4>Wallet</h4>
+          <p>Available Balance: ₹0</p>
+        </div>
+      </div>
+    </label>
+
+    <!-- Cash on Delivery -->
+    <label class="payment-item">
+      <input type="radio" name="paymentMethod" value="cod" />
+      <div class="payment-card">
+        <div class="payment-icon-wrap payment-cod">
+          <i class="bi bi-cash-coin"></i>
+        </div>
+        <div class="payment-content">
+          <h4>Cash on Delivery</h4>
+          <p>Pay when you receive</p>
+        </div>
+      </div>
+    </label>
+
+  </div>
+</section>
+
+
+        <!-- 3. Apply Coupon -->
+        <section class="card">
+          <h2 class="card-title mb-16">
+            <i class="bi bi-tag-fill card-icon"></i>
+            Apply Coupon
+          </h2>
+
+          <div class="coupon-row">
+            <input
+              type="text"
+              placeholder="ENTER COUPON CODE"
+              class="coupon-input"
+            />
+            <button class="btn-primary">Apply</button>
+          </div>
+
+          <button class="link-button mt-12">
+            <i class="bi bi-eye"></i>
+            View Available Coupons
+          </button>
+        </section>
+
+        <!-- 4. Order Items -->
+       <!-- 4. Order Items -->
+<section class="card">
+  <h2 class="card-title mb-16">
+    <i class="bi bi-box-seam-fill card-icon"></i>
+    Order Items (<%= cart.items.length %>)
+  </h2>
+
+  <div class="order-items">
+    <% cart.items.forEach(function(item){ %>
+      <div class="order-item">
+        <div class="order-image-wrap">
+          <img src="<%= item.images?.[0] %>" class="order-item-image" />
+        </div>
+
+        <div class="order-info">
+          <h3 class="order-product-name"><%= item.product.name %></h3>
+
+          <div class="order-variant">
+            <span><%= item.variant.quantityValue %><%= item.variant.quantityType %></span>
+          </div>
+
+          <div class="order-qty">
+            Qty: <%= item.quantity %>
+          </div>
+        </div>
+
+        <div class="order-price">
+          <h4>₹<%= (item.salePrice * item.quantity).toLocaleString('en-IN') %></h4>
+          <del class="old-price">₹<%= (item.regularPrice * item.quantity).toLocaleString('en-IN') %></del>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+</section>
+
+      </div>
+
+      <!-- RIGHT SIDE (1/3) -->
+      <!-- Order Summary -->
+<div class="summary-box">
+  <h2 class="summary-title">Order Summary</h2>
+
+  <div class="summary-row">
+    <span>Subtotal (<%= cart.items.length %> items)</span>
+    <span id="summary-subtotal">₹<%= cart.subtotal.toLocaleString('en-IN') %></span>
+  </div>
+
+  <div class="summary-row">
+    <span>Delivery Charges</span>
+    <span id="summary-delivery">₹<%= cart.deliveryCharge.toLocaleString('en-IN') %></span>
+  </div>
+
+  <div class="summary-row saving">
+    <span>Savings</span>
+    <span id="summary-discount">-₹<%= cart.discount.toLocaleString('en-IN') %></span>
+  </div>
+
+  <div class="summary-row">
+    <span>Tax</span>
+    <span id="summary-tax">₹<%= cart.tax.toLocaleString('en-IN') %></span>
+  </div>
+
+  <hr class="summary-divider"/>
+
+  <div class="summary-total">
+    <span>Total Amount</span>
+    <span id="summary-total">₹<%= cart.total.toLocaleString('en-IN') %></span>
+  </div>
+
+  <button id="placeOrderBtn" onclick="placeOrder()" class="place-order-btn">
+  Place Order
+</button>
+
+  <a href="/cart" class="back-cart-btn">Back to Cart</a>
+</div>
+
+
+    </div>
+  </div>
+</div>
+<!-- ADD / EDIT ADDRESS MODAL -->
+<div class="modal-overlay" id="addressModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2 id="modalTitle">Add Address</h2>
+      <button class="close-btn" onclick="closeModal()">×</button>
+    </div>
+
+    <form id="addressForm">
+
+      <label>Address Type</label>
+      <select id="addressType" required>
+        <option value="home">Home</option>
+        <option value="office">Office</option>
+        <option value="other">Other</option>
+      </select>
+      <input type="hidden" id="addressId">
+
+      <label>Full Name</label>
+      <input type="text" id="fullName" required>
+
+      <label>Phone</label>
+      <input type="text" id="phone" required>
+
+      <label>Address Line 1</label>
+      <input type="text" id="address1" required>
+
+      <label>Address Line 2</label>
+      <input type="text" id="address2">
+
+      <label>City</label>
+      <input type="text" id="city" required>
+
+      <label>State</label>
+      <input type="text" id="state" required>
+
+      <label>Pincode</label>
+      <input type="text" id="pincode" required>
+
+      <label>Country</label>
+      <input type="text" id="country" value="India" readonly>
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="setDefault">
+        <label for="setDefault">Set as Default</label>
+      </div>
+
+      <div class="modal-buttons">
+        <button type="button" id="saveBtn" class="save-btn">Save</button>
+
+        <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+
+<script src="/js/user/checkout.js"></script>
+<%- include("../partials/user/footer") %>

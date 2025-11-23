@@ -1,0 +1,138 @@
+.profile-section {
+  padding: 40px;
+}
+
+.profile-wrapper {
+  display: flex;
+  gap: 25px;
+}
+
+.profile-container {
+  flex: 1;
+  background: #fff;
+  padding: 30px 40px;
+  border-radius: 12px;
+  border: 1px solid #e6e8ec;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+}
+
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.search-wrapper {
+  width: 320px;  /* adjust size */
+  display: flex;
+  justify-content: flex-end;
+}
+
+.search-box {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+
+.search-box input {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+}
+
+.search-btn {
+  background: #2563eb;
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+
+
+
+.order-list {
+  margin-top: 25px;
+}
+
+.order-card {
+  background: #f9fafb;
+  padding: 18px 20px;
+  border-radius: 10px;
+  margin-bottom: 18px;
+  border: 1px solid #e5e7eb;
+}
+
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.order-card h3 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.order-status {
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.order-status.delivered { background: #d1fae5; color: #059669; }
+.order-status.pending { background: #fef9c3; color: #eab308; }
+.order-status.cancelled { background: #fee2e2; color: #ef4444; }
+
+.order-actions {
+  margin-top: 15px;
+}
+
+.details-btn {
+  background: #2563eb;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+.pagination {
+  margin-top: 25px;
+  text-align: center;
+}
+.pagination a {
+  padding: 10px 15px;
+  border: 1px solid #ccc;
+  margin: 0 4px;
+  border-radius: 6px;
+}
+.pagination .active {
+  background: #2563eb;
+  color: white;
+}
+.product-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 10px 0;
+}
+
+.product-thumb {
+  width: 55px;
+  height: 55px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #e5e7eb;
+}
+
+.more-items {
+  font-size: 14px;
+  color: #6b7280;
+  font-style: italic;
+  margin-bottom: 10px;
+}

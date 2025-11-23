@@ -13,6 +13,7 @@ const storage = new CloudinaryStorage({
     if (file.fieldname === "logo") folder = "brands"; 
     if (file.fieldname === "image") folder = "categories";
     if (file.fieldname === "images") folder = "products"; 
+    if (file.fieldname === "profileImage") folder = "profile"; 
 
     return {
       folder,

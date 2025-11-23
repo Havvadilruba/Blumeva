@@ -30,7 +30,7 @@
         <%= message %>
       </div>
     <% } %>
-      <form method="POST" action="/login" novalidate>
+      <form id="loginForm" novalidate>
       
         <label>Email</label>
         <input type="email" name="email" placeholder="Enter your email" autocomplete="off"  />
@@ -49,7 +49,7 @@
           <hr><span>OR</span><hr>
         </div>
 
-        <button type="button" class="btn-social google">
+        <button type="button" class="btn-social google" onclick="window.location.href='/auth/google'">
           <img src="https://cdnjs.cloudflare.com/ajax/libs/simple-icons/15.16.0/google.svg" alt="Google" />
           <span>Login with Google</span>
         </button>

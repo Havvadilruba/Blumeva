@@ -51,7 +51,7 @@ const getProducts = async (req, res) => {
     const products = await Product.find(filter)
       .populate("brand category")
       .collation({ locale: "en", strength: 2 }) 
-      .sort({ name: 1 })
+      .sort({ createdAt:-1 })
       .skip((page - 1) * limit)
       .limit(limit)
       .lean();
@@ -333,11 +333,35 @@ const updateProduct = async (req, res) => {
     await product.save();
 
     // Replace variants 
-    await Variant.deleteMany({ productId });
+   
+   const variantIds = Array.isArray(req.body.variantIds) ? req.body.variantIds : [req.body.variantIds];
 
-    for (let v of variants) {
-      await Variant.create({ productId, ...v });
-    }
+for (let i = 0; i < variants.length; i++) {
+  if (variantIds[i]) {
+    // update existing
+    await Variant.findByIdAndUpdate(variantIds[i], variants[i]);
+  } else {
+    // create new variant linked to product
+    await Variant.create({
+      productId,
+      ...variants[i],
+    });
+  }
+}
+
+if (req.body.deletedVariantIds) {
+  let idsToDelete = [];
+  try {
+    idsToDelete = JSON.parse(req.body.deletedVariantIds);
+  } catch (err) {
+    idsToDelete = [];
+  }
+
+  if (idsToDelete.length > 0) {
+    await Variant.deleteMany({ _id: { $in: idsToDelete } });
+  }
+}
+
 
     res.status(200).json({
       success: true,

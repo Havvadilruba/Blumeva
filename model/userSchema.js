@@ -16,6 +16,10 @@ const userSchema=new Schema({
         type:String,
         required:false
     },
+    profileImage: {
+    type: String,
+    default: ""   
+    },
     googleId:{
         type:String,
         unique:true

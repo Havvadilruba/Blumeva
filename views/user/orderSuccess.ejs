@@ -1,0 +1,140 @@
+<%- include("../partials/user/header") %>
+
+<div class="success-container">
+  <div class="success-card">
+
+    <!-- SUCCESS ICON -->
+    <div class="success-icon">
+      <i class="bi bi-check-circle-fill"></i>
+    </div>
+
+    <h1 class="title-success">Order Placed Successfully!</h1>
+    <p class="success-message">Thank you for shopping with us 🎉</p>
+
+    <!-- ORDER INFO -->
+    <div class="order-info-block">
+      <div class="order-row">
+        <span class="row-left">
+          <div class="payment-icon-wrap">
+            <i class="bi bi-receipt-cutoff"></i>
+          </div>
+          <strong>Order ID</strong>
+        </span>
+        <span><%= order.orderId %></span>
+      </div>
+
+      <div class="order-row">
+        <span class="row-left">
+          <div class="payment-icon-wrap">
+            <i class="bi bi-calendar2-check"></i>
+          </div>
+          Order Date
+        </span>
+        <span><%= order.createdAt.toLocaleDateString("en-IN") %></span>
+      </div>
+
+      <div class="order-row">
+        <span class="row-left">
+          <div class="payment-icon-wrap">
+            <i class="bi bi-hourglass-split"></i>
+          </div>
+          Order Status
+        </span>
+        <span class="status-pill"><%= order.orderStatus %></span>
+      </div>
+    </div>
+
+    <!-- SUMMARY -->
+    <h3 class="summary-title">Order Summary</h3>
+    <div class="summary-box">
+
+      <div class="summary-row">
+        <span>Subtotal</span>
+        <span>₹<%= order.subtotal.toLocaleString('en-IN') %></span>
+      </div>
+
+      <div class="summary-row">
+        <span>Discount</span>
+        <span>-₹<%= order.discount.toLocaleString('en-IN') %></span>
+      </div>
+
+      <div class="summary-row">
+        <span>Tax (GST)</span>
+       <span>₹<%= order.tax?.toLocaleString('en-IN') || 0 %></span>
+
+      </div>
+
+      <div class="summary-row">
+        <span>Delivery Charge</span>
+        <span><%= order.deliveryCharge == 0 ? "FREE 🚚" : "₹" + order.deliveryCharge %></span>
+      </div>
+
+      <hr />
+
+      <div class="summary-total-row">
+        <span><strong>Total Amount</strong></span>
+        <span><strong>₹<%= order.finalAmount.toLocaleString('en-IN') %></strong></span>
+      </div>
+    </div>
+
+    <!-- PAYMENT METHOD -->
+    <h3 class="sub-title">Payment Method</h3>
+    <div class="payment-method-display">
+      <div class="payment-icon-wrap payment-online">
+        <i class="bi bi-wallet2"></i>
+      </div>
+      <p class="payment-value"><%= order.paymentMethod.toUpperCase() %></p>
+    </div>
+
+    <!-- ADDRESS -->
+    <h3 class="sub-title">Shipping Address</h3>
+
+    <div class="address-display">
+      <div class="address-icon-wrap">
+        <i class="bi bi-geo-alt-fill"></i>
+      </div>
+      <p class="address-box">
+        <strong><%= order.shippingAddress.fullName %></strong><br>
+        <%= order.shippingAddress.address1 %> <%= order.shippingAddress.address2 ? ", " + order.shippingAddress.address2 : ""%> <br>
+        <%= order.shippingAddress.city %>, <%= order.shippingAddress.state %> - <%= order.shippingAddress.pincode %><br>
+        <%= order.shippingAddress.country %><br>
+        <i class="bi bi-telephone-fill"></i> <%= order.shippingAddress.phone %>
+      </p>
+    </div>
+
+    <!-- ORDER ITEMS -->
+    <h3 class="sub-title">Order Items</h3>
+    <div class="item-box">
+      <% order.orderedItems.forEach(item => { %>
+        <div class="item-row">
+  <div class="item-info">
+
+    <div class="item-image-wrap">
+      <img src="<%= item.productId.images[0] %>" class="item-image"/>
+    </div>
+
+    <div class="item-text">
+      <strong><%= item.productId.name %></strong><br>
+      Qty: <%= item.quantity %>
+    </div>
+  </div>
+
+ <div class="item-price">
+  <strong>₹<%= item.price.toLocaleString('en-IN') %></strong>
+</div>
+
+</div>
+
+      <% }) %>
+    </div>
+
+    <!-- BUTTONS -->
+    <div class="button-row">
+      <a href="/orders" class="btn-primary"><i class="bi bi-card-list"></i> View Order Details</a>
+      <a href="/products" class="btn-outline"><i class="bi bi-cart-plus"></i> Continue Shopping</a>
+    </div>
+
+  </div>
+</div>
+
+<%- include("../partials/user/footer") %>

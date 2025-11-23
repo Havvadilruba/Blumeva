@@ -1,19 +1,33 @@
 import User from "../model/userSchema.js";
 import mongoose from "mongoose";
 
-
 const userAuth = async (req, res, next) => {
   try {
-    if (!req.session.user) return res.redirect("/login");
+    if (!req.session.user) {
 
-    const user = await User.findById(req.session.user.id);
+      if (req.xhr || req.headers.accept?.includes("application/json")) {
+        return res.status(401).json({ success: false, message: "Login required" });
+      }
+
+      return res.redirect("/login");
+    }
+
+    const userId = req.session.user._id;
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      req.session.destroy();
+      return res.redirect("/login");
+    }
+
+    const user = await User.findById(userId);
     if (!user || user.isBlocked) {
-      delete req.session.user;
+      req.session.destroy();
       return res.redirect("/login?message=blocked");
     }
 
     req.user = user;
     res.locals.user = user;
+
     next();
   } catch (err) {
     console.error("userAuth error:", err);
@@ -23,10 +37,8 @@ const userAuth = async (req, res, next) => {
 
 const checkUser = async (req, res, next) => {
   try {
-    res.locals.user = null;
-
-    if (req.session && req.session.user && req.session.user.id) {
-      const userId = req.session.user.id;
+    if (req.session?.user?._id) {
+      const userId = req.session.user._id;
 
       if (mongoose.Types.ObjectId.isValid(userId)) {
         const user = await User.findById(userId).lean();
@@ -34,19 +46,22 @@ const checkUser = async (req, res, next) => {
         if (user && !user.isBlocked) {
           res.locals.user = user;
         } else {
-          delete req.session.user; 
+          req.session.destroy();
         }
       } else {
-        delete req.session.user;
+        req.session.destroy();
       }
     }
+console.log("🛑 USER AUTH RUNNING");
 
     next();
   } catch (err) {
     console.error("checkUser error:", err);
-    res.locals.user = null;
     next();
   }
 };
+
+
 export { userAuth, checkUser };
+
 

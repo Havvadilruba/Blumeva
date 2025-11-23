@@ -7,6 +7,7 @@ import categoryController from "../controller/admin/categoryController.js";
 import upload from "../middlewares/multer.js";
 import brandController from "../controller/admin/brandController.js";
 import productController from "../controller/admin/productController.js";
+import orderController from "../controller/admin/orderController.js";
 
 const router = express.Router();
 
@@ -41,5 +42,9 @@ router.post("/products/add",adminAuth,upload.array("images",5), productControlle
 router.get("/products/edit/:id", adminAuth, productController.loadEditProduct);
 router.patch("/products/:id", adminAuth, upload.array("images", 5), productController.updateProduct);
 router.patch("/products/toggle/:id", adminAuth, productController.toggleProductStatus);
+
+router.get("/orders", adminAuth, orderController.loadOrders); 
+router.get("/orders/:id", adminAuth, orderController.loadOrderDetails);
+router.patch("/orders/:id/status", adminAuth,orderController.updateOrderStatus);
 
 export default router;

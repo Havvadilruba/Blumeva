@@ -1,0 +1,53 @@
+<%- include("../partials/user/header") %>
+
+<section class="profile-section">
+  <div class="profile-wrapper">
+
+    <%- include("../partials/user/sidebar", {activePage }) %>
+
+    <div class="profile-container edit-email-page">
+
+      <div class="header-section">
+        <h2>Edit Email</h2>
+      </div>
+
+      <% if (user?.googleId) { %>
+        <!-- Google Access Block Section -->
+        <div class="google-block">
+          <div class="google-icon">
+            <i class="bi bi-google"></i>
+          </div>
+          <h3>This is a Google Account</h3>
+          <p>Email cannot be changed here.Manage your email from Google account</p>
+
+          <a href="/profile" class="back-btn">Back</a>
+        </div>
+
+      <% } else { %>
+        <!-- Editable Form for Normal Users -->
+        <form id="emailEditForm" class="email-form">
+
+          <div class="form-group">
+            <label>Current Email</label>
+            <input type="text" value="<%= user?.email %>" disabled>
+          </div>
+
+          <div class="form-group">
+            <label>New Email</label>
+            <input type="email" id="newEmailInput" name="newEmail" placeholder="Enter new email" required>
+          </div>
+
+          <div class="button-row">
+            <button type="button" id="sendOtpBtn" class="save-btn">Send OTP</button>
+            <a href="/profile" class="cancel-btn">Cancel</a>
+          </div>
+        </form>
+      <% } %>
+
+    </div>
+  </div>
+</section>
+
+<%- include("../partials/user/footer") %>
+<script src="/js/user/emailEdit.js"></script>
+

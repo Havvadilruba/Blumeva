@@ -121,7 +121,7 @@ const editCategory = async (req, res) => {
 };
 
 
-// UPDATE CATEGORY (PATCH)
+// UPDATE CATEGORY 
 
 const updateCategory = async (req, res) => {
   try {

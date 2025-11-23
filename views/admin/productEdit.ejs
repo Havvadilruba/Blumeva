@@ -101,6 +101,8 @@
                 <option value="ml" <%= v.quantityType === "ml" ? "selected" : "" %>>ml</option>
                 <option value="g" <%= v.quantityType === "g" ? "selected" : "" %>>g</option>
               </select>
+              <input type="hidden" name="variantIds[]" value="<%= v._id %>">
+
               <input type="number" name="regularPrice[]" placeholder="Regular Price ₹" value="<%= v.regularPrice %>"/>
               <input type="number" name="salePrice[]" placeholder="Sale Price ₹" value="<%= v.salePrice %>"/>
               <input type="number" name="stock[]" placeholder="Stock" value="<%= v.stock %>"/>

@@ -30,52 +30,15 @@
 <section class="latest">
   <h2>Latest Products</h2>
   <div class="product-grid">
-    <% latestProducts.forEach(product => { %>
-      <div class="product-card" onclick="goToProduct('<%= product._id %>')">
-        <div class="image-container">
-          <img src="<%= product.images[0] %>" alt="<%= product.name %>">
+  <% if (latestProducts.length === 0) { %>
+    <p>No products found.</p>
+  <% } %>
 
-          <% 
-            const regular = product.variants.regularPrice;
-            const sale = product.variants.salePrice;
-            const hasDiscount = regular > sale;
-            const discountPercent = hasDiscount 
-              ? Math.round(((regular - sale) / regular) * 100) 
-              : 0;
-          %>
+  <% latestProducts.forEach(product => { %>
+    <%- include("../partials/user/productCard", { product }) %>
+  <% }) %>
+</div>
 
-          <% if (hasDiscount) { %>
-            <span class="offer-badge"><%= discountPercent %>% OFF</span>
-          <% } %>
-        </div>
-
-        <h3><%= product.name %></h3>
-        <p class="category"><%= product.category.name %></p>
-
-        <div class="price">
-          <span class="sale">₹<%= sale %></span>
-          <% if (hasDiscount) { %>
-            <span class="regular">₹<%= regular %></span>
-          <% } %>
-        </div>
-
-        <!-- Rating -->
-        <div class="rating">
-          <% for (let i = 1; i <= 5; i++) { %>
-            <% if (i <= product.avgRating) { %>
-              <i class="fa-solid fa-star"></i>
-            <% } else { %>
-              <i class="fa-regular fa-star"></i>
-            <% } %>
-          <% } %>
-        </div>
-
-        <!-- Add to Cart Button -->
-        <button 
-          class="add-to-cart">Add to Cart</button>
-      </div>
-    <% }) %>
-  </div>
 </section>
 
 

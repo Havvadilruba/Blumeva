@@ -1,0 +1,96 @@
+<%- include("../partials/user/header") %>
+
+<link rel="stylesheet" href="/style/user/orders.css" />
+
+<section class="profile-section">
+  <div class="profile-wrapper">
+
+    <!-- Sidebar -->
+    <%- include("../partials/user/sidebar", { activePage }) %>
+
+    <!-- Main Content -->
+    <div class="profile-container">
+<div class="header-section">
+  <h2>My Orders</h2>
+
+  <div class="search-wrapper">
+    <form id="searchForm" class="search-box">
+      <input
+        type="text"
+        name="search"
+        value="<%= search %>"
+        placeholder="Search Order ID"
+      />
+      <button type="submit" class="search-btn">Search</button>
+    </form>
+  </div>
+</div>
+
+
+      <p class="sub-text">View and manage your orders</p>
+
+      <!-- Orders List -->
+      <div class="order-list">
+        <% if (orders.length === 0) { %>
+          <p class="no-address">No orders found.</p>
+        <% } %>
+
+        <% orders.forEach((order) => { %>
+          <div class="order-card">
+
+  <div class="order-header">
+    <h3><%= order.orderId %></h3>
+    <span class="order-status <%= order.orderStatus.toLowerCase() %>">
+      <%= order.orderStatus %>
+    </span>
+  </div>
+
+  <% order.orderedItems.slice(0,2).forEach(item => { %>
+    <div class="product-row">
+      <img src="<%= item.productId.images[0] %>" class="product-thumb" />
+      <p><%= item.productId.name %></p>
+    </div>
+  <% }) %>
+
+  <% if (order.orderedItems.length > 2) { %>
+    <p class="more-items">+ <%= order.orderedItems.length - 2 %> more items</p>
+  <% } %>
+
+  <p><strong>Placed On:</strong> <%= order.createdAt.toDateString() %></p>
+  <p><strong>Total Amount:</strong> ₹<%= order.finalAmount.toFixed(2) %></p>
+
+  <div class="order-actions">
+    <a class="details-btn" href="/orders/<%= order.orderId %>">
+      View Details
+    </a>
+  </div>
+
+</div>
+
+        <% }) %>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination">
+        <% if (currentPage > 1) { %>
+          <a href="?page=<%= currentPage - 1 %>&search=<%= search %>">« Prev</a>
+        <% } %>
+
+        <% for (let i = 1; i <= totalPages; i++) { %>
+          <a href="?page=<%= i %>&search=<%= search %>" class="<%= currentPage === i ? 'active' : '' %>">
+            <%= i %>
+          </a>
+        <% } %>
+
+        <% if (currentPage < totalPages) { %>
+          <a href="?page=<%= currentPage + 1 %>&search=<%= search %>">Next »</a>
+        <% } %>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<script src="/js/user/orders.js"></script>
+<%- include("../partials/user/footer") %>
+

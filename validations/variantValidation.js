@@ -1,6 +1,5 @@
 import Joi from "joi";
 
-
 const variantValidation = Joi.object({
   quantityValue: Joi.number().positive().required().empty("").messages({
     "any.required": "Variant value is required",
@@ -30,8 +29,14 @@ const variantValidation = Joi.object({
     "number.base": "Stock must be a number",
     "number.min": "Stock cannot be negative",
   }),
+}).custom((obj, helper) => {
+  if (obj.salePrice > obj.regularPrice) {
+    return helper.message("Sale price cannot be greater than Regular price");
+  }
+  return obj;
 });
 
 export default variantValidation;
+
 
 

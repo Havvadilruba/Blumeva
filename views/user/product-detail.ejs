@@ -53,43 +53,51 @@
 
   <!-- STOCK  -->
   <div id="stockInfo">
-    <% if (variant.stock <= 0) { %>
-      <div class="stock"><span class="out-stock">Out of Stock</span></div>
-    <% } else if (variant.stock < 20) { %>
-      <div class="stock"><span class="in-stock">Only <%= variant.stock %> left!</span></div>
-    <% } else { %>
-      <div class="stock"><span class="in-stock">In Stock</span></div>
-    <% } %>
-  </div>
+  <% if (variant.stock <= 0) { %>
+    <div class="stock out-stock-msg">
+      <i class="fa-solid fa-circle-exclamation"></i> Out of Stock
+    </div>
+  <% } else if (variant.stock < 20) { %>
+    <div class="stock low-stock-msg">
+      <i class="fa-solid fa-clock"></i> Only <%= variant.stock %> left!
+    </div>
+  <% } else { %>
+    <div class="stock in-stock-msg">
+      <i class="fa-solid fa-check-circle"></i> In Stock
+    </div>
+  <% } %>
+</div>
+
 
   <!-- VARIANT BADGES -->
   <div class="variant-badges">
   <% product.variants.forEach((v, i) => { %>
     <span 
-      class="variant-badge <%= v._id.toString() === variant._id.toString() ? 'active' : '' %>" 
+      class="variant-badge <%= v._id.toString() === variant._id.toString() ? 'active' : '' %>"
       data-variantid="<%= v._id %>"
-      data-saleprice="<%= (v.salePrice ?? v.saleprice ?? 0) %>"
-      data-regularprice="<%= (v.regularPrice ?? v.regularprice ?? 0) %>"
-      data-stock="<%= (v.stock ?? 0) %>">
+      data-saleprice="<%= v.salePrice %>"
+      data-regularprice="<%= v.regularPrice %>"
+      data-stock="<%= v.stock %>"
+    >
       <%= v.quantityValue %> <%= v.quantityType %>
     </span>
   <% }) %>
 </div>
 
-
-  <!-- QUANTITY -->
-  <div class="quantity-selector">
-    <button type="button" onclick="decreaseQty()">-</button>
-    <input type="number" id="quantityInput" value="1" min="1" max="<%= variant.stock %>">
-    <button type="button" onclick="increaseQty(<%= variant.stock %>)">+</button>
-  </div>
-
-  <!-- ACTION BUTTON -->
-  <div class="actions">
-    <button class="add-cart" data-productid="<%= product._id %>" data-variantid="<%= variant._id %>">
+<div class="spacer"></div>
+<div class="actions">
+  <% if (variant.stock <= 0) { %>
+    <button class="add-cart" disabled style="opacity:0.6;cursor:not-allowed">
+      Out of Stock
+    </button>
+  <% } else { %>
+    <button class="add-cart"
+      onclick="addToCart(event, document.querySelector('.variant-badge.active').dataset.variantid)">
       Add to Cart
     </button>
-  </div>
+  <% } %>
+</div>
+
 
 <% } else { %>
   <button class="sold-out" disabled>Sold Out</button>

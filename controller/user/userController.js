@@ -4,20 +4,18 @@ import Brand from "../../model/brandSchema.js";
 import { ObjectId } from "mongodb";
 
 
-const loadLandingpage =  async (req, res) => {
+const loadLandingpage = async (req, res) => {
   try {
     const categories = await Category.find({ isListed: true })
       .sort({ createdAt: -1 })
       .limit(6);
 
     const brands = await Brand.find({ status: true })
-    .sort({ createdAt: -1 })
-    .limit(6);
+      .sort({ createdAt: -1 })
+      .limit(6);
 
     const latestProducts = await Product.aggregate([
-      {
-        $match: { isBlocked: false }, 
-      },
+      { $match: { isBlocked: false } },
       {
         $lookup: {
           from: "brands",
@@ -27,7 +25,6 @@ const loadLandingpage =  async (req, res) => {
         },
       },
       { $unwind: "$brand" },
-  
       {
         $lookup: {
           from: "categories",
@@ -37,69 +34,65 @@ const loadLandingpage =  async (req, res) => {
         },
       },
       { $unwind: "$category" },
-     
       {
-        $lookup: {
-          from: "variants",
-          let: { productId: "$_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$productId", "$$productId"] },
-                    { $gt: ["$stock", 0] },
-                  ],
-                },
-              },
-            },
-            { $sort: { salePrice: 1 } },
-            { $limit: 1 },
-          ],
-          as: "variants",
-        },
+  $lookup: {
+    from: "variants",
+    let: { productId: "$_id" },
+    pipeline: [
+      {
+        $match: {
+          $expr: {
+            $eq: ["$productId", "$$productId"]
+          }
+        }
       },
+      { $sort: { salePrice: 1 } },
+      { $limit: 1 }
+    ],
+    as: "variants",
+  },
+},
+{ $unwind: "$variants" },
+{
+  $addFields: {
+    inStock: { $gt: ["$variants.stock", 0] }
+  }
+}
+,
       { $unwind: "$variants" },
-     
+      { $sort: { createdAt: -1 } },
+      { $limit: 5 },
       {
-        $sort: { createdAt: -1 },
-      },
-     
-      {
-        $limit: 5,
-      },
-     
-      {
-        $project: {
-          _id: 1,
-          name: 1,
-          images: 1,
-          avgRating: 1,
-          "brand.name": 1,
-          "category.name": 1,
-          "variants.salePrice": 1,
-          "variants.regularPrice": 1,
-        },
+      $project: {
+      _id: 1,
+      name: 1,
+      images: 1,
+      avgRating: 1,
+      "brand.name": 1,
+      "category.name": 1,
+      variantId: "$variants._id",
+      salePrice: "$variants.salePrice",
+      regularPrice: "$variants.regularPrice",
+      inStock: 1
+    },
       },
     ]);
 
-
-    const user = res.locals?.user || null;
-        
     res.render("user/landing", {
       layout: "layouts/user",
       title: "Home | Blumeva",
       pageCSS: "/style/user/landing.css",
-      user,
       categories,
       brands,
       latestProducts,
     });
+
   } catch (error) {
     console.error("Landing Page Error:", error);
     res.status(500).send("Server Error");
   }
 };
+
 
 
 const listProducts = async (req, res) => {
@@ -165,7 +158,11 @@ const listProducts = async (req, res) => {
         },
       },
       { $unwind: "$category" },
-
+      {
+        $match: {
+          "category.isListed": true
+        }
+      },
       {
         $lookup: {
           from: "brands",
@@ -177,27 +174,36 @@ const listProducts = async (req, res) => {
       { $unwind: "$brand" },
 
       {
-        $lookup: {
-          from: "variants",
-          let: { productId: "$_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$productId", "$$productId"] },
-                    { $gt: ["$stock", 0] },
-                  ],
-                },
-              },
-            },
-            { $sort: { salePrice: 1 } },
-            { $limit: 1 },
-          ],
-          as: "variants",
-        },
+  $lookup: {
+    from: "variants",
+    let: { productId: "$_id" },
+    pipeline: [
+      {
+        $match: {
+          $expr: {
+            $eq: ["$productId", "$$productId"]
+          }
+        }
       },
+      { $sort: { salePrice: 1 } },
+      { $limit: 1 }
+    ],
+    as: "variants",
+  },
+},
+{ $unwind: "$variants" },
+{
+  $addFields: {
+    inStock: { $gt: ["$variants.stock", 0] }
+  }
+}
+,
       { $unwind: "$variants" },
+      {
+        $match: {
+          "brand.status": true
+        }
+      },
     ];
 
     if (Object.keys(priceStage).length > 0) {
@@ -225,8 +231,10 @@ const listProducts = async (req, res) => {
         avgRating: 1,
         "brand.name": 1,
         "category.name": 1,
+        variantId: "$variants._id",
         regularPrice: "$variants.regularPrice",
         salePrice: "$variants.salePrice",
+        inStock: 1
       },
     });
 
@@ -263,7 +271,7 @@ const listProducts = async (req, res) => {
 const pageNotFound = async (req, res) => {
   try {
     res.render("user/page-404", {
-      layout: "layouts/userLayout",
+      layout: "layouts/user",
       title: "Page Not Found | Blumeva",
       pageCSS: "/style/user/page404.css"
     });
@@ -316,15 +324,11 @@ const loadProductDetail = async (req, res) => {
       },
     ]);
 
-    if (!product) {
-      return res.status(404).render("user/page-404", {
-        layout: "layouts/user",
-        title: "Product Not Found | Blumeva",
-        pageCSS: "/style/user/page404.css",
-      });
+    if (!product || !product.category.isListed || !product.brand.status) {
+      return res.redirect("/products");
     }
 
-    const variant = product.variants.length ? product.variants[0] : null;
+    const variant = product.variants.find(v => v.stock > 0) || product.variants[0];
 
     res.render("user/product-detail", {
       layout: "layouts/user",
@@ -333,6 +337,7 @@ const loadProductDetail = async (req, res) => {
       product,
       variant,
     });
+    
   } catch (error) {
     console.error("Error loading product details:", error);
     res.status(500).send("Internal Server Error");

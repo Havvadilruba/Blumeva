@@ -1,0 +1,212 @@
+.profile-section {
+  padding: 40px;
+}
+
+.profile-wrapper {
+  display: flex;
+  gap: 25px;
+}
+
+.profile-container {
+  flex: 1;
+  background: #fff;
+  padding: 30px 40px;
+  border-radius: 12px;
+  border: 1px solid #e6e8ec;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+}
+
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.add-btn {
+  background: #2563eb;
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 10px;
+  text-decoration: none;
+}
+
+.address-list {
+  margin-top: 25px;
+}
+
+.address-card {
+  background: #f9fafb;
+  padding: 18px 20px;
+  border-radius: 10px;
+  margin-bottom: 18px;
+  border: 1px solid #e5e7eb;
+}
+
+.address-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.default-btn {
+  background: #1d4ed8;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.default-label {
+  font-size: 14px;
+  color: #059669;
+}
+
+.icons button, .icons a {
+  margin-left: 10px;
+  cursor: pointer;
+}
+/* MODAL OVERLAY */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.55);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-box {
+  width: 650px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #fff;
+  padding: 32px;
+  border-radius: 14px;
+  box-shadow: 0 10px 35px rgba(0,0,0,0.18);
+  animation: slideDown .25s ease;
+}
+
+.modal-box label {
+  display: block;
+  font-weight: 600;
+  margin-top: 10px;
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+
+.modal-box input,
+.modal-box select {
+  width: 100%;
+  padding: 14px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+  font-size: 15px;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.modal-buttons {
+  margin-top: 22px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.save-btn {
+  background: #2563eb;
+  color: #fff;
+  padding: 12px 28px;
+  border-radius: 10px;
+  font-size: 16px;
+  border: none;
+  width: 48%;
+}
+
+.cancel-btn {
+  background: #d9534f;
+  color: #fff;
+  padding: 12px 28px;
+  border-radius: 10px;
+  font-size: 16px;
+  border: none;
+  width: 48%;
+}
+
+.close-btn {
+  font-size: 26px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #222;
+  margin-left: auto;
+}
+
+
+.icons button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 6px;
+  color: #1e21fd;
+}
+
+.icons button:hover {
+  color: #1d4ed8; /* Blue on hover */
+}
+
+.default-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #1d4ed8;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.default-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.checkbox-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #2563eb;  /* blue tick */
+  cursor: pointer;
+}
+
+.default-check-label {
+  background: #e0ebff;
+  color: #1d4ed8;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: 600;
+}

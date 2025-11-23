@@ -1,0 +1,164 @@
+/* Layout */
+.profile-section {
+  padding: 40px;
+}
+
+.profile-wrapper {
+  display: flex;
+  gap: 25px;
+}
+
+/* Card container same style as profile page */
+.edit-email-page {
+  flex: 1;
+  background: #fff;
+  border-radius: 12px;
+  padding: 35px 40px;
+  border: 1px solid #e6e8ec;
+  margin-left: auto;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+}
+
+/* Inner content width similar to profile card */
+.profile-content {
+  max-width: 550px;
+  margin-top: 25px;
+}
+
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-section h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+/* Form Styling */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid #dfe2e6;
+  background: #f7faff;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+  border-color: #1d4ed8;
+}
+
+/* Buttons */
+.button-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.save-btn,
+.cancel-btn {
+  display: inline-block;
+  padding: 12px 22px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.save-btn {
+  background: #1d4ed8;
+  color: #fff;
+  border: none;
+}
+
+.save-btn:hover {
+  background: #153a9c;
+}
+
+.cancel-btn {
+  background: #d9534f;
+  color: #fff;
+}
+
+.cancel-btn:hover {
+  background: #b33b38;
+}
+
+.otp-inputs {
+  display: flex;
+  gap: 12px;
+  margin: 25px 0;
+}
+
+.otp-inputs input {
+  width: 50px;
+  height: 55px;
+  font-size: 22px;
+  text-align: center;
+  border-radius: 10px;
+  border: 1px solid #dfe2e6;
+  background: #f7faff;
+}
+
+.otp-inputs input:focus {
+  border-color: #1d4ed8;
+}
+
+.resend-text {
+  margin-top: 15px;
+  font-size: 14px;
+  color: #555;
+}
+
+.resend-link {
+  color: #1d4ed8;
+  font-weight: 600;
+  cursor: pointer;
+}
+.google-block {
+  text-align: center;
+  padding: 40px 10px;
+}
+
+.google-icon {
+  font-size: 50px;
+  color: #4285F4;
+  margin-bottom: 15px;
+}
+
+.google-block h3 {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.google-block p {
+  color: #666;
+  margin: 10px 0 25px;
+}
+
+.back-btn {
+  display: inline-block;
+  padding: 12px 22px;
+  background: #1d4ed8;
+  color: #fff;
+  border-radius: 10px;
+  font-weight: 600;
+}
+

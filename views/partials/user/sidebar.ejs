@@ -1,0 +1,44 @@
+<link rel="stylesheet" href="/style/user/sidebar.css">
+
+<div class="sidebar">
+  <div class="profile-header">
+
+    <div class="avatar">
+      <img src="<%= user?.profileImage || '/images/default-avatar.png' %>" alt="Profile">
+
+    </div>
+
+    <h4><%= user?.name || '' %></h4>
+    <p><%= user?.email || '' %></p>
+  </div>
+
+  <ul class="menu">
+  <li class="<%= activePage === 'personal-info' ? 'active' : '' %>">
+    <a href="/profile">Personal Information</a>
+  </li>
+
+  <li class="<%= activePage === 'manage-address' ? 'active' : '' %>">
+    <a href="/manage-address">Manage Address</a>
+  </li>
+
+  <li class="<%= activePage === 'orders' ? 'active' : '' %>">
+    <a href="/orders">My Orders</a>
+  </li>
+
+  <li class="<%= activePage === 'wallet' ? 'active' : '' %>">
+    <a href="/wallet">My Wallet</a>
+  </li>
+
+  <li class="<%= activePage === 'refer-earn' ? 'active' : '' %>">
+    <a href="/refer-earn">Refer & Earn</a>
+  </li>
+
+  <li class="<%= activePage === 'wishlist' ? 'active' : '' %>">
+    <a href="/wishlist">My Wishlist</a>
+  </li>
+
+  <li class="logout">
+    <a href="/logout">Logout</a>
+  </li>
+</ul>
+</div>

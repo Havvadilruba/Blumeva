@@ -1,0 +1,120 @@
+<%- include("../partials/user/header") %>
+
+<div class="cart-container">
+  <div class="cart-wrapper">
+
+    <h1 class="cart-title">Shopping Cart</h1>
+
+    <% const hasOutOfStock = cart.items.some(i => i.stock <= 0); %>
+
+    <div class="cart-layout">
+
+      <!-- Cart Items -->
+      <div class="cart-items-box">
+  <% if(cart.items.length > 0) { %>
+  <% cart.items.forEach(item => { %>
+
+  <div class="cart-item" id="item-<%= item._id %>">
+
+  <div class="cart-item-left">
+    <img src="<%= item.images?.[0] %>" class="cart-item-image"/>
+
+    <div class="cart-item-details">
+  <h3 class="cart-product-name"><%= item.product.name %></h3>
+
+  <div class="variant-tags">
+    <span class="tag"><%= item.variant.quantityValue %><%= item.variant.quantityType %></span>
+  </div>
+
+  <% if(item.variant.stock > 0) { %>
+    <div class="qty-box">
+  <button class="qty-btn" onclick="changeQty('<%= item._id %>', 'minus')">-</button>
+  <span class="qty-display"><%= item.quantity %></span>
+  <button class="qty-btn" onclick="changeQty('<%= item._id %>', 'plus')">+</button>
+</div>
+
+  <% } %>
+
+  <% if(item.variant.stock <= 0) { %>
+    <p class="out-of-stock" style="color:#d9534f;font-weight:600;">Out of Stock</p>
+  <% } %>
+</div>
+
+  </div>
+
+  <div class="cart-item-right">
+
+  <% if(item.variant.stock <= 0) { %>
+    <button class="remove-btn" onclick="removeItem('<%= item._id %>')">Remove</button>
+  <% } else { %>
+    <button class="delete-btn" onclick="removeItem('<%= item._id %>')">
+      <i class="fa-solid fa-trash"></i>
+    </button>
+  <% } %>
+
+  <div class="price-box">
+
+    <h3 class="price">₹<%= (item.salePrice * item.quantity).toLocaleString('en-IN') %></h3>
+    <del class="old-price">₹<%= (item.regularPrice * item.quantity).toLocaleString('en-IN') %></del>
+
+  </div>
+
+</div>
+
+
+</div>
+
+
+  <% }) %>
+  <% } else { %>
+    <h2 class="empty-cart">Your Cart is Empty</h2>
+  <% } %>
+</div>
+
+
+      <!-- Summary -->
+      <div class="summary-box">
+        <h2 class="summary-title">Order Summary</h2>
+
+
+
+  <div class="summary-row">
+    <span>Subtotal</span>
+    <span id="summary-subtotal">₹<%= cart.subtotal.toLocaleString('en-IN') %></span>
+  </div>
+
+  <div class="summary-row saving">
+    <span>Savings</span>
+    <span id="summary-discount">-₹<%= cart.discount.toLocaleString('en-IN') %></span>
+  </div>
+
+  <div class="summary-row">
+    <span>Tax</span>
+    <span id="summary-tax">₹<%= cart.tax.toLocaleString('en-IN') %></span>
+  </div>
+
+  <hr class="summary-divider"/>
+
+  <div class="summary-total">
+    <span>Total</span>
+    <span id="summary-total">₹<%= cart.total.toLocaleString('en-IN') %></span>
+  </div>
+
+  <% if(!hasOutOfStock) { %>
+  <a href="/checkout" class="checkout-btn">Proceed to Checkout</a>
+  <% } else { %>
+  <div class="remove-message">Remove Out of Stock items to checkout</div>
+  <% } %>
+</div>
+
+    </div>
+  </div>
+</div>
+
+<script src="/js/user/cart.js"></script>
+<%- include("../partials/user/footer") %>
+
+
+
+
+

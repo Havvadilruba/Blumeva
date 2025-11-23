@@ -11,9 +11,6 @@ import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-
-
 dotenv.config();
 const app = express();
 connectDB();
@@ -46,7 +43,7 @@ app.use(passport.session());
 
 
 
-app.use((req, res, next) => {
+app.use("/",(req, res, next) => {
   res.locals.user = req.session.user || null;
   next();
 });

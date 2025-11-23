@@ -1,0 +1,67 @@
+<%- include("../partials/user/header") %>
+
+<link rel="stylesheet" href="/css/editProfile.css" />
+
+<section class="profile-section">
+  <div class="profile-wrapper">
+
+<%- include("../partials/user/sidebar", { activePage }) %>
+
+
+    <div class="profile-container">
+      <div class="header-section">
+        <h2>Edit Profile</h2>
+      </div>
+
+      <form id="editProfileForm" enctype="multipart/form-data" class="profile-content">
+        <div class="avatar-upload">
+          <div class="avatar-preview">
+           <img id="avatarPreview" src="<%= user?.profileImage || '/images/default-avatar.png' %>">
+
+
+          </div>
+
+          <label class="upload-btn">
+            Change Photo
+            <input type="file" name="profileImage" accept="image/*" id="profileImageInput">
+
+          </label>
+          <button type="button" id="removePhotoBtn" class="remove-btn">Remove Photo</button>
+          <input type="hidden" name="removePhoto" id="removePhotoInput" value="false" />
+
+        </div>
+
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" name="name" value="<%= user?.name || '' %>" required />
+        </div>
+
+       <div class="button-row">
+        <button type="button" id="saveBtn" class="save-btn">Save Changes</button>
+        <a href="/profile" class="cancel-btn">Cancel</a>
+        </div>
+
+        
+      </form>
+     <div id="cropModal" class="crop-modal">
+  <div class="crop-container">
+    <div class="crop-body">
+      <img id="cropImage" src="" />
+    </div>
+
+    <div class="crop-actions">
+      <button id="cropSave" class="btn-primary">Crop</button>
+      <button id="cancelCrop" class="btn-secondary">Cancel</button>
+    </div>
+  </div>
+</div>
+
+
+
+    </div>
+
+  </div>
+</section>
+
+<%- include("../partials/user/footer") %>
+<script src="/js/user/profileEdit.js"></script>

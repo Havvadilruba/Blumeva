@@ -1,0 +1,46 @@
+<%- include("../partials/user/header") %>
+
+<section class="profile-section">
+  <div class="profile-wrapper">
+
+    <%- include("../partials/user/sidebar", { activePage }) %>
+
+    <div class="profile-container edit-email-page">
+
+      <div class="header-section">
+        <h2>Verify Email</h2>
+      </div>
+
+      <p style="margin-top: 5px; color:#444; font-size:15px;">
+        Enter the 6-digit OTP sent to <strong><%= email %></strong>
+      </p>
+
+      <div class="otp-box">
+        <div class="otp-inputs">
+          <input type="text" maxlength="1" id="otp1" />
+          <input type="text" maxlength="1" id="otp2" />
+          <input type="text" maxlength="1" id="otp3" />
+          <input type="text" maxlength="1" id="otp4" />
+          <input type="text" maxlength="1" id="otp5" />
+          <input type="text" maxlength="1" id="otp6" />
+        </div>
+      </div>
+
+      <div class="button-row">
+        <button type="button" id="verifyOtpBtn" class="save-btn">Verify OTP</button>
+        <a href="/emailEdit" class="cancel-btn">Cancel</a>
+      </div>
+      <p class="resend-text">
+        Didn’t receive it? <span id="timer">01:00</span>
+        </p>
+      <p class="resend-text">
+        <span id="resendOtp" class="resend-link disabled">Resend OTP</span>
+        </p>
+
+    </div>
+
+  </div>
+</section>
+
+<%- include("../partials/user/footer") %>
+<script src="/js/user/emailVerify.js"></script>

@@ -1,0 +1,127 @@
+<%- include("../partials/user/header") %>
+
+<link rel="stylesheet" href="/style/user/manageAddress.css" />
+
+<section class="profile-section">
+  <div class="profile-wrapper">
+
+    <!-- Sidebar -->
+    <%- include("../partials/user/sidebar", { activePage }) %>
+
+    <!-- Main Content -->
+    <div class="profile-container">
+
+      <div class="header-section">
+        <h2>Manage Addresses</h2>
+        <a class="add-btn" id="openAddModalBtn">➕ Add New Address</a>
+      </div>
+
+      <p class="sub-text">Add, edit or delete your delivery addresses</p>
+
+      <div class="address-list">
+
+        <% if (addresses.length === 0) { %>
+          <p class="no-address">No addresses found. Please add one.</p>
+        <% } %>
+
+        <% addresses.forEach((address) => { %>
+          <div class="address-card">
+
+            <div class="address-title">
+              <strong><%= address.addressType %></strong>
+            </div>
+
+            <p><%= address.name %></p>
+            <p><%= address.street %></p>
+            <p><%= address.city %>, <%= address.state %> - <%= address.pincode %></p>
+            <p><%= address.country %></p>
+            <p class="phone">📞 <%= address.phone %></p>
+
+            <div class="address-actions">
+                <% if (!address.setDefault) { %>
+                    <button onclick="setDefault('<%= address._id %>')" class="default-btn">
+                    <i class="bi bi-check-circle"></i> Set as Default
+                    </button>
+                    <% } else { %>
+                    <span class="default-label"><i class="bi bi-star-fill"></i> Default</span>
+                    <% } %>
+                <div class="icons">
+                    <button onclick="openEditModal('<%= JSON.stringify(address) %>')" class="edit-icon">
+                    <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <button onclick="deleteAddress('<%= address._id %>')" class="delete-icon">
+                    <i class="bi bi-trash3"></i>
+                    </button>
+                </div>
+                </div>
+
+
+          </div>
+        <% }) %>
+
+      </div>
+
+    </div>
+  </div>
+</section>
+    <!-- ADD / EDIT ADDRESS MODAL -->
+<div class="modal-overlay" id="addressModal">
+  <div class="modal-box">
+    <div class="modal-header">
+        <h2 id="modalTitle">Add Address</h2>
+        <button class="close-btn" onclick="closeModal()">×</button>
+    </div>
+
+
+    <form id="addressForm">
+      <input type="hidden" id="addressId">
+
+      <label>Address Type</label>
+      <select id="addressType" required>
+        <option value="home">Home</option>
+        <option value="office">Office</option>
+        <option value="other">Other</option>
+      </select>
+
+      <label>Full Name</label>
+      <input type="text" id="fullName" required>
+
+      <label>Phone</label>
+      <input type="text" id="phone" required>
+
+      <label>Address Line 1</label>
+      <input type="text" id="address1" required>
+
+      <label>Address Line 2</label>
+      <input type="text" id="address2">
+
+      <label>City</label>
+      <input type="text" id="city" required>
+
+      <label>State</label>
+      <input type="text" id="state" required>
+
+      <label>Pincode</label>
+      <input type="text" id="pincode" required>
+
+      <label>Country</label>
+      <input type="text" id="country" value="India" readonly>
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="setDefault">
+        <label for="setDefault" class="default-check-label">Set as Default</label>
+      </div>
+
+
+      <div class="modal-buttons">
+        <button type="button" id="saveBtn" class="save-btn">Save</button>
+        <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+
+<%- include("../partials/user/footer") %>
+<script src="/js/user/manageAddress.js"></script>

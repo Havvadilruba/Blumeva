@@ -1,0 +1,53 @@
+.orders-page-container { padding: 24px; font-family: Arial, sans-serif; }
+
+.orders-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+.orders-header h1 { margin:0; font-size:26px; font-weight:600; }
+.subtitle-text { color:#666; margin:4px 0 0; }
+
+.btn-primary { padding:10px 18px; background:#007bff; border:none; color:white; border-radius:8px; cursor:pointer; font-size:14px; }
+.btn-primary:hover { background:#0056b3; }
+
+.stats-container { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:20px; }
+
+.stat-card { background:white; border-radius:12px; padding:18px; display:flex; align-items:center; gap:12px; }
+.stat-icon { font-size:30px; }
+.blue .stat-icon { color:#3b82f6; }
+.green .stat-icon { color:#10b981; }
+.orange .stat-icon { color:#f59e0b; }
+.red .stat-icon { color:#ef4444; }
+.purple .stat-icon { color:#8b5cf6; }
+
+.filters-section { display:flex; gap:10px; flex-wrap:wrap; background:white; padding:14px; border-radius:12px; margin-bottom:18px; }
+
+.search-box { position:relative; flex:1; }
+.search-box input{ width:100%; padding:10px 12px 10px 34px; border:1px solid #ddd; border-radius:6px; }
+.search-box i{ position:absolute; top:50%; left:10px; transform:translateY(-50%); color:#999; }
+
+.filters-section select { padding:10px 12px; border:1px solid #ddd; border-radius:6px; cursor:pointer; }
+
+.table-container { overflow-x:auto; background:white; border-radius:12px; }
+table { width:100%; border-collapse:collapse; }
+thead { background:#f8f9fa; }
+th, td { padding:14px; font-size:14px; border-bottom:1px solid #eee; }
+tbody tr:hover{ background:#fafafa; }
+
+.status-badge { padding:5px 12px; border-radius:16px; font-size:12px; font-weight:500; }
+.paid{ background:#d1fae5; color:#065f46; }
+.pending{ background:#fef3c7; color:#92400e; }
+.failed{ background:#fee2e2; color:#991b1b; }
+.refunded{ background:#ede9fe; color:#5b21b6; }
+
+.delivered{ background:#d1fae5; color:#065f46; }
+.shipped, .out-for-delivery{ background:#dbeafe; color:#1e40af; }
+.processing, .confirmed { background:#e0e7ff; color:#3730a3; }
+.cancelled { background:#fee2e2; color:#991b1b; }
+.returned{ background:#fed7aa; color:#9a3412; }
+
+.view-btn { color:#007bff; text-decoration:none; font-weight:600; }
+.view-btn:hover{ text-decoration:underline; }
+
+.empty-row { text-align:center; padding:28px; color:#777; }
+
+.pagination-wrapper { display:flex; gap:6px; margin-top:18px; justify-content:center; }
+.pagination-wrapper button { padding:8px 12px; border:1px solid #ccc; background:white; border-radius:6px; cursor:pointer; }
+.pagination-wrapper button.active { background:#007bff; color:white; border-color:#007bff; }

@@ -35,21 +35,23 @@ document.addEventListener("DOMContentLoaded", () => {
   let croppedFiles = [];
   let currentIndex = 0;
   let cropper;
+  let deletedVariantIds = [];
 
-  // 🗑 CROSS MARK DELETE (existing + new)
+
+  // 🗑 CROSS MARK DELETE 
   previewContainer.addEventListener("click", (e) => {
     if (e.target.classList.contains("delete-img-btn")) {
       const box = e.target.closest(".preview-box");
       const imgUrl = e.target.dataset.url; // will exist only for old images
 
-      // ✅ If existing image (has URL), mark for backend deletion
+      // If existing image (has URL), mark for backend deletion
       if (imgUrl) {
         deletedImages.push(imgUrl);
         deletedImagesInput.value = JSON.stringify(deletedImages);
         showToast("🗑 Existing image marked for deletion", "warning");
       }
 
-      // ✅ If new cropped image (no URL), remove from memory
+      //  If new cropped image (no URL), remove from memory
       const index = Array.from(previewContainer.children).indexOf(box);
       if (index >= 0 && !imgUrl) {
         croppedFiles.splice(index - deletedImages.length, 1);
@@ -60,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // ✂️ CROP NEW IMAGES
+  //  CROP NEW IMAGES
   imageInput.addEventListener("change", (e) => {
     cropQueue = Array.from(e.target.files);
     currentIndex = 0;
@@ -100,7 +102,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     croppedFiles.push(croppedFile);
 
-    // ✅ Add preview (with ❌)
+    // Add preview 
     const box = document.createElement("div");
     box.classList.add("preview-box");
     const img = document.createElement("img");
@@ -130,7 +132,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (currentIndex < cropQueue.length) openCropper();
   });
 
-  // ➕ ADD VARIANT
+  // ADD VARIANT
   addVariantBtn.addEventListener("click", () => {
     const row = document.createElement("div");
     row.classList.add("variant-row");
@@ -149,18 +151,26 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // 🗑 REMOVE VARIANT ROW
-  document.addEventListener("click", (e) => {
-    if (e.target.classList.contains("remove-variant")) {
-      e.target.closest(".variant-row").remove();
+ document.addEventListener("click", (e) => {
+  if (e.target.classList.contains("remove-variant")) {
+    const row = e.target.closest(".variant-row");
+
+    const id = row.querySelector("[name='variantIds']")?.value;
+    if (id) {
+      deletedVariantIds.push(id); // store variant id to delete in backend
     }
-  });
-  // 🚀 PATCH SUBMIT
+
+    row.remove();
+  }
+});
+
+  //  PATCH SUBMIT
 editForm.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const formData = new FormData(editForm);
 
-  // 🧩 Force all variant rows to be included, even empty ones
+  // Force all variant rows to be included, even empty ones
   const variantRows = document.querySelectorAll(".variant-row");
   formData.delete("quantityValue[]");
   formData.delete("quantityType[]");
@@ -169,20 +179,23 @@ editForm.addEventListener("submit", async (e) => {
   formData.delete("stock[]");
 
   variantRows.forEach((row) => {
-    const qVal = row.querySelector("[name='quantityValue[]']").value.trim();
-    const qType = row.querySelector("[name='quantityType[]']").value.trim();
-    const regP = row.querySelector("[name='regularPrice[]']").value.trim();
-    const saleP = row.querySelector("[name='salePrice[]']").value.trim();
-    const stock = row.querySelector("[name='stock[]']").value.trim();
+  const qVal = row.querySelector("[name='quantityValue[]']").value.trim();
+  const qType = row.querySelector("[name='quantityType[]']").value.trim();
+  const regP = row.querySelector("[name='regularPrice[]']").value.trim();
+  const saleP = row.querySelector("[name='salePrice[]']").value.trim();
+  const stock = row.querySelector("[name='stock[]']").value.trim();
+  const id = row.querySelector("[name='variantIds']")?.value;
 
-    // push even empty ones to keep array indexes aligned
-    formData.append("quantityValue[]", qVal);
-    formData.append("quantityType[]", qType);
-    formData.append("regularPrice[]", regP);
-    formData.append("salePrice[]", saleP);
-    formData.append("stock[]", stock);
-  });
+  formData.append("quantityValue[]", qVal);
+  formData.append("quantityType[]", qType);
+  formData.append("regularPrice[]", regP);
+  formData.append("salePrice[]", saleP);
+  formData.append("stock[]", stock);
+  formData.append("variantIds", id || "");
 
+});
+
+ formData.append("deletedVariantIds", JSON.stringify(deletedVariantIds));
   croppedFiles.forEach((f) => formData.append("images", f));
 
   submitBtn.disabled = true;
@@ -194,7 +207,7 @@ editForm.addEventListener("submit", async (e) => {
     });
 
     if (res.data.success) {
-      showToast("✅ Product updated successfully!", "success");
+      showToast("Product updated successfully!", "success");
       setTimeout(() => (window.location.href = res.data.redirectUrl), 1200);
     } else {
       const msg = Array.isArray(res.data.message)
@@ -203,7 +216,7 @@ editForm.addEventListener("submit", async (e) => {
       showToast(msg || "Update failed", "error");
     }
   } catch (err) {
-    console.error("❌ Update error:", err);
+    console.error(" Update error:", err);
     const msg = err.response?.data?.message?.[0] || "Server error";
     showToast(msg, "error");
   } finally {

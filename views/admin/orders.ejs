@@ -1,0 +1,176 @@
+<%- include('../partials/admin/sidebar') %>
+
+<div class="orders-page-container">
+
+  <!-- PAGE HEADER -->
+  <div class="orders-header">
+    <div>
+      <h1>Orders Management</h1>
+      <p class="subtitle-text">Track, filter, and manage all customer orders.</p>
+    </div>
+
+    <button class="btn-primary" onclick="exportOrders()">
+      <i class="bi bi-download"></i> Export Orders
+    </button>
+  </div>
+
+  <!-- STATS CARDS -->
+  <div class="stats-container">
+    <div class="stat-card blue">
+      <i class="bi bi-cart3 stat-icon"></i>
+      <div>
+        <p>Total Orders</p>
+        <h3><%= analytics.totalOrders %></h3>
+      </div>
+    </div>
+
+    <div class="stat-card green">
+      <i class="bi bi-check-circle stat-icon"></i>
+      <div>
+        <p>Active Orders</p>
+        <h3><%= analytics.activeOrders %></h3>
+      </div>
+    </div>
+
+    <div class="stat-card orange">
+      <i class="bi bi-arrow-return-left stat-icon"></i>
+      <div>
+        <p>Returned</p>
+        <h3><%= analytics.returnedOrders %></h3>
+      </div>
+    </div>
+
+    <div class="stat-card red">
+      <i class="bi bi-x-circle stat-icon"></i>
+      <div>
+        <p>Cancelled</p>
+        <h3><%= analytics.cancelledOrders %></h3>
+      </div>
+    </div>
+
+    <div class="stat-card purple">
+      <i class="bi bi-currency-rupee stat-icon"></i>
+      <div>
+        <p>Total Revenue</p>
+        <h3>₹<%= analytics.totalRevenue.toLocaleString("en-IN") %></h3>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filters-section">
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+      <input type="text" id="searchInput" placeholder="Search order ID, customer, or email..."
+        value="<%= searchQuery %>" onkeyup="handleSearch()" />
+    </div>
+
+    <select id="statusFilter" onchange="applyFilters()">
+      <option value="">All Status</option>
+      <% ["Pending","Confirmed","Processing","Shipped","Out for Delivery","Delivered","Cancelled","Returned"].forEach(st => { %>
+        <option value="<%= st %>" <%= statusFilter === st ? 'selected' : '' %>><%= st %></option>
+      <% }) %>
+    </select>
+
+    <select id="paymentStatusFilter" onchange="applyFilters()">
+      <option value="">Payment</option>
+      <% ["Pending","Paid","Failed","Refunded"].forEach(pay => { %>
+        <option value="<%= pay %>" <%= paymentStatusFilter === pay ? 'selected' : '' %>><%= pay %></option>
+      <% }) %>
+    </select>
+
+    <select id="sortFilter" onchange="applyFilters()">
+      <option value="recent" <%= sortFilter==='recent'?'selected':'' %>>Recent</option>
+      <option value="oldest" <%= sortFilter==='oldest'?'selected':'' %>>Oldest</option>
+      <option value="amount-high" <%= sortFilter==='amount-high'?'selected':'' %>>Amount High → Low</option>
+      <option value="amount-low" <%= sortFilter==='amount-low'?'selected':'' %>>Amount Low → High</option>
+    </select>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Order ID</th>
+          <th>Customer</th>
+          <th>Date</th>
+          <th>Items</th>
+          <th>Amount</th>
+          <th>Payment</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <% if(orders.length > 0){ %>
+          <% orders.forEach(order => { %>
+            <tr>
+              <td>#<%= order.orderId %></td>
+              <td>
+                <strong><%= order.userId?.name %></strong>
+                <div class="email-text"><%= order.userId?.email %></div>
+              </td>
+              <td><%= new Date(order.createdAt).toLocaleDateString() %></td>
+              <td><%= order.orderedItems.length %></td>
+              <td>₹<%= order.finalAmount %></td>
+
+              <td><span class="status-badge <%= order.paymentStatus.toLowerCase() %>">
+                  <%= order.paymentStatus %>
+                </span></td>
+
+              <td><span class="status-badge <%= order.orderStatus.toLowerCase().replaceAll(' ', '-') %>">
+                  <%= order.orderStatus %>
+                </span></td>
+
+              <td><a href="/admin/orders/<%= order._id %>" class="view-btn">View</a></td>
+            </tr>
+          <% }) %>
+        <% } else { %>
+          <tr><td colspan="8" class="empty-row">No orders found</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PAGINATION -->
+  <div class="pagination-wrapper">
+    <% if(currentPage > 1){ %>
+      <button onclick="changePage(<%= currentPage-1 %>)">Prev</button>
+    <% } %>
+
+    <% for(let i=1;i<=totalPages;i++){ %>
+      <button class="<%= currentPage===i?'active':'' %>" onclick="changePage(<%= i %>)"><%= i %></button>
+    <% } %>
+
+    <% if(currentPage < totalPages){ %>
+      <button onclick="changePage(<%= currentPage+1 %>)">Next</button>
+    <% } %>
+  </div>
+</div>
+
+<script>
+function changePage(p){ const url=new URL(location); url.searchParams.set("page",p); location=url; }
+function exportOrders(){ location="/admin/orders/export" }
+
+function applyFilters(){
+  const url = new URL(location);
+  url.searchParams.set("status", document.getElementById("statusFilter").value);
+  url.searchParams.set("paymentStatus", document.getElementById("paymentStatusFilter").value);
+  url.searchParams.set("sort", document.getElementById("sortFilter").value);
+  url.searchParams.set("page",1);
+  location = url;
+}
+
+let timer;
+function handleSearch(){
+  clearTimeout(timer);
+  timer=setTimeout(()=>{
+    const url=new URL(location);
+    const v=document.getElementById("searchInput").value;
+    v?url.searchParams.set("search",v):url.searchParams.delete("search");
+    url.searchParams.set("page",1); location=url;
+  },500);
+}
+</script>

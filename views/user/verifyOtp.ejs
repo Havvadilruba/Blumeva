@@ -20,12 +20,7 @@
 </p>
 <p class="email"><%= email %></p>
 
-<form
-  action="<%= isReset ? '/verify-reset' : '/verifyOtp' %>"
-  method="POST"
-  class="otp-form"
-  onsubmit="return validateOTPForm(event)"
->
+<form action="<%= isReset ? '/verify-reset' : '/verifyOtp' %>" method="POST" class="otp-form" onsubmit="return validateOTPForm(event)">
   <div class="otp-inputs">
     <input type="text" maxlength="1" id="otp1" />
     <input type="text" maxlength="1" id="otp2" />

@@ -1,0 +1,135 @@
+<%- include('../partials/user/header') %>
+<link rel="stylesheet" href="<%= pageCSS %>"/>
+
+<section class="profile-section">
+  <div class="profile-wrapper">
+
+    <!-- Sidebar -->
+    <%- include("../partials/user/sidebar", { activePage }) %>
+
+    <!-- Main Content -->
+    <div class="profile-container">
+
+      <div class="header-section">
+        <h2>Order Details</h2>
+        <a href="/orders" class="back-btn">← Back to Orders</a>
+      </div>
+
+      <!-- Order Summary -->
+      <div class="order-summary-card">
+        <h3><%= order.orderId %></h3>
+
+        <p><strong>Status:</strong>
+          <span class="order-status <%= order.orderStatus.toLowerCase() %>">
+            <%= order.orderStatus %>
+          </span>
+        </p>
+
+        <p><strong>Placed On:</strong> <%= order.createdAt.toDateString() %></p>
+        <p><strong>Payment:</strong> <%= order.paymentMethod.toUpperCase() %> ( <%= order.paymentStatus %> )</p>
+        <p><strong>Total Amount:</strong> ₹<%= order.finalAmount.toFixed(2) %></p>
+
+        <!-- Actions -->
+        <div class="action-buttons">
+          <% if(order.orderStatus === "Pending" || order.orderStatus === "Confirmed") { %>
+            <button class="cancel-btn" onclick="openCancelModal('<%= order.orderId %>')">Cancel Order</button>
+          <% } %>
+
+          <% if(order.orderStatus === "Delivered") { %>
+            <button class="return-btn" onclick="openReturnModal('<%= order.orderId %>')">Return</button>
+          <% } %>
+
+          <a href="/orders/<%= order.orderId %>/invoice" class="invoice-btn">Download Invoice</a>
+        </div>
+      </div>
+
+      <!-- Delivery Card -->
+      <div class="delivery-card">
+        <h3>Delivery Information</h3>
+
+        <% if(order.orderStatus === "Delivered") { %>
+          <p><strong>Delivered On:</strong> <%= order.statusTimeline.deliveredAt.toDateString() %></p>
+        <% } else { %>
+          <p><strong>Expected Delivery:</strong> <%= order.expectedDelivery?.toDateString() || "Not available" %></p>
+        <% } %>
+      </div>
+
+      <!-- Products Section -->
+      <div class="products-card">
+        <h3>Items in this order</h3>
+
+        <% order.orderedItems.forEach(item => { %>
+          <div class="product-row">
+
+            <img src="<%= item.productId.images[0] %>" class="product-thumb"/>
+
+            <div class="product-info">
+              <h4><%= item.productId.name %></h4>
+
+              <% if(item.variantId) { %>
+                <p><strong>Variant:</strong> <%= item.variantId.quantityValue %> <%= item.variantId.quantityType %></p>
+              <% } %>
+
+              <p><strong>Qty:</strong> <%= item.quantity %></p>
+              <p><strong>Price:</strong> ₹<%= item.price.toFixed(2) %></p>
+            </div>
+
+          </div>
+        <% }) %>
+      </div>
+
+      <!-- Shipping Section -->
+      <div class="shipping-card">
+        <h3>Shipping Address</h3>
+        <p><%= order.shippingAddress.fullName %></p>
+        <p><%= order.shippingAddress.address1 %> <%= order.shippingAddress.address2 %></p>
+        <p><%= order.shippingAddress.city %> - <%= order.shippingAddress.pincode %></p>
+        <p><%= order.shippingAddress.state %>, <%= order.shippingAddress.country %></p>
+        <p>📞 <%= order.shippingAddress.phone %></p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ================== CANCEL MODAL ================= -->
+<div class="modal-overlay" id="cancelModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Cancel Order</h2>
+      <button class="close-btn" onclick="closeCancelModal()">×</button>
+    </div>
+
+    <label>Reason (optional)</label>
+    <textarea id="cancelReason" placeholder="Tell us why you're cancelling..."></textarea>
+
+    <div class="modal-buttons">
+      <button class="save-btn" onclick="confirmCancel()">Confirm</button>
+      <button class="cancel-btn" onclick="closeCancelModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================== RETURN MODAL ================= -->
+<div class="modal-overlay" id="returnModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Return Order</h2>
+      <button class="close-btn" onclick="closeReturnModal()">×</button>
+    </div>
+
+    <label>Reason (required)</label>
+    <textarea id="returnReason" placeholder="Please provide a return reason..." required></textarea>
+
+    <div class="modal-buttons">
+      <button class="save-btn" onclick="confirmReturn()">Submit</button>
+      <button class="cancel-btn" onclick="closeReturnModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="/js/user/orderDetails.js"></script>
+
+<%- include('../partials/user/footer') %>
+

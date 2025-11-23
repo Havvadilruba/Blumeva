@@ -1,0 +1,285 @@
+<%- include('../partials/admin/sidebar') %>
+
+<div class="page-container" data-order-id="<%= order._id %>">
+
+  <!-- ================= HEADER ================= -->
+  <div class="page-header">
+    <div class="header-left">
+      <a href="/admin/orders" class="back-btn"><i class="bi bi-arrow-left"></i></a>
+      <div>
+        <h1>Order Details</h1>
+        <p class="subtitle">Order ID: <strong>#<%= order.orderId %></strong></p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-secondary" onclick="window.print()">
+        <i class="bi bi-printer"></i> Print
+      </button>
+      <button class="btn-primary" onclick="downloadInvoice()">
+        <i class="bi bi-download"></i> Invoice
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= GRID ================= -->
+  <div class="details-grid">
+
+    <!-- LEFT COLUMN -->
+    <div class="left-column">
+
+      <!-- ORDER STATUS -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Order Status</h3>
+
+          <% 
+            let statusClass = '';
+            if(order.orderStatus==='Delivered') statusClass='status-active';
+            else if(order.orderStatus==='Shipped' || order.orderStatus==='Out for Delivery') statusClass='status-shipping';
+            else if(order.orderStatus==='Pending') statusClass='status-pending';
+            else if(order.orderStatus==='Confirmed' || order.orderStatus==='Processing') statusClass='status-processing';
+            else if(order.orderStatus==='Cancelled') statusClass='status-cancelled';
+            else if(order.orderStatus==='Returned') statusClass='status-returned';
+          %>
+
+          <span class="status-badge <%= statusClass %>"><%= order.orderStatus %></span>
+        </div>
+
+        <div class="card-body">
+
+          <% if (!['Returned','Cancelled'].includes(order.orderStatus)) { %>
+          <label><i class="bi bi-arrow-repeat"></i> Update Status</label>
+          <div class="status-update">
+            <select id="statusSelect" class="form-select">
+              <option value="Pending">Pending</option>
+              <option value="Confirmed">Confirmed</option>
+              <option value="Processing">Processing</option>
+              <option value="Shipped">Shipped</option>
+              <option value="Out for Delivery">Out for Delivery</option>
+              <option value="Delivered">Delivered</option>
+              <option value="Cancelled">Cancelled</option>
+              <option value="Cancelled">Returned</option>
+            </select>
+            <button class="btn-primary" onclick="updateOrderStatus()">
+              <i class="bi bi-check-circle"></i> Update
+            </button>
+          </div>
+          <% } %>
+
+          <% if (order.orderStatus === 'ReturnRequested') { %>
+          <div class="return-actions-box">
+            <h4><i class="bi bi-arrow-return-left"></i> Return Requested</h4>
+            <p>The customer has requested a return on this order.</p>
+
+            <div class="action-buttons">
+              <button class="btn-secondary" onclick="handleReturn('reject')">
+                <i class="bi bi-x-circle"></i> Reject
+              </button>
+              <button class="btn-primary" onclick="handleReturn('approve')">
+                <i class="bi bi-check-circle"></i> Approve
+              </button>
+            </div>
+          </div>
+          <% } %>
+
+        </div>
+      </div>
+
+
+      <!-- ================= TIMELINE ================= -->
+      <div class="card">
+        <div class="card-header"><h3>Tracking Timeline</h3></div>
+
+        <div class="card-body timeline">
+
+          <!-- ORDER PLACED -->
+          <div class="timeline-item completed">
+            <div class="timeline-dot"><i class="bi bi-bag-check-fill"></i></div>
+            <div class="timeline-content">
+              <div class="timeline-title">Order Placed</div>
+              <div class="timeline-date"><%= order.createdAt.toLocaleString() %></div>
+            </div>
+          </div>
+
+          <% if (order.statusTimeline?.confirmedAt) { %>
+          <div class="timeline-item completed">
+            <div class="timeline-dot"><i class="bi bi-check-circle-fill"></i></div>
+            <div class="timeline-content">
+              <div class="timeline-title">Confirmed</div>
+              <div class="timeline-date"><%= order.statusTimeline.confirmedAt.toLocaleString() %></div>
+            </div>
+          </div>
+          <% } %>
+
+          <% if(order.statusTimeline?.processedAt){ %>
+          <div class="timeline-item completed">
+            <div class="timeline-dot"><i class="bi bi-gear-fill"></i></div>
+            <div class="timeline-content">
+              <div class="timeline-title">Processing</div>
+              <div class="timeline-date"><%= order.statusTimeline.processedAt.toLocaleString() %></div>
+            </div>
+          </div>
+          <% } %>
+
+          <% if(order.statusTimeline?.shippedAt){ %>
+          <div class="timeline-item completed">
+            <div class="timeline-dot"><i class="bi bi-truck"></i></div>
+            <div class="timeline-content">
+              <div class="timeline-title">Shipped</div>
+              <div class="timeline-date"><%= order.statusTimeline.shippedAt.toLocaleString() %></div>
+            </div>
+          </div>
+          <% } %>
+
+          <% if(order.statusTimeline?.outForDeliveryAt){ %>
+          <div class="timeline-item completed">
+            <div class="timeline-dot"><i class="bi bi-box-seam"></i></div>
+            <div class="timeline-content">
+              <div class="timeline-title">Out For Delivery</div>
+              <div class="timeline-date"><%= order.statusTimeline.outForDeliveryAt.toLocaleString() %></div>
+            </div>
+          </div>
+          <% } %>
+
+          <% if(order.statusTimeline?.deliveredAt){ %>
+          <div class="timeline-item completed">
+            <div class="timeline-dot"><i class="bi bi-house-check-fill"></i></div>
+            <div class="timeline-content">
+              <div class="timeline-title">Delivered</div>
+              <div class="timeline-date"><%= order.statusTimeline.deliveredAt.toLocaleString() %></div>
+            </div>
+          </div>
+          <% } %>
+
+          <% if(order.orderStatus==='Returned'){ %>
+          <div class="timeline-item completed returned">
+            <div class="timeline-dot"><i class="bi bi-arrow-return-left"></i></div>
+            <div class="timeline-content">
+              <div class="timeline-title">Returned</div>
+            </div>
+          </div>
+          <% } %>
+
+        </div>
+      </div>
+
+
+      <!-- ITEMS -->
+      <div class="card">
+  <div class="card-header">
+    <h3>Ordered Items (<%= order.orderedItems.length %>)</h3>
+  </div>
+
+  <div class="card-body items-list">
+    <% order.orderedItems.forEach(item => { %>
+    <div class="item-card">
+
+      <div class="item-image">
+        <img 
+          src="<%= item.productId?.images?.[0] || '/images/noimg.png' %>"
+          alt="Product"
+        />
+      </div>
+
+      <div class="item-details">
+        <div class="item-name"><i class="bi bi-box"></i> <%= item.productId?.name %></div>
+
+        <p><i class="bi bi-sliders2"></i> <%= item.variantId?.quantityValue %> <%= item.variantId?.quantityType %></p>
+
+        <p><i class="bi bi-cart-check"></i> Qty: <%= item.quantity %></p>
+      </div>
+
+      <div class="item-price">
+        ₹<%= (item.price * item.quantity).toLocaleString('en-IN') %>
+        <div class="price-per-unit">
+          <small>₹<%= item.price.toLocaleString('en-IN') %> each</small>
+        </div>
+      </div>
+
+    </div>
+    <% }) %>
+  </div>
+</div>
+
+    </div>
+
+
+    <!-- ================= RIGHT COLUMN ================= -->
+    <div class="right-column">
+
+      <!-- CUSTOMER -->
+      <div class="card">
+        <div class="card-header"><h3>Customer</h3></div>
+        <div class="card-body">
+          <p><i class="bi bi-person-circle"></i> <strong><%= order.userId?.name %></strong></p>
+          <p><i class="bi bi-envelope-at"></i> <%= order.userId?.email %></p>
+        </div>
+      </div>
+
+      <!-- ADDRESS -->
+      <div class="card">
+        <div class="card-header"><h3>Shipping</h3></div>
+        <div class="card-body">
+          <p><i class="bi bi-geo-alt-fill"></i> <%= order.shippingAddress.fullName %></p>
+          <p><%= order.shippingAddress.address1 %></p>
+          <p><%= order.shippingAddress.city %>, <%= order.shippingAddress.state %> - <%= order.shippingAddress.pincode %></p>
+          <p><i class="bi bi-telephone-fill"></i> <%= order.shippingAddress.phone %></p>
+        </div>
+      </div>
+
+      <!-- PAYMENT -->
+      <div class="card">
+        <div class="card-header"><h3>Payment</h3></div>
+        <div class="card-body">
+
+          <p><strong>Method:</strong> <i class="bi bi-credit-card-2-front"></i> <%= order.paymentMethod %></p>
+          <p><strong>Status:</strong> <span class="status-badge"><%= order.paymentStatus %></span></p>
+
+          <label><i class="bi bi-cash-coin"></i> Update Payment</label>
+          <div class="status-update">
+            <select id="paymentStatusSelect" class="form-select">
+              <option value="Pending">Pending</option>
+              <option value="Paid">Paid</option>
+              <option value="Failed">Failed</option>
+              <option value="Refunded">Refunded</option>
+            </select>
+            <button class="btn-primary" onclick="updatePaymentStatus()">
+              <i class="bi bi-check-circle"></i> Update
+            </button>
+          </div>
+
+          <hr>
+
+          <p><strong>Subtotal:</strong> ₹<%= order.subtotal %></p>
+          <p><strong>Discount:</strong> ₹<%= order.discount %></p>
+          <p><strong>Delivery:</strong> ₹<%= order.deliveryCharge %></p>
+          <h3>Total: ₹<%= order.finalAmount %></h3>
+        </div>
+      </div>
+      <!-- DELIVERY INFO -->
+<div class="card">
+  <div class="card-header">
+    <h3>Delivery</h3>
+  </div>
+  <div class="card-body">
+    <p><strong>Expected Delivery:</strong>
+      <%= order.expectedDelivery ? order.expectedDelivery.toLocaleDateString() : "Not assigned yet" %>
+    </p>
+
+    <% if (order.deliveredDate) { %>
+    <p><strong>Delivered On:</strong>
+      <%= order.deliveredDate.toLocaleDateString() %>
+    </p>
+    <% } %>
+  </div>
+</div>
+
+    </div>
+
+  </div>
+</div>
+
+<script src="/js/admin/orderDetails.js"></script>
+
+

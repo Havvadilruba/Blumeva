@@ -1,0 +1,56 @@
+<%- include("../partials/user/header") %>
+
+<section class="profile-section">
+  <div class="profile-wrapper">
+
+    <!-- include sidebar -->
+    <%- include("../partials/user/sidebar", { activePage }) %>
+
+    <div class="profile-container">
+      <div class="header-section">
+        <h2>Personal Information</h2>
+        <a href="/profileEdit" class="edit-btn">Edit Info</a>
+      </div>
+
+      <div class="profile-content">
+        <div class="avatar-large">
+          <img src="<%= user?.profileImage || '/images/default-avatar.png' %>" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" value="<%= user?.name || '' %>" disabled />
+      </div>
+
+      <div class="form-group">
+        <label>Email</label>
+        <input type="text" value="<%= user?.email || '' %>" disabled />
+
+        <!-- EMAIL ACTION SECTION -->
+        <% if (!user?.googleId) { %>
+          <div class="edit-email">
+            <a href="/emailEdit" class="edit-email-btn">Edit Email</a>
+          </div>
+        <% } else { %>
+          <p class="google-warning">Email is managed by Google</p>
+        <% } %>
+      </div>
+
+      <hr class="divider"/>
+
+      <!-- CHANGE PASSWORD SECTION -->
+      <% if (!user?.googleId) { %>
+        <div class="change-password">
+          <a href="/change-password" class="change-btn">Change Password</a>
+        </div>
+      <% } else { %>
+        <p class="google-warning">Password is managed by Google</p>
+      <% } %>
+
+    </div>
+  </div>
+</section>
+
+<%- include("../partials/user/footer") %>
+

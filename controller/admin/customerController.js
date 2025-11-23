@@ -20,7 +20,7 @@ const customerInfo = async (req, res) => {
 
     const customers = await User.find(filter)
       .collation({ locale: "en", strength: 2 }) 
-      .sort({ name: 1 })
+      .sort({ createdAt:-1})
       .skip((page - 1) * limit)
       .limit(limit)
       .lean();

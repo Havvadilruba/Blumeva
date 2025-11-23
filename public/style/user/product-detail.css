@@ -41,7 +41,7 @@ body {
   border: 1px solid #ddd;
   border-radius: 10px;
   background: #fff;
-  overflow: hidden;
+  overflow:hidden;
 }
 
 .main-image-box img {
@@ -131,47 +131,76 @@ body {
 }
 
 .stock { margin-bottom: 10px; }
-.in-stock { color: #d9534f; font-weight: 500; }
+.out-stock-msg {
+  background: #ffe6e6;
+  color: #d32f2f;
+  font-weight: 600;
+  padding: 10px 15px;
+  border-radius: 6px;
+  border-left: 4px solid #d32f2f;
+  margin-bottom: 10px;
+}
 
+.low-stock-msg {
+  background: #fff4e5;
+  color: #e67e22;
+  font-weight: 600;
+  padding: 10px 15px;
+  border-radius: 6px;
+  border-left: 4px solid #e67e22;
+  margin-bottom: 10px;
+}
+
+.in-stock-msg {
+  background: #e8f5e9;
+  color: #2e7d32;
+  font-weight: 600;
+  padding: 10px 15px;
+  border-radius: 6px;
+  border-left: 4px solid #2e7d32;
+  margin-bottom: 10px;
+}
+
+/* Variant badge styling */
 .variant-badges {
-  margin-top: 10px;
+  margin-top: 15px;
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-}
-.variant-badge {
-  background: #e3f2fd;
-  color: #007bff;
-  font-weight: 500;
-  padding: 5px 10px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-}
-
-.quantity-selector {
-  display: flex;
-  align-items: center;
   gap: 10px;
-  margin: 15px 0;
-}
-.quantity-selector button {
-  width: 32px;
-  height: 32px;
-  background: #f0f4ff;
-  border: 1px solid #cfd9f2;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-}
-.quantity-selector input {
-  width: 50px;
-  text-align: center;
-  border: 1px solid #cfd9f2;
-  border-radius: 6px;
-  padding: 5px;
 }
 
-.actions { margin-bottom: 20px; }
+.variant-badge {
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  background: #eef5ff;
+  border-radius: 25px;
+  border: 2px solid #90caf9;
+  font-weight: 600;
+  color: #1976d2;
+  cursor: pointer;
+  transition: 0.25s ease-in-out;
+}
+
+.variant-badge:hover {
+  background: #d6eaff;
+  transform: translateY(-2px);
+}
+
+.variant-badge.active {
+  background: #1976d2;
+  color: #fff;
+  border-color: #0d47a1;
+}
+
+/* Space between variants and buy section */
+.spacer {
+  height: 18px;
+}
+
+.actions {
+  margin-top: 10px;
+}
+
 .add-cart {
   background: #007bff;
   color: #fff;

@@ -148,14 +148,14 @@ const resendOtp = async (req, res) => {
     const otp = generateOtp();
     req.session.userOtp = otp;
     req.session.userOtpTime = Date.now()
-
+    console.log(otp)
     const emailSent = await sendVerificationEmail(email, otp);
     if (!emailSent) {
       return res.status(500).json({ 
         success: false, 
         message: "Failed to resend OTP" });
     }
-
+    
     res.status(200).json({ 
       success: true, 
       message: "OTP resent successfully" });
@@ -208,12 +208,7 @@ const login = async (req, res) => {
     success: false,
      message: "Incorrect password" });
 
-    req.session.user = {
-      id: user._id,
-      username: user.username,
-      email: user.email,
-      role: "user",
-    };
+    req.session.user = { _id: user._id };
 
     return res.status(200).json({
       success: true,
@@ -232,20 +227,12 @@ const login = async (req, res) => {
 const googleLogin = (req, res) => {
   try {
     if (req.user) {
-      req.session.user = {
-        id: req.user._id,
-        username: req.user.name, 
-        email: req.user.email,
-        role: "user",
-      };
-
-      console.log("Google login:", req.user.email);
+      req.session.user = { _id: req.user._id };
       return res.redirect("/");
-    } else {
-      return res.redirect("/signup");
     }
+    return res.redirect("/signup");
   } catch (error) {
-    console.error("error:", error);
+    console.error("Google Login Error:", error);
     return res.redirect("/signup");
   }
 };
@@ -411,13 +398,15 @@ const saveNewPassword = async (req, res) => {
 
 const logout = (req, res) => {
   try {
-    delete req.session.user; 
-    res.redirect("/login");
+    req.session.destroy(() => {
+      res.redirect("/login");
+    });
   } catch (error) {
     console.error("Logout Error:", error);
     res.redirect("/");
   }
 };
+
 
 
 

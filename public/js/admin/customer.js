@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     debounceTimer = setTimeout(() => {
         console.log("Searching for:", searchInput.value);
-      searchForm.requestSubmit();
+      searchForm.submit();
     }, 400);
   });
 }
@@ -21,7 +21,7 @@ if (clearSearch) {
   clearSearch.addEventListener("click", (e) => {
     e.preventDefault();
     searchInput.value = "";
-    window.location.href = "/admin/costumers";
+    window.location.href = "/admin/customers";
   });
 }
 

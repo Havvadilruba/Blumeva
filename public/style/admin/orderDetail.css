@@ -1,0 +1,393 @@
+/* ===============================
+   ORDER DETAILS PAGE STYLES
+=============================== */
+body {
+  background: #f5f7fb;
+  font-family: "Poppins", sans-serif;
+}
+
+.order-details-page {
+  padding: 25px;
+}
+
+/* Page Header */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 25px;
+}
+
+.page-header h1 {
+  font-size: 28px;
+  margin-bottom: 4px;
+  color: #111;
+}
+
+.page-header p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.btn-back {
+  padding: 8px 14px;
+  background: #e5e7eb;
+  border-radius: 8px;
+  text-decoration: none;
+  color: #111;
+  font-weight: 500;
+  border: 1px solid #d4d4d8;
+}
+
+.header-actions button {
+  margin-left: 10px;
+}
+
+/* Buttons */
+button,
+.btn-primary,
+.btn-secondary {
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-primary {
+  background: #0066ff;
+  color: white;
+}
+
+.btn-secondary {
+  background: #e5e7eb;
+  color: #111;
+}
+
+/* Cards */
+.card {
+  background: white;
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 18px;
+  box-shadow: rgba(149, 157, 165, 0.15) 0px 4px 10px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.card-header h3 {
+  margin: 0;
+  font-size: 20px;
+  color: #111;
+}
+
+.status-badge {
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  background: #e5e7eb;
+  color: #111;
+}
+
+/* Grid 2 columns */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+/* Items */
+.item-row {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+  padding: 12px 0;
+}
+
+.item-row:last-child {
+  border-bottom: none;
+}
+
+.item-image img {
+  width: 75px;
+  height: 75px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.item-info {
+  flex: 1;
+  padding-left: 15px;
+}
+
+.item-info h4 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.item-price {
+  text-align: right;
+  min-width: 120px;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.item-price p {
+  margin: 0;
+  font-size: 13px;
+  color: #666;
+}
+
+/* Inputs */
+.form-select {
+  width: 200px;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #d4d4d8;
+}
+
+
+/* ==============================
+   PAGE LAYOUT
+============================== */
+.page-container {
+  padding: 25px;
+  background: #f5f7fb;
+  min-height: 100vh;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 25px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.back-btn {
+  font-size: 22px;
+  padding: 10px 14px;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #d4dbe5;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s;
+}
+.back-btn:hover {
+  background: #eaeef5;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #666;
+}
+
+/* ==============================
+   GRID
+============================== */
+.details-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+
+.left-column, .right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ==============================
+   CARD
+============================== */
+.card {
+  background: white;
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.06);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.card-header h3 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.card-body {
+  font-size: 15px;
+}
+
+/* ==============================
+   BUTTONS
+============================== */
+.btn-primary {
+  background: #0066ff;
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+.btn-primary:hover {
+  background: #0051d4;
+}
+
+.btn-secondary {
+  background: #fff;
+  border: 1px solid #d4dbe5;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.btn-secondary:hover {
+  background: #efefef;
+}
+
+/* ==============================
+   SELECT / FORM
+============================== */
+.form-select {
+  padding: 8px 10px;
+  border: 1px solid #d4dbe5;
+  border-radius: 6px;
+  width: 180px;
+  margin-right: 10px;
+}
+
+/* ==============================
+   STATUS BADGES
+============================== */
+.status-badge {
+  padding: 5px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 20px;
+  color: #fff;
+}
+
+.status-pending { background:#f59e0b; }
+.status-processing { background:#6366f1; }
+.status-shipping { background:#0284c7; }
+.status-active { background:#16a34a; }
+.status-returned { background:#374151; }
+.status-cancelled { background:#dc2626; }
+.status-warning { background:#fbbf24; color:#000; }
+.status-info { background:#3b82f6; }
+.status-blocked { background:#444; }
+
+/* ==============================
+   TIMELINE
+============================== */
+.timeline {
+  position: relative;
+  border-left: 3px solid #d8dee9;
+  padding-left: 20px;
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 18px;
+  padding-left: 12px;
+}
+
+.timeline-dot {
+  position: absolute;
+  left: -11px;
+  top: 5px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #9ca3af;
+  border: 3px solid #9ca3af;
+}
+
+.timeline-item.completed .timeline-dot {
+  background: #16a34a;
+  border-color:#16a34a;
+}
+
+.timeline-title {
+  font-weight: 600;
+  color: #111;
+}
+
+.timeline-date {
+  font-size: 13px;
+  color: #666;
+}
+
+/* ==============================
+   ITEM LIST STYLING
+============================== */
+.items-list .item-card {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  align-items: center;
+}
+
+.item-image img {
+  width: 65px;
+  height: 65px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.item-details {
+  flex: 1;
+  padding-left: 12px;
+}
+
+.item-name {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.item-price {
+  font-size: 16px;
+  font-weight: 700;
+  min-width: 90px;
+  text-align: right;
+}
+
+/* Global spacing between texts */
+.card-body p,
+.card-body div,
+.card-body h4,
+.card-body span,
+.item-details p,
+.item-details div {
+  margin-bottom: 8px;   /* adjust as needed (8–12px looks good) */
+}
+
+/* Remove last unnecessary gap */
+.card-body p:last-child,
+.item-details p:last-child,
+.card-body div:last-child {
+  margin-bottom: 0;
+}
