@@ -1,0 +1,214 @@
+<div class="track-order-container">
+  <!-- Back Button -->
+  <div class="back-button">
+    <a href="/order/details/<%= order._id %>">&larr; Back to Order Details</a>
+  </div>
+
+  <div class="track-wrapper">
+    <!-- Order Header -->
+    <div class="track-card">
+      <div class="track-header">
+        <div>
+          <h1>Track Order #<%= order.orderId %></h1>
+          <p><%= order.orderedItems.length %> item<%= order.orderedItems.length > 1 ? 's' : '' %> • 
+             ₹<%= order.finalAmount.toLocaleString('en-IN') %></p>
+        </div>
+        <span class="status-badge <%= getStatusClass(order.orderStatus) %>">
+          <%= order.orderStatus %>
+        </span>
+      </div>
+    </div>
+
+    <!-- Tracking Timeline -->
+    <div class="track-card">
+      <h2>Order Timeline</h2>
+
+      <div class="timeline">
+        <!-- Timeline Line -->
+        <div class="timeline-line"></div>
+        <div class="timeline-line-progress" style="height: <%= getProgressHeight(order.orderStatus) %>%"></div>
+
+        <!-- Order Placed -->
+        <div class="timeline-item active">
+          <div class="timeline-icon">✓</div>
+          <div class="timeline-content">
+            <h3>Order Placed</h3>
+            <p>Your order has been placed successfully</p>
+            <small><%= new Date(order.createdAt).toLocaleString('en-IN', { 
+              day: 'numeric', month: 'short', year: 'numeric', 
+              hour: '2-digit', minute: '2-digit' 
+            }) %></small>
+          </div>
+        </div>
+
+        <!-- Order Confirmed -->
+        <div class="timeline-item <%= ['Confirmed', 'Processing', 'Shipped', 'Out for Delivery', 'Delivered'].includes(order.orderStatus) ? 'active' : '' %>">
+          <div class="timeline-icon">
+            <%= ['Confirmed', 'Processing', 'Shipped', 'Out for Delivery', 'Delivered'].includes(order.orderStatus) ? '✓' : '○' %>
+          </div>
+          <div class="timeline-content">
+            <h3>Order Confirmed</h3>
+            <p>Your order has been confirmed</p>
+            <% if (order.statusTimeline?.confirmedAt) { %>
+              <small><%= new Date(order.statusTimeline.confirmedAt).toLocaleString('en-IN', { 
+                day: 'numeric', month: 'short', year: 'numeric', 
+                hour: '2-digit', minute: '2-digit' 
+              }) %></small>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Processing -->
+        <div class="timeline-item <%= ['Processing', 'Shipped', 'Out for Delivery', 'Delivered'].includes(order.orderStatus) ? 'active' : '' %>">
+          <div class="timeline-icon">
+            <%= ['Processing', 'Shipped', 'Out for Delivery', 'Delivered'].includes(order.orderStatus) ? '✓' : '○' %>
+          </div>
+          <div class="timeline-content">
+            <h3>Processing</h3>
+            <p>We're preparing your items</p>
+            <% if (order.statusTimeline?.processedAt) { %>
+              <small><%= new Date(order.statusTimeline.processedAt).toLocaleString('en-IN', { 
+                day: 'numeric', month: 'short', year: 'numeric', 
+                hour: '2-digit', minute: '2-digit' 
+              }) %></small>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Shipped -->
+        <div class="timeline-item <%= ['Shipped', 'Out for Delivery', 'Delivered'].includes(order.orderStatus) ? 'active' : '' %>">
+          <div class="timeline-icon">
+            <%= ['Shipped', 'Out for Delivery', 'Delivered'].includes(order.orderStatus) ? '✓' : '○' %>
+          </div>
+          <div class="timeline-content">
+            <h3>Shipped</h3>
+            <p>Your order is on the way</p>
+            <% if (order.statusTimeline?.shippedAt) { %>
+              <small><%= new Date(order.statusTimeline.shippedAt).toLocaleString('en-IN', { 
+                day: 'numeric', month: 'short', year: 'numeric', 
+                hour: '2-digit', minute: '2-digit' 
+              }) %></small>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Out for Delivery -->
+        <div class="timeline-item <%= ['Out for Delivery', 'Delivered'].includes(order.orderStatus) ? 'active' : '' %>">
+          <div class="timeline-icon">
+            <%= ['Out for Delivery', 'Delivered'].includes(order.orderStatus) ? '✓' : '○' %>
+          </div>
+          <div class="timeline-content">
+            <h3>Out for Delivery</h3>
+            <p>Your order is out for delivery</p>
+            <% if (order.statusTimeline?.outForDeliveryAt) { %>
+              <small><%= new Date(order.statusTimeline.outForDeliveryAt).toLocaleString('en-IN', { 
+                day: 'numeric', month: 'short', year: 'numeric', 
+                hour: '2-digit', minute: '2-digit' 
+              }) %></small>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Delivered -->
+        <div class="timeline-item <%= ['Delivered', 'Partially Delivered'].includes(order.orderStatus) ? 'active completed' : '' %>">
+          <div class="timeline-icon">
+            <%= ['Delivered', 'Partially Delivered'].includes(order.orderStatus) ? '✓' : '○' %>
+          </div>
+          <div class="timeline-content">
+            <h3>Delivered</h3>
+            <% if (order.orderStatus === 'Delivered') { %>
+              <p>Your order has been delivered successfully</p>
+            <% } else if (order.orderStatus === 'Partially Delivered') { %>
+              <p>Some items have been delivered</p>
+            <% } else if (order.expectedDelivery) { %>
+              <p>Expected by <%= new Date(order.expectedDelivery).toLocaleDateString('en-IN', { 
+                day: 'numeric', month: 'short', year: 'numeric' 
+              }) %></p>
+            <% } else { %>
+              <p>Your order will be delivered soon</p>
+            <% } %>
+            <% if (order.statusTimeline?.deliveredAt) { %>
+              <small><%= new Date(order.statusTimeline.deliveredAt).toLocaleString('en-IN', { 
+                day: 'numeric', month: 'short', year: 'numeric', 
+                hour: '2-digit', minute: '2-digit' 
+              }) %></small>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Order Items -->
+    <div class="track-card">
+      <h2>Items in this Order</h2>
+      <div class="track-items">
+        <% order.orderedItems.forEach(function(item) { %>
+          <div class="track-item">
+            <img src="<%= item.productId.images[0] %>" alt="<%= item.productId.name %>">
+            <div class="track-item-info">
+              <div class="track-item-header">
+                <h4><%= item.productId.name %></h4>
+                <span class="item-status-badge <%= getItemStatusClass(item.itemStatus) %>">
+                  <%= item.itemStatus.replace(/([A-Z])/g, ' $1').trim() %>
+                </span>
+              </div>
+              <p>Quantity: <%= item.quantity %></p>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+
+    <!-- Shipping Address -->
+    <div class="track-card">
+      <h2>📍 Delivery Address</h2>
+      <div class="address-box">
+        <p class="address-name"><%= order.shippingAddress.fullName %></p>
+        <p class="address-text">
+          <%= order.shippingAddress.address1 %><br>
+          <% if (order.shippingAddress.address2) { %>
+            <%= order.shippingAddress.address2 %><br>
+          <% } %>
+          <%= order.shippingAddress.city %>, <%= order.shippingAddress.state %> - <%= order.shippingAddress.pincode %><br>
+          <%= order.shippingAddress.country %>
+        </p>
+        <p class="address-phone">📞 <%= order.shippingAddress.phone %></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%
+function getStatusClass(status) {
+  const statusClasses = {
+    'Pending': 'status-pending',
+    'Confirmed': 'status-confirmed',
+    'Processing': 'status-processing',
+    'Shipped': 'status-shipped',
+    'Out for Delivery': 'status-delivery',
+    'Delivered': 'status-delivered',
+    'Cancelled': 'status-cancelled',
+    'Returned': 'status-returned'
+  };
+  return statusClasses[status] || 'status-default';
+}
+
+function getItemStatusClass(status) {
+  return getStatusClass(status);
+}
+
+function getProgressHeight(status) {
+  const progress = {
+    'Pending': 0,
+    'Confirmed': 20,
+    'Processing': 40,
+    'Shipped': 60,
+    'Out for Delivery': 80,
+    'Delivered': 100,
+    'Partially Delivered': 100
+  };
+  return progress[status] || 0;
+}
+%>
+
+<link rel="stylesheet" href="/css/user/trackOrder.css">

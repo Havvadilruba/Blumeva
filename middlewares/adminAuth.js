@@ -36,5 +36,3 @@ const checkAdmin = async (req, res, next) => {
 };
 
 export { adminAuth, checkAdmin };
-
-

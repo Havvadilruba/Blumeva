@@ -63,5 +63,3 @@ console.log("🛑 USER AUTH RUNNING");
 
 
 export { userAuth, checkUser };
-
-

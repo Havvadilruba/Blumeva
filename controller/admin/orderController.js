@@ -1,100 +1,106 @@
 import Order from "../../model/orderSchema.js";
 import User from "../../model/userSchema.js";
+import Variant from "../../model/variantSchema.js";
 
 const loadOrders = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = 10; // Orders per page
+    const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    // Filters
-    const search = req.query.search?.trim() || "";
+    const search = req.query.search || "";
     const statusFilter = req.query.status || "";
-    const paymentStatusFilter = req.query.paymentStatus || "";
-    const sortFilter = req.query.sort || "recent";
-
+    const sortBy = req.query.sortBy || "createdAt";
+    const paymentFilter = req.query.payment || "";  
+    const sortOrder = req.query.sortOrder === "asc" ? 1 : -1;
     let query = {};
 
-    // Search by orderId / userName / email
     if (search) {
+      const users = await User.find({
+        $or: [
+          { name: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
+        ],
+      }).select("_id");
+
+      const userIds = users.map((u) => u._id);
+
       query.$or = [
         { orderId: { $regex: search, $options: "i" } },
-        { "userId.name": { $regex: search, $options: "i" } },
-        { "userId.email": { $regex: search, $options: "i" } }
+        { userId: { $in: userIds } },
       ];
     }
 
-    if (statusFilter) query.orderStatus = statusFilter;
-    if (paymentStatusFilter) query.paymentStatus = paymentStatusFilter;
-
-    // Sorting
-    let sort = {};
-    if (sortFilter === "recent") sort = { createdAt: -1 };
-    else if (sortFilter === "oldest") sort = { createdAt: 1 };
-    else if (sortFilter === "amount-high") sort = { finalAmount: -1 };
-    else if (sortFilter === "amount-low") sort = { finalAmount: 1 };
-
-    // Orders Data with pagination
+    if (statusFilter) {
+      query.orderStatus = statusFilter;
+    }
+    if (paymentFilter) query.paymentMethod = paymentFilter;
+    
     const orders = await Order.find(query)
       .populate("userId", "name email")
-      .sort(sort)
+      .sort({ [sortBy]: sortOrder })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
 
     const totalOrders = await Order.countDocuments(query);
     const totalPages = Math.ceil(totalOrders / limit);
 
-    // Analytics from DB
-    const allOrders = await Order.find();
-    const analytics = {
-      totalOrders: await Order.countDocuments(),
-      activeOrders: await Order.countDocuments({ orderStatus: { $nin: ["Delivered", "Cancelled", "Returned"] } }),
-      returnedOrders: await Order.countDocuments({ orderStatus: "Returned" }),
-      cancelledOrders: await Order.countDocuments({ orderStatus: "Cancelled" }),
-      totalRevenue: allOrders.reduce((sum, o) => sum + (o.paymentStatus === "Paid" ? o.finalAmount : 0), 0),
-    };
-
     res.render("admin/orders", {
-        layout: "layouts/admin",
-      title: "Orders",
+      layout: "layouts/admin",
+      title: "Orders | Admin",
       pageCSS: "orders",
       activePage: "orders",
       orders,
-      analytics,
       currentPage: page,
       totalPages,
-      limit,
       totalOrders,
-
-      // keep filter states
+      search,
+      paymentFilter,  
       statusFilter,
-      paymentStatusFilter,
-      sortFilter,
-      searchQuery: search,
+      sortBy,
+      sortOrder: req.query.sortOrder || "desc",
+      limit,
     });
-
-  } catch (error) {
-    console.log("Load Orders Error:", error);
-    res.status(500).send("Internal Server Error");
+  } catch (err) {
+    console.error("Load orders error:", err);
+    res.redirect("/admin/pageNotFound");
   }
 };
 
- const loadOrderDetails = async (req, res) => {
-  const id = req.params.id;
+const loadOrderDetail = async (req, res) => {
+  try {
+    const { id } = req.params;
 
-  const order = await Order.findById(id)
-    .populate("userId")
-    .populate("orderedItems.productId")
-    .populate("orderedItems.variantId");
+    const order = await Order.findById(id)
+      .populate("userId", "name email phone")
+      .populate({
+        path: "orderedItems.productId",
+        model: "Product",
+      })
+      .populate({
+        path: "orderedItems.variantId",
+        model: "Variant",
+      })
+      .lean();
 
-  res.render("admin/orderDetails", {
-    layout: "layouts/admin",
-      title: "OrderDetails",
+    if (!order) {
+      return res.redirect("/admin/pageNotFound");
+    }
+
+    res.render("admin/orderDetails", {
+      layout: "layouts/admin",
+      title: `Order ${order.orderId} | Admin`,
       pageCSS: "orderDetail",
       activePage: "orders",
-    order
-  });
+      order,
+    });
+  } catch (err) {
+    console.error("Load order detail error:", err);
+    res.redirect("/admin/pageNotFound");
+  }
 };
+
 const updateOrderStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -102,11 +108,17 @@ const updateOrderStatus = async (req, res) => {
 
     const order = await Order.findById(id);
     if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
     }
 
     const now = new Date();
-    if (!order.statusTimeline) order.statusTimeline = {};
+
+    if (!order.statusTimeline) {
+      order.statusTimeline = {};
+    }
+
     const timeline = order.statusTimeline;
 
     const statusFlow = [
@@ -128,71 +140,107 @@ const updateOrderStatus = async (req, res) => {
       Returned: "returnedAt",
     };
 
-    // BUSINESS RULE: CANCEL ONLY BEFORE SHIPPING
-    if (status === "Cancelled") {
-      if (timeline.shippedAt) {
-        return res.status(400).json({
-          success: false,
-          message: "Order cannot be cancelled after shipping has started",
-        });
-      }
+    const validStatuses = [
+      ...statusFlow,
+      "Cancelled",
+      "Returned",
+      "Partially Delivered",
+      "Partially Cancelled",
+      "Partially Returned",
+    ];
 
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid order status",
+      });
+    }
+
+    if (status === "Cancelled") {
       timeline.cancelledAt = now;
       order.orderStatus = status;
 
       order.orderedItems.forEach((item) => {
-        item.itemStatus = "Cancelled";
-        if (!item.itemTimeline) item.itemTimeline = {};
-        item.itemTimeline.cancelledAt = now;
+        if (item.itemStatus !== "Cancelled") {
+          item.itemStatus = "Cancelled";
+          if (!item.itemTimeline) item.itemTimeline = {};
+          item.itemTimeline.cancelledAt = now;
+        }
       });
 
       await order.save();
-      return res.json({ success: true, message: "Order cancelled successfully", order });
+      return res.json({
+        success: true,
+        message: "Order cancelled successfully",
+        order,
+      });
     }
 
-    // BUSINESS RULE: RETURN ONLY AFTER DELIVERED
     if (status === "Returned") {
-      if (!timeline.deliveredAt) {
-        return res.status(400).json({
-          success: false,
-          message: "Return can only be initiated after delivery",
-        });
-      }
-
       timeline.returnedAt = now;
       order.orderStatus = status;
 
       order.orderedItems.forEach((item) => {
-        item.itemStatus = "Returned";
-        if (!item.itemTimeline) item.itemTimeline = {};
-        item.itemTimeline.returnedAt = now;
+        if (item.itemStatus !== "Returned") {
+          item.itemStatus = "Returned";
+          if (!item.itemTimeline) item.itemTimeline = {};
+          item.itemTimeline.returnedAt = now;
+        }
       });
 
       await order.save();
-      return res.json({ success: true, message: "Order returned successfully", order });
+      return res.json({
+        success: true,
+        message: "Order marked as returned",
+        order,
+      });
     }
 
-    // NORMAL FLOW HANDLING
     const newIndex = statusFlow.indexOf(status);
 
-    if (newIndex !== -1) {
-      for (let i = 1; i <= newIndex; i++) {
-        const step = statusFlow[i];
-        const key = timelineMap[step];
-        if (key && !timeline[key]) timeline[key] = now;
+    if (newIndex === -1) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status for automatic timeline update",
+      });
+    }
+
+    for (let i = 1; i <= newIndex; i++) {
+      const step = statusFlow[i];
+      const key = timelineMap[step];
+
+      if (key && !timeline[key]) {
+        timeline[key] = now;
       }
     }
 
     order.orderStatus = status;
 
-    // EXPECTED DELIVERY +5 DAYS WHEN CONFIRMED OR SHIPPED
-    if (status === "Confirmed" || status === "Shipped") {
-      const expected = new Date();
-      expected.setDate(expected.getDate() + 5);
-      order.expectedDelivery = expected;
-    }
+    order.orderedItems.forEach((item) => {
+      if (
+        item.itemStatus !== "Cancelled" &&
+        item.itemStatus !== "Returned" &&
+        item.itemStatus !== "ReturnApproved" &&
+        item.itemStatus !== "ReturnRequested"
+      ) {
+        item.itemStatus = status;
 
-    // SET ACTUAL DELIVERY DATE
+        if (!item.itemTimeline) {
+          item.itemTimeline = {};
+        }
+
+        if (status === "Confirmed" && !item.itemTimeline.confirmedAt) {
+          item.itemTimeline.confirmedAt = now;
+        } else if (status === "Processing" && !item.itemTimeline.processedAt) {
+          item.itemTimeline.processedAt = now;
+        } else if (status === "Shipped" && !item.itemTimeline.shippedAt) {
+          item.itemTimeline.shippedAt = now;
+        } else if (status === "Delivered" && !item.itemTimeline.deliveredAt) {
+          item.itemTimeline.deliveredAt = now;
+        }
+      }
+    });
+
     if (status === "Delivered") {
       order.deliveredDate = now;
     }
@@ -207,16 +255,194 @@ const updateOrderStatus = async (req, res) => {
       message: "Order status updated successfully",
       order,
     });
-
   } catch (error) {
-    console.log("Error updating order:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.log("Error updating order status:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while updating order status",
+    });
   }
 };
 
 
-export default{
-    loadOrders,
-    loadOrderDetails,
-    updateOrderStatus
-}
+
+// ===========================
+// HANDLE RETURN REQUEST (Approve/Reject) - FIXED
+// ===========================
+const handleReturnRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { itemId, action, adminNote } = req.body;
+
+    if (!itemId || !action) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing itemId or action" });
+    }
+
+    const validActions = ["approve", "reject"];
+    if (!validActions.includes(action)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid action" });
+    }
+
+    const order = await Order.findById(id);
+    if (!order) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
+    }
+
+    const item = order.orderedItems.id(itemId);
+    if (!item) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Item not found" });
+    }
+
+    const now = new Date();
+
+    if (item.itemStatus !== "ReturnRequested") {
+      return res.status(400).json({
+        success: false,
+        message: "Only pending return requests can be approved/rejected",
+      });
+    }
+
+    if (action === "approve") {
+      item.itemStatus = "ReturnApproved";
+      if (!item.itemTimeline) item.itemTimeline = {};
+      item.itemTimeline.returnApprovedAt = now;
+      if (adminNote) item.adminNote = adminNote;
+    } else if (action === "reject") {
+      item.itemStatus = "ReturnRejected";
+      if (!item.itemTimeline) item.itemTimeline = {};
+      item.itemTimeline.returnRejectedAt = now;
+      if (adminNote) item.adminNote = adminNote;
+    }
+
+    // Only update order status based on ACTUALLY RETURNED items
+    const actuallyReturnedItems = order.orderedItems.filter(
+      (i) => i.itemStatus === "Returned"
+    );
+    const allItemsReturned = order.orderedItems.every(
+      (i) => i.itemStatus === "Returned"
+    );
+
+    if (allItemsReturned) {
+      order.orderStatus = "Returned";
+      if (!order.statusTimeline) order.statusTimeline = {};
+      order.statusTimeline.returnedAt = now;
+    } else if (actuallyReturnedItems.length > 0) {
+      order.orderStatus = "Partially Returned";
+    }
+
+    order.markModified("orderedItems");
+    await order.save();
+
+    return res.json({
+      success: true,
+      message: `Return request ${action}d successfully`,
+      order,
+    });
+  } catch (error) {
+    console.error("Handle return request error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error while processing return request",
+    });
+  }
+};
+
+// ===========================
+// MARK ITEM RETURNED - FIXED
+// ===========================
+const markItemReturned = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { itemId } = req.body;
+
+    if (!itemId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing itemId" });
+    }
+
+    const order = await Order.findById(id).populate("orderedItems.variantId");
+    if (!order) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
+    }
+
+    const item = order.orderedItems.id(itemId);
+    if (!item) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Item not found" });
+    }
+
+    if (item.itemStatus !== "ReturnApproved") {
+      return res.status(400).json({
+        success: false,
+        message: "Only approved returns can be marked as returned",
+      });
+    }
+
+    const now = new Date();
+
+    // Restore stock when item is returned
+    if (item.variantId && item.variantId._id) {
+      await Variant.findByIdAndUpdate(
+        item.variantId._id,
+        { $inc: { stock: item.quantity } },
+        { new: true }
+      );
+    }
+
+    item.itemStatus = "Returned";
+    if (!item.itemTimeline) item.itemTimeline = {};
+    item.itemTimeline.returnedAt = now;
+
+    // Update order status based on ALL items being returned
+    const allReturned = order.orderedItems.every(
+      (i) => i.itemStatus === "Returned"
+    );
+    const someReturned = order.orderedItems.some(
+      (i) => i.itemStatus === "Returned"
+    );
+
+    if (allReturned) {
+      order.orderStatus = "Returned";
+      if (!order.statusTimeline) order.statusTimeline = {};
+      order.statusTimeline.returnedAt = now;
+    } else if (someReturned) {
+      order.orderStatus = "Partially Returned";
+    }
+
+    order.markModified("orderedItems");
+    order.markModified("statusTimeline");
+    await order.save();
+
+    return res.json({
+      success: true,
+      message: "Item marked as returned and stock restored successfully",
+      order,
+    });
+  } catch (error) {
+    console.error("Mark item returned error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error while marking item as returned",
+    });
+  }
+};
+
+export default {
+  loadOrders,
+  loadOrderDetail,
+  updateOrderStatus, 
+  handleReturnRequest,
+  markItemReturned,
+};

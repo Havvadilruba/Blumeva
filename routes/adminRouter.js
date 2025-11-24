@@ -44,7 +44,12 @@ router.patch("/products/:id", adminAuth, upload.array("images", 5), productContr
 router.patch("/products/toggle/:id", adminAuth, productController.toggleProductStatus);
 
 router.get("/orders", adminAuth, orderController.loadOrders); 
-router.get("/orders/:id", adminAuth, orderController.loadOrderDetails);
+router.get("/orders/:id", adminAuth, orderController.loadOrderDetail);
 router.patch("/orders/:id/status", adminAuth,orderController.updateOrderStatus);
+router.patch("/orders/:id/status", adminAuth,orderController.updateOrderStatus);
+
+router.patch("/orders/:id/return-request", adminAuth,orderController.handleReturnRequest);
+router.patch("/orders/:id/mark-returned",adminAuth, orderController.markItemReturned);
+
 
 export default router;

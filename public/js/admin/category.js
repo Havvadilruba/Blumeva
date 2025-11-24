@@ -86,6 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
           setTimeout(() => (window.location.href = res.data.redirectUrl), 1500);
         }
       } catch (error) {
+        console.log("Full Axios Error Response:", error.response?.data);
         handleAxiosError(error, "updating category");
       }
     });

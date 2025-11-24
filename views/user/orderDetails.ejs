@@ -1,135 +1,676 @@
 <%- include('../partials/user/header') %>
-<link rel="stylesheet" href="<%= pageCSS %>"/>
+<div class="orders-layout"> 
+<%- include("../partials/user/sidebar", { activePage }) %>
 
-<section class="profile-section">
-  <div class="profile-wrapper">
-
-    <!-- Sidebar -->
-    <%- include("../partials/user/sidebar", { activePage }) %>
-
-    <!-- Main Content -->
-    <div class="profile-container">
-
-      <div class="header-section">
-        <h2>Order Details</h2>
-        <a href="/orders" class="back-btn">← Back to Orders</a>
+<div class="order-detail-page" data-order-id="<%= order._id %>">
+  <div class="container">
+    <!-- Back Button & Header -->
+    <div class="page-header">
+      <a href="/orders" class="back-link">
+        <i class="bi bi-arrow-left"></i> Back to Orders
+      </a>
+      <div class="header-content">
+        <h1>Order Details</h1>
+        <p class="order-id">Order #<%= order.orderId %></p>
       </div>
+      <% if (order.orderStatus === 'Delivered' || order.orderStatus === 'Cancelled' || order.orderStatus.includes('Returned')) { %>
+        <a href="/orders/<%= order._id %>/invoice" class="btn-download">
+          <i class="bi bi-download"></i> Download Invoice
+        </a>
+      <% } %>
+    </div>
 
-      <!-- Order Summary -->
-      <div class="order-summary-card">
-        <h3><%= order.orderId %></h3>
+    <div class="detail-grid">
+      <!-- Left Column -->
+      <div class="left-column">
+        <!-- Order Status Card -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Order Status</h2>
+            <% 
+              let statusClass = '';
+              if (order.orderStatus === 'Delivered') statusClass = 'status-delivered';
+              else if (order.orderStatus === 'Shipped' || order.orderStatus === 'Out for Delivery') statusClass = 'status-shipping';
+              else if (order.orderStatus === 'Pending') statusClass = 'status-pending';
+              else if (order.orderStatus === 'Confirmed' || order.orderStatus === 'Processing') statusClass = 'status-processing';
+              else if (order.orderStatus === 'Cancelled') statusClass = 'status-cancelled';
+              else statusClass = 'status-returned';
+            %>
+            <span class="status-badge <%= statusClass %>"><%= order.orderStatus %></span>
+          </div>
+          <div class="card-body">
+            <!-- Order Timeline -->
+            <div class="timeline">
+              <div class="timeline-item <%= order.createdAt ? 'completed' : '' %>">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                  <p class="timeline-title">Order Placed</p>
+                  <% if (order.createdAt) { %>
+                    <p class="timeline-date"><%= new Date(order.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) %></p>
+                  <% } %>
+                </div>
+              </div>
 
-        <p><strong>Status:</strong>
-          <span class="order-status <%= order.orderStatus.toLowerCase() %>">
-            <%= order.orderStatus %>
-          </span>
-        </p>
+              <div class="timeline-item <%= order.statusTimeline?.confirmedAt ? 'completed' : '' %>">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                  <p class="timeline-title">Confirmed</p>
+                  <% if (order.statusTimeline?.confirmedAt) { %>
+                    <p class="timeline-date"><%= new Date(order.statusTimeline.confirmedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) %></p>
+                  <% } %>
+                </div>
+              </div>
 
-        <p><strong>Placed On:</strong> <%= order.createdAt.toDateString() %></p>
-        <p><strong>Payment:</strong> <%= order.paymentMethod.toUpperCase() %> ( <%= order.paymentStatus %> )</p>
-        <p><strong>Total Amount:</strong> ₹<%= order.finalAmount.toFixed(2) %></p>
+              <div class="timeline-item <%= order.statusTimeline?.processedAt ? 'completed' : '' %>">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                  <p class="timeline-title">Processing</p>
+                  <% if (order.statusTimeline?.processedAt) { %>
+                    <p class="timeline-date"><%= new Date(order.statusTimeline.processedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) %></p>
+                  <% } %>
+                </div>
+              </div>
 
-        <!-- Actions -->
-        <div class="action-buttons">
-          <% if(order.orderStatus === "Pending" || order.orderStatus === "Confirmed") { %>
-            <button class="cancel-btn" onclick="openCancelModal('<%= order.orderId %>')">Cancel Order</button>
-          <% } %>
+              <div class="timeline-item <%= order.statusTimeline?.shippedAt ? 'completed' : '' %>">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                  <p class="timeline-title">Shipped</p>
+                  <% if (order.statusTimeline?.shippedAt) { %>
+                    <p class="timeline-date"><%= new Date(order.statusTimeline.shippedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) %></p>
+                  <% } %>
+                </div>
+              </div>
 
-          <% if(order.orderStatus === "Delivered") { %>
-            <button class="return-btn" onclick="openReturnModal('<%= order.orderId %>')">Return</button>
-          <% } %>
+              <div class="timeline-item <%= order.statusTimeline?.outForDeliveryAt ? 'completed' : '' %>">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                  <p class="timeline-title">Out for Delivery</p>
+                  <% if (order.statusTimeline?.outForDeliveryAt) { %>
+                    <p class="timeline-date"><%= new Date(order.statusTimeline.outForDeliveryAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) %></p>
+                  <% } %>
+                </div>
+              </div>
 
-          <a href="/orders/<%= order.orderId %>/invoice" class="invoice-btn">Download Invoice</a>
+              <div class="timeline-item <%= order.statusTimeline?.deliveredAt || order.deliveredDate ? 'completed' : '' %>">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                  <p class="timeline-title">Delivered</p>
+                  <% if (order.statusTimeline?.deliveredAt || order.deliveredDate) { %>
+                    <p class="timeline-date"><%= new Date(order.statusTimeline?.deliveredAt || order.deliveredDate).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) %></p>
+                  <% } %>
+                </div>
+              </div>
+
+              <% if (order.orderStatus === 'Cancelled') { %>
+                <div class="timeline-item completed cancelled">
+                  <div class="timeline-dot"></div>
+                  <div class="timeline-content">
+                    <p class="timeline-title">Cancelled</p>
+                    <% if (order.statusTimeline?.cancelledAt) { %>
+                      <p class="timeline-date"><%= new Date(order.statusTimeline.cancelledAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) %></p>
+                    <% } %>
+                  </div>
+                </div>
+              <% } %>
+            </div>
+
+            <!-- Cancel Entire Order Button -->
+            <% 
+              const cancellableStatuses = ['Pending', 'Confirmed', 'Processing'];
+              const hasAnyCancellableItem = order.orderedItems.some(item => 
+                cancellableStatuses.includes(item.itemStatus)
+              );
+            %>
+            <% if (hasAnyCancellableItem) { %>
+              <button class="btn-danger btn-block" onclick="showCancelOrderModal()">
+                <i class="bi bi-x-circle"></i> Cancel Entire Order
+              </button>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Order Items -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Order Items (<%= order.orderedItems.length %>)</h2>
+          </div>
+          <div class="card-body">
+            <div class="items-list">
+              <% order.orderedItems.forEach(item => { %>
+                <div class="item-card" data-item-id="<%= item._id %>">
+                  <div class="item-main">
+                    <div class="item-image">
+                      <% 
+                        let imageUrl = '';
+                        if (item.productId && item.productId.images && item.productId.images.length > 0) {
+                          imageUrl = item.productId.images[0];
+                        }
+                      %>
+                      <% if (imageUrl) { %>
+                        <img src="<%= imageUrl %>" alt="<%= item.productId?.name || 'Product' %>" onerror="this.parentElement.innerHTML='<div class=\'no-image\'><i class=\'bi bi-image\'></i></div>'">
+                      <% } else { %>
+                        <div class="no-image">
+                          <i class="bi bi-image"></i>
+                        </div>
+                      <% } %>
+                    </div>
+                    <div class="item-details">
+                      <h3 class="item-name"><%= item.productId?.name || 'Product' %></h3>
+                      <p class="item-variant">
+                        <% if (item.variantId) { %>
+                          Size: <%= item.variantId.quantityValue %><%= item.variantId.quantityType %>
+                        <% } %>
+                      </p>
+                      <p class="item-quantity">Quantity: <strong><%= item.quantity %></strong></p>
+                      <% if (item.itemStatus) { %>
+                        <% 
+                          let itemStatusClass = '';
+                          if (item.itemStatus === 'Delivered') itemStatusClass = 'status-delivered';
+                          else if (item.itemStatus === 'Shipped' || item.itemStatus === 'Out for Delivery') itemStatusClass = 'status-shipping';
+                          else if (item.itemStatus === 'Pending') itemStatusClass = 'status-pending';
+                          else if (item.itemStatus === 'Confirmed' || item.itemStatus === 'Processing') itemStatusClass = 'status-processing';
+                          else if (item.itemStatus === 'Cancelled') itemStatusClass = 'status-cancelled';
+                          else if (item.itemStatus === 'ReturnRequested') itemStatusClass = 'status-return-pending';
+                          else if (item.itemStatus === 'ReturnApproved') itemStatusClass = 'status-return-approved';
+                          else if (item.itemStatus === 'ReturnRejected') itemStatusClass = 'status-cancelled';
+                          else if (item.itemStatus === 'Returned') itemStatusClass = 'status-returned';
+                        %>
+                        <span class="item-status <%= itemStatusClass %>"><%= item.itemStatus %></span>
+                      <% } %>
+                    </div>
+                    <div class="item-price">
+                      <p class="price">₹<%= (item.price * item.quantity).toLocaleString('en-IN') %></p>
+                      <p class="price-unit">₹<%= item.price.toLocaleString('en-IN') %> each</p>
+                    </div>
+                  </div>
+
+                  <!-- Item Actions -->
+                  <div class="item-actions">
+                    <!-- Cancel Item Button -->
+                    <% if (cancellableStatuses.includes(item.itemStatus)) { %>
+                      <button class="btn-cancel-item" onclick="showCancelItemModal('<%= item._id %>', '<%= (item.productId?.name || 'this item').replace(/'/g, "\\'") %>')">
+                        <i class="bi bi-x-circle"></i> Cancel This Item
+                      </button>
+                    <% } %>
+
+                    <!-- Return Item Button -->
+                    <% if (item.itemStatus === 'Delivered') { %>
+                      <%
+                        const deliveredDate = item.itemTimeline?.deliveredAt || order.deliveredDate;
+                        const daysSinceDelivery = deliveredDate ? Math.floor((new Date() - new Date(deliveredDate)) / (1000 * 60 * 60 * 24)) : 999;
+                        const canReturn = daysSinceDelivery <= 7;
+                      %>
+                      <div class="item-delivery-info">
+                        <i class="bi bi-check-circle-fill"></i>
+                        Delivered on <%= new Date(deliveredDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) %>
+                      </div>
+                      <% if (canReturn) { %>
+                        <button class="btn-return-item" onclick="showReturnItemModal('<%= item._id %>', '<%= (item.productId?.name || 'this item').replace(/'/g, "\\'") %>')">
+                          <i class="bi bi-arrow-return-left"></i> Return This Item (<%= 7 - daysSinceDelivery %> days left)
+                        </button>
+                      <% } else { %>
+                        <p class="return-expired">Return window expired (7 days from delivery)</p>
+                      <% } %>
+                    <% } %>
+
+                    <!-- Return Status Messages -->
+                    <% if (item.itemStatus === 'ReturnRequested') { %>
+                      <div class="return-status pending">
+                        <i class="bi bi-clock-history"></i> 
+                        <div>
+                          <strong>Return request pending</strong>
+                          <p>Waiting for admin approval</p>
+                        </div>
+                      </div>
+                    <% } %>
+
+                    <% if (item.itemStatus === 'ReturnApproved') { %>
+                      <div class="return-status approved">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <div>
+                          <strong>Return approved</strong>
+                          <p>Please ship the item back to us</p>
+                        </div>
+                      </div>
+                    <% } %>
+
+                    <% if (item.itemStatus === 'ReturnRejected') { %>
+                      <div class="return-status rejected">
+                        <i class="bi bi-x-circle-fill"></i>
+                        <div>
+                          <strong>Return request rejected</strong>
+                          <% if (item.adminNote) { %>
+                            <p>Reason: <%= item.adminNote %></p>
+                          <% } %>
+                        </div>
+                      </div>
+                    <% } %>
+
+                    <% if (item.itemStatus === 'Returned') { %>
+                      <div class="return-status completed">
+                        <i class="bi bi-arrow-return-left"></i>
+                        <div>
+                          <strong>Item returned successfully</strong>
+                          <p>Refund has been processed</p>
+                        </div>
+                      </div>
+                    <% } %>
+
+                    <!-- Show Cancellation/Return Reason -->
+                    <% if ((item.itemStatus === 'Cancelled' || item.itemStatus.includes('Return')) && item.reason) { %>
+                      <div class="item-reason">
+                        <strong><%= item.itemStatus === 'Cancelled' ? 'Cancellation' : 'Return' %> Reason:</strong>
+                        <p><%= item.reason %></p>
+                      </div>
+                    <% } %>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Delivery Card -->
-      <div class="delivery-card">
-        <h3>Delivery Information</h3>
-
-        <% if(order.orderStatus === "Delivered") { %>
-          <p><strong>Delivered On:</strong> <%= order.statusTimeline.deliveredAt.toDateString() %></p>
-        <% } else { %>
-          <p><strong>Expected Delivery:</strong> <%= order.expectedDelivery?.toDateString() || "Not available" %></p>
-        <% } %>
-      </div>
-
-      <!-- Products Section -->
-      <div class="products-card">
-        <h3>Items in this order</h3>
-
-        <% order.orderedItems.forEach(item => { %>
-          <div class="product-row">
-
-            <img src="<%= item.productId.images[0] %>" class="product-thumb"/>
-
-            <div class="product-info">
-              <h4><%= item.productId.name %></h4>
-
-              <% if(item.variantId) { %>
-                <p><strong>Variant:</strong> <%= item.variantId.quantityValue %> <%= item.variantId.quantityType %></p>
-              <% } %>
-
-              <p><strong>Qty:</strong> <%= item.quantity %></p>
-              <p><strong>Price:</strong> ₹<%= item.price.toFixed(2) %></p>
-            </div>
-
+      <!-- Right Column -->
+      <div class="right-column">
+        <!-- Delivery Address -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Delivery Address</h2>
           </div>
-        <% }) %>
-      </div>
+          <div class="card-body">
+            <div class="address">
+              <p class="name"><%= order.shippingAddress?.fullName %></p>
+              <p><%= order.shippingAddress?.phone %></p>
+              <p><%= order.shippingAddress?.address1 %></p>
+              <% if (order.shippingAddress?.address2) { %>
+                <p><%= order.shippingAddress.address2 %></p>
+              <% } %>
+              <p><%= order.shippingAddress?.city %>, <%= order.shippingAddress?.state %> - <%= order.shippingAddress?.pincode %></p>
+              <p><%= order.shippingAddress?.country %></p>
+            </div>
+          </div>
+        </div>
 
-      <!-- Shipping Section -->
-      <div class="shipping-card">
-        <h3>Shipping Address</h3>
-        <p><%= order.shippingAddress.fullName %></p>
-        <p><%= order.shippingAddress.address1 %> <%= order.shippingAddress.address2 %></p>
-        <p><%= order.shippingAddress.city %> - <%= order.shippingAddress.pincode %></p>
-        <p><%= order.shippingAddress.state %>, <%= order.shippingAddress.country %></p>
-        <p>📞 <%= order.shippingAddress.phone %></p>
-      </div>
+        <!-- Payment Information -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Payment Info</h2>
+          </div>
+          <div class="card-body">
+            <div class="info-row">
+              <span>Method:</span>
+              <span>
+                <% if (order.paymentMethod === 'razorpay') { %>
+                  <i class="bi bi-credit-card"></i> Online Payment
+                <% } else if (order.paymentMethod === 'cod') { %>
+                  <i class="bi bi-cash"></i> Cash on Delivery
+                <% } else if (order.paymentMethod === 'wallet') { %>
+                  <i class="bi bi-wallet2"></i> Wallet
+                <% } %>
+              </span>
+            </div>
+            <div class="info-row">
+              <span>Status:</span>
+              <% 
+                let paymentClass = '';
+                if (order.paymentStatus === 'Paid') paymentClass = 'status-paid';
+                else if (order.paymentStatus === 'Pending') paymentClass = 'status-pending';
+                else if (order.paymentStatus === 'Failed') paymentClass = 'status-failed';
+                else if (order.paymentStatus === 'Refunded') paymentClass = 'status-refunded';
+              %>
+              <span class="payment-status <%= paymentClass %>"><%= order.paymentStatus %></span>
+            </div>
+          </div>
+        </div>
 
+        <!-- Order Summary -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Order Summary</h2>
+          </div>
+          <div class="card-body">
+            <div class="summary-row">
+              <span>Subtotal</span>
+              <span>₹<%= order.subtotal.toLocaleString('en-IN') %></span>
+            </div>
+            <% if (order.discount > 0) { %>
+              <div class="summary-row discount">
+                <span>Discount</span>
+                <span>-₹<%= order.discount.toLocaleString('en-IN') %></span>
+              </div>
+            <% } %>
+            <% if (order.tax > 0) { %>
+              <div class="summary-row">
+                <span>Tax</span>
+                <span>₹<%= order.tax.toLocaleString('en-IN') %></span>
+              </div>
+            <% } %>
+            <div class="summary-row">
+              <span>Delivery</span>
+              <span><%= order.deliveryCharge === 0 ? 'FREE' : '₹' + order.deliveryCharge.toLocaleString('en-IN') %></span>
+            </div>
+            <div class="summary-divider"></div>
+            <div class="summary-row total">
+              <span>Total</span>
+              <span>₹<%= order.finalAmount.toLocaleString('en-IN') %></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Expected/Delivered Delivery -->
+        <div class="card">
+          <div class="card-header">
+            <h2><%= order.deliveredDate ? 'Delivery Details' : 'Expected Delivery' %></h2>
+          </div>
+          <div class="card-body">
+            <% if (order.deliveredDate) { %>
+              <div class="delivery-date delivered">
+                <i class="bi bi-check-circle-fill"></i>
+                <div>
+                  <p class="delivery-label">Delivered On</p>
+                  <p class="delivery-value">
+                    <%= new Date(order.deliveredDate).toLocaleDateString('en-IN', { 
+                      weekday: 'long',
+                      day: '2-digit', 
+                      month: 'long', 
+                      year: 'numeric' 
+                    }) %>
+                  </p>
+                </div>
+              </div>
+            <% } else if (order.expectedDelivery) { %>
+              <div class="delivery-date expected">
+                <i class="bi bi-truck"></i>
+                <div>
+                  <p class="delivery-label">Expected By</p>
+                  <p class="delivery-value">
+                    <%= new Date(order.expectedDelivery).toLocaleDateString('en-IN', { 
+                      weekday: 'long',
+                      day: '2-digit', 
+                      month: 'long', 
+                      year: 'numeric' 
+                    }) %>
+                  </p>
+                </div>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-</section>
+  </div>
+</div>
 
-<!-- ================== CANCEL MODAL ================= -->
-<div class="modal-overlay" id="cancelModal">
-  <div class="modal-box">
+<!-- Cancel Order Modal -->
+<div id="cancelOrderModal" class="modal">
+  <div class="modal-content">
     <div class="modal-header">
-      <h2>Cancel Order</h2>
-      <button class="close-btn" onclick="closeCancelModal()">×</button>
+      <h3>Cancel Entire Order</h3>
+      <button class="modal-close" onclick="closeCancelOrderModal()">
+        <i class="bi bi-x"></i>
+      </button>
     </div>
-
-    <label>Reason (optional)</label>
-    <textarea id="cancelReason" placeholder="Tell us why you're cancelling..."></textarea>
-
-    <div class="modal-buttons">
-      <button class="save-btn" onclick="confirmCancel()">Confirm</button>
-      <button class="cancel-btn" onclick="closeCancelModal()">Close</button>
+    <div class="modal-body">
+      <p>Are you sure you want to cancel all items in this order?</p>
+      <p class="warning-text">This action cannot be undone.</p>
+      <div class="form-group">
+        <label for="cancelOrderReason">Reason for Cancellation (Optional)</label>
+        <textarea id="cancelOrderReason" rows="3" placeholder="Tell us why you're cancelling (optional)..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeCancelOrderModal()">No, Keep Order</button>
+      <button class="btn-danger" onclick="cancelOrder()">Yes, Cancel Order</button>
     </div>
   </div>
 </div>
 
-<!-- ================== RETURN MODAL ================= -->
-<div class="modal-overlay" id="returnModal">
-  <div class="modal-box">
+<!-- Cancel Item Modal -->
+<div id="cancelItemModal" class="modal">
+  <div class="modal-content">
     <div class="modal-header">
-      <h2>Return Order</h2>
-      <button class="close-btn" onclick="closeReturnModal()">×</button>
+      <h3>Cancel Item</h3>
+      <button class="modal-close" onclick="closeCancelItemModal()">
+        <i class="bi bi-x"></i>
+      </button>
     </div>
-
-    <label>Reason (required)</label>
-    <textarea id="returnReason" placeholder="Please provide a return reason..." required></textarea>
-
-    <div class="modal-buttons">
-      <button class="save-btn" onclick="confirmReturn()">Submit</button>
-      <button class="cancel-btn" onclick="closeReturnModal()">Close</button>
+    <div class="modal-body">
+      <p>Are you sure you want to cancel <strong id="cancelItemName"></strong>?</p>
+      <div class="form-group">
+        <label for="cancelItemReason">Reason for Cancellation (Optional)</label>
+        <textarea id="cancelItemReason" rows="3" placeholder="Tell us why you're cancelling this item (optional)..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeCancelItemModal()">No, Keep Item</button>
+      <button class="btn-danger" onclick="cancelItem()">Yes, Cancel Item</button>
     </div>
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-<script src="/js/user/orderDetails.js"></script>
+<!-- Return Item Modal -->
+<div id="returnItemModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Request Return</h3>
+      <button class="modal-close" onclick="closeReturnItemModal()">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p>Request return for <strong id="returnItemName"></strong></p>
+      <div class="form-group">
+        <label for="returnItemReason">Reason for Return <span class="required">*</span></label>
+        <textarea id="returnItemReason" rows="4" placeholder="Please provide a reason for return (mandatory)..." required></textarea>
+        <small class="form-help">
+          <i class="bi bi-info-circle"></i> Return reason is mandatory. You have 7 days from delivery to request a return.
+        </small>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeReturnItemModal()">Cancel</button>
+      <button class="btn-primary" onclick="requestReturn()">Submit Return Request</button>
+    </div>
+  </div>
+</div>
 
 <%- include('../partials/user/footer') %>
+
+<script>
+  const orderItems = <%- JSON.stringify(order.orderedItems) %>;
+  let selectedItemIds = [];
+  const activeOrderId = document.querySelector(".order-detail-page")?.dataset.orderId;
+
+  // Modal Functions
+  window.showCancelOrderModal = function () {
+    // Get all cancellable items
+    const cancellableStatuses = ['Pending', 'Confirmed', 'Processing'];
+    selectedItemIds = orderItems
+      .filter(item => cancellableStatuses.includes(item.itemStatus))
+      .map(item => item._id);
+
+    if (selectedItemIds.length === 0) {
+      Toastify({
+        text: "No items available to cancel",
+        duration: 2000,
+        style: { background: "orange" }
+      }).showToast();
+      return;
+    }
+
+    document.getElementById("cancelOrderModal").style.display = "flex";
+  };
+
+  window.closeCancelOrderModal = function () {
+    document.getElementById("cancelOrderModal").style.display = "none";
+    document.getElementById("cancelOrderReason").value = "";
+  };
+
+  window.showCancelItemModal = function (itemId, name) {
+    selectedItemIds = [itemId];
+    document.getElementById("cancelItemName").innerText = name;
+    document.getElementById("cancelItemModal").style.display = "flex";
+  };
+
+  window.closeCancelItemModal = function () {
+    document.getElementById("cancelItemModal").style.display = "none";
+    document.getElementById("cancelItemReason").value = "";
+  };
+
+  window.showReturnItemModal = function (itemId, name) {
+    selectedItemIds = [itemId];
+    document.getElementById("returnItemName").innerText = name;
+    document.getElementById("returnItemModal").style.display = "flex";
+  };
+
+  window.closeReturnItemModal = function () {
+    document.getElementById("returnItemModal").style.display = "none";
+    document.getElementById("returnItemReason").value = "";
+  };
+
+  // CANCEL ENTIRE ORDER
+  window.cancelOrder = async function () {
+    const reason = document.getElementById("cancelOrderReason").value.trim();
+
+    if (selectedItemIds.length === 0) {
+      Toastify({
+        text: "No items to cancel",
+        duration: 2000,
+        style: { background: "orange" }
+      }).showToast();
+      return;
+    }
+
+    try {
+      const res = await axios.post(`/orders/${activeOrderId}/cancel-items`, {
+        itemIds: selectedItemIds,
+        reason
+      });
+
+      if (res.data.success) {
+        Toastify({
+          text: res.data.message || "Items cancelled successfully",
+          duration: 2500,
+          gravity: "top",
+          position: "right",
+          style: { background: "#dc3545" }
+        }).showToast();
+
+        closeCancelOrderModal();
+        setTimeout(() => location.reload(), 2000);
+      } else {
+        Toastify({
+          text: res.data.message || "Failed to cancel items",
+          duration: 2500,
+          style: { background: "orange" }
+        }).showToast();
+      }
+    } catch (err) {
+      console.error("Cancel order error:", err);
+      Toastify({
+        text: "Something went wrong while cancelling",
+        duration: 2500,
+        style: { background: "red" }
+      }).showToast();
+    }
+  };
+
+  // CANCEL ONE ITEM
+  window.cancelItem = async function () {
+    const reason = document.getElementById("cancelItemReason").value.trim();
+
+    try {
+      const res = await axios.post(`/orders/${activeOrderId}/cancel-items`, {
+        itemIds: selectedItemIds,
+        reason
+      });
+
+      if (res.data.success) {
+        Toastify({
+          text: res.data.message || "Item cancelled successfully",
+          duration: 2500,
+          gravity: "top",
+          position: "right",
+          style: { background: "#dc3545" }
+        }).showToast();
+
+        closeCancelItemModal();
+        setTimeout(() => location.reload(), 2000);
+      } else {
+        Toastify({
+          text: res.data.message || "Failed to cancel item",
+          duration: 2500,
+          style: { background: "orange" }
+        }).showToast();
+      }
+    } catch (err) {
+      console.error("Cancel item error:", err);
+      Toastify({
+        text: "Unable to cancel item",
+        duration: 2500,
+        style: { background: "red" }
+      }).showToast();
+    }
+  };
+
+  // REQUEST RETURN ITEM
+  window.requestReturn = async function () {
+    const reason = document.getElementById("returnItemReason").value.trim();
+
+    if (!reason) {
+      Toastify({
+        text: "Return reason is mandatory",
+        duration: 2500,
+        gravity: "top",
+        position: "right",
+        style: { background: "orange" }
+      }).showToast();
+      return;
+    }
+
+    try {
+      const res = await axios.post(`/orders/${activeOrderId}/return-item`, {
+        itemId: selectedItemIds[0],
+        reason
+      });
+
+      if (res.data.success) {
+        Toastify({
+          text: res.data.message || "Return request submitted",
+          duration: 2500,
+          gravity: "top",
+          position: "right",
+          style: { background: "#0d6efd" }
+        }).showToast();
+
+        closeReturnItemModal();
+        setTimeout(() => location.reload(), 2000);
+      } else {
+        Toastify({
+          text: res.data.message || "Failed to submit return request",
+          duration: 2500,
+          style: { background: "orange" }
+        }).showToast();
+      }
+    } catch (err) {
+      console.error("Return request error:", err);
+      Toastify({
+        text: err.response?.data?.message || "Something went wrong",
+        duration: 2500,
+        style: { background: "red" }
+      }).showToast();
+    }
+  };
+
+  // Close modal when clicking outside
+  window.addEventListener("click", (e) => {
+    document.querySelectorAll(".modal").forEach(modal => {
+      if (e.target === modal) {
+        modal.style.display = "none";
+      }
+    });
+  });
+</script>
 

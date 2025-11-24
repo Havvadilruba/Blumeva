@@ -71,10 +71,16 @@ router.get("/checkout", checkoutController.loadCheckout);
 
 router.post("/order/place", middle.userAuth, orderController.placeOrder);
 router.get("/order/success/:orderId", middle.userAuth, orderController.loadOrderSuccess);
-router.get("/orders", middle.userAuth, orderController.loadOrders);
-router.get("/orders/:orderId", middle.userAuth, orderController.orderDetails);
+router.get("/orders", orderController.loadOrders);
 
-router.post("/orders/cancel", middle.userAuth, orderController.cancelOrder);
-router.post("/orders/item/cancel", middle.userAuth, orderController.cancelItem);
-router.post("/orders/return", middle.userAuth, orderController.returnRequest);
+
+router.get("/orders/:id", middle.userAuth,orderController.loadOrderDetail);
+router.post("/orders/:id/cancel-items", middle.userAuth, orderController.cancelOrderItems);
+
+// Request return for an item
+router.post("/orders/:id/return-item", middle.userAuth, orderController.requestReturn);
+
+// Download invoice (PDF)
+router.get("/orders/:id/invoice", middle.userAuth, orderController.downloadInvoice);
+
 export default router;

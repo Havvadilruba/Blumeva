@@ -1,6 +1,5 @@
 import User from "../../model/userSchema.js";
 import { profileValidation } from "../../validations/profileValidation.js";
-import cloudinary from "../../config/cloudinary.js";
 import { sendVerificationEmail } from "../../helpers/emailHelper.js";
 import { generateOtp } from "../../helpers/otpHelper.js";
 import Joi from "joi";
@@ -45,56 +44,11 @@ const loadEditProfile = async (req, res) => {
 };
 
 
-// const updateProfile = async (req, res) => {
-//   try {
-//     const { error } = profileValidation.validate(req.body, { abortEarly: true });
-//     if (error) {
-//       return res.status(400).json({
-//         success: false,
-//         message: error.details[0].message,
-//       });
-//     }
-
-//     const { name, removePhoto } = req.body;
-//     const user = await User.findById(req.session.user.id);
-
-//     if (!user) {
-//       return res.status(404).json({ success: false, message: "User not found" });
-//     }
-
-//     if (removePhoto === "true" && !req.file) {
-//       user.profileImage = "";
-//     }
-//     if (req.file) {
-//       user.profileImage = req.file.path;
-//     }
-
-//     user.name = name;
-//     await user.save();
-    
-    
-//     return res.status(200).json({
-//       success: true,
-//       message: "Profile updated successfully"
-//     });
-
-//   } catch (error) {
-//     console.log("Profile update error:", error);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Server error"
-//     });
-//   }
-// };
 
 const updateProfile = async (req, res) => {
   try {
 
-    console.log("---- UPDATE PROFILE START ----");
-    console.log("Session user:", req.session.user);
-    console.log("Body:", req.body);
-    console.log("File:", req.file);
-
+  
     const { error } = profileValidation.validate(req.body, { abortEarly: true });
     if (error) {
       console.log("Validation Error:", error.details[0].message);
@@ -106,29 +60,24 @@ const updateProfile = async (req, res) => {
 
     const { name, removePhoto } = req.body;
 
-    const user = await User.findById(req.session.user.id);
-    console.log("Fetched User:", user);
+    const user = await User.findById(req.session.user._id);
+
 
     if (!user) {
-      console.log("User not found with id:", req.session.user.id);
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
     if (removePhoto === "true" && !req.file) {
-      console.log("Removing profile photo");
       user.profileImage = "";
     }
 
     if (req.file) {
-      console.log("New file received:", req.file.path);
       user.profileImage = req.file.path;
     }
 
-    console.log("Updating name to:", name);
     user.name = name;
 
     await user.save();
-    console.log("User saved successfully");
 
     return res.status(200).json({
       success: true,
@@ -184,8 +133,8 @@ const editEmail = async (req, res) => {
 
     const newEmail = req.body.newEmail;
 
-    // Get existing user email from DB
-    const user = await User.findById(req.session.user.id).select("email");
+    //  existing user email 
+    const user = await User.findById(req.session.user._id).select("email");
     const oldEmail = user.email;
 
     // Same email check
@@ -205,7 +154,7 @@ const editEmail = async (req, res) => {
       });
     }
 
-    // Generate and send OTP
+    // Generate  send OTP
     const otp = generateOtp();
     console.log("OTP:", otp);
 
@@ -270,7 +219,7 @@ const verifyEmailOtp = async (req, res) => {
     }
 
     // Update email
-    await User.findByIdAndUpdate(req.session.user.id, {
+    await User.findByIdAndUpdate(req.session.user._id, {
       email: req.session.newEmail
     });
 
@@ -361,7 +310,7 @@ const loadChangePassword = async (req, res) => {
     }
 
     const { currentPassword, newPassword } = req.body;
-    const userId = req.session.user.id;
+    const userId = req.session.user._id;
 
     // Check if user exists
     const user = await User.findById(userId);

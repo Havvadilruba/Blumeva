@@ -1,61 +1,43 @@
-let activeOrderId = null;
 
-function openCancelModal(orderId) {
-  activeOrderId = orderId;
-  document.getElementById("cancelModal").style.display = "flex";
-}
+   const orderItems = <%- JSON.stringify(order.orderedItems) %>;
+  let selectedItemIds = [];
+  const activeOrderId = document.querySelector(".order-detail-page")?.dataset.orderId;
 
-function closeCancelModal() {
-  document.getElementById("cancelModal").style.display = "none";
-}
-
-function openReturnModal(orderId) {
-  activeOrderId = orderId;
-  document.getElementById("returnModal").style.display = "flex";
-}
-
-function closeReturnModal() {
-  document.getElementById("returnModal").style.display = "none";
-}
-
-async function confirmCancel() {
-  const reason = document.getElementById("cancelReason").value;
-
-  try {
-    const { data } = await axios.post("/orders/cancel", {
-      orderId: activeOrderId,
-      reason
-    });
-
-    if (data.success) {
-      location.reload();
-    } else {
-      alert(data.msg || "Failed to cancel order");
-    }
-  } catch (err) {
-    console.error(err);
-    alert("Something went wrong");
+  function showCancelOrderModal() {
+    selectedItemIds = orderItems.map(item => item._id);
+    document.getElementById("cancelOrderModal").style.display = "flex";
   }
-}
 
-async function confirmReturn() {
-  const reason = document.getElementById("returnReason").value.trim();
-  if (!reason) return alert("Return reason is required");
-
-  try {
-    const { data } = await axios.post("/orders/return", {
-      orderId: activeOrderId,
-      reason
-    });
-
-    if (data.success) {
-      location.reload();
-    } else {
-      alert(data.msg || "Failed to request return");
-    }
-  } catch (err) {
-    console.error(err);
-    alert("Something went wrong");
+  function closeCancelOrderModal() {
+    document.getElementById("cancelOrderModal").style.display = "none";
   }
-}
+
+  function showCancelItemModal(itemId, name) {
+    selectedItemIds = [itemId];
+    document.getElementById("cancelItemName").innerText = name;
+    document.getElementById("cancelItemModal").style.display = "flex";
+  }
+
+  function closeCancelItemModal() {
+    document.getElementById("cancelItemModal").style.display = "none";
+  }
+
+  async function confirmCancel(isFull = false) {
+    const reason = document.getElementById(isFull ? "cancelOrderReason" : "cancelItemReason").value;
+
+    try {
+      const { data } = await axios.post(`/orders/${activeOrderId}/cancel-item`, {
+        itemIds: selectedItemIds,
+        reason
+      });
+
+      if (data.success) {
+        Toastify({ text: "Order cancelled successfully!", duration: 2000 }).showToast();
+        setTimeout(() => location.reload(), 1000);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong");
+    }
+  }
 

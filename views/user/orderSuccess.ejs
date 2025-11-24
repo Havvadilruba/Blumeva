@@ -1,137 +1,282 @@
 <%- include("../partials/user/header") %>
 
-<div class="success-container">
-  <div class="success-card">
-
-    <!-- SUCCESS ICON -->
-    <div class="success-icon">
-      <i class="bi bi-check-circle-fill"></i>
+<div class="success-page">
+  <div class="success-container">
+    
+    <!-- Animated Success Icon -->
+    <div class="success-animation">
+      <div class="success-checkmark">
+        <div class="check-icon">
+          <span class="icon-line line-tip"></span>
+          <span class="icon-line line-long"></span>
+          <div class="icon-circle"></div>
+          <div class="icon-fix"></div>
+        </div>
+      </div>
     </div>
 
-    <h1 class="title-success">Order Placed Successfully!</h1>
-    <p class="success-message">Thank you for shopping with us 🎉</p>
+    <!-- Success Message -->
+    <h1 class="success-title">Order Placed Successfully!</h1>
+    <p class="success-subtitle">Thank you for your purchase 🎉</p>
+    <p class="success-description">
+      We've received your order and will process it shortly. 
+      You'll receive a confirmation email soon.
+    </p>
 
-    <!-- ORDER INFO -->
-    <div class="order-info-block">
-      <div class="order-row">
-        <span class="row-left">
-          <div class="payment-icon-wrap">
-            <i class="bi bi-receipt-cutoff"></i>
-          </div>
-          <strong>Order ID</strong>
-        </span>
-        <span><%= order.orderId %></span>
+    <!-- Order Information Card -->
+    <div class="info-card">
+      <div class="info-header">
+        <i class="bi bi-receipt-cutoff"></i>
+        <h2>Order Information</h2>
       </div>
-
-      <div class="order-row">
-        <span class="row-left">
-          <div class="payment-icon-wrap">
-            <i class="bi bi-calendar2-check"></i>
+      
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">
+            <i class="bi bi-hash"></i>
+            Order ID
           </div>
-          Order Date
-        </span>
-        <span><%= order.createdAt.toLocaleDateString("en-IN") %></span>
-      </div>
+          <div class="info-value order-id">#<%= order.orderId %></div>
+        </div>
 
-      <div class="order-row">
-        <span class="row-left">
-          <div class="payment-icon-wrap">
+        <div class="info-item">
+          <div class="info-label">
+            <i class="bi bi-calendar-check"></i>
+            Order Date
+          </div>
+          <div class="info-value">
+            <%= new Date(order.createdAt).toLocaleDateString("en-IN", { 
+              day: 'numeric', 
+              month: 'short', 
+              year: 'numeric' 
+            }) %>
+          </div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-label">
             <i class="bi bi-hourglass-split"></i>
+            Status
           </div>
-          Order Status
-        </span>
-        <span class="status-pill"><%= order.orderStatus %></span>
+          <div class="info-value">
+            <span class="status-badge status-pending">
+              <i class="bi bi-clock-history"></i>
+              <%= order.orderStatus %>
+            </span>
+          </div>
+        </div>
+
+        <% if (order.expectedDelivery) { %>
+          <div class="info-item">
+            <div class="info-label">
+              <i class="bi bi-truck"></i>
+              Expected Delivery
+            </div>
+            <div class="info-value expected-date">
+              <%= new Date(order.expectedDelivery).toLocaleDateString("en-IN", { 
+                day: 'numeric', 
+                month: 'short', 
+                year: 'numeric' 
+              }) %>
+            </div>
+          </div>
+        <% } %>
       </div>
     </div>
 
-    <!-- SUMMARY -->
-    <h3 class="summary-title">Order Summary</h3>
-    <div class="summary-box">
-
-      <div class="summary-row">
-        <span>Subtotal</span>
-        <span>₹<%= order.subtotal.toLocaleString('en-IN') %></span>
+    <!-- Order Summary Card -->
+    <div class="summary-card">
+      <div class="summary-header">
+        <i class="bi bi-calculator"></i>
+        <h2>Order Summary</h2>
       </div>
 
-      <div class="summary-row">
-        <span>Discount</span>
-        <span>-₹<%= order.discount.toLocaleString('en-IN') %></span>
-      </div>
+      <div class="summary-content">
+        <div class="summary-row">
+          <span class="summary-label">Subtotal</span>
+          <span class="summary-value">₹<%= order.subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2}) %></span>
+        </div>
 
-      <div class="summary-row">
-        <span>Tax (GST)</span>
-       <span>₹<%= order.tax?.toLocaleString('en-IN') || 0 %></span>
+        <% if (order.discount > 0) { %>
+          <div class="summary-row discount-row">
+            <span class="summary-label">
+              <i class="bi bi-tag-fill"></i>
+              Discount
+            </span>
+            <span class="summary-value discount-value">-₹<%= order.discount.toLocaleString('en-IN', {minimumFractionDigits: 2}) %></span>
+          </div>
+        <% } %>
 
-      </div>
+        <% if (order.tax > 0) { %>
+          <div class="summary-row">
+            <span class="summary-label">Tax (GST)</span>
+            <span class="summary-value">₹<%= order.tax.toLocaleString('en-IN', {minimumFractionDigits: 2}) %></span>
+          </div>
+        <% } %>
 
-      <div class="summary-row">
-        <span>Delivery Charge</span>
-        <span><%= order.deliveryCharge == 0 ? "FREE 🚚" : "₹" + order.deliveryCharge %></span>
-      </div>
+        <div class="summary-row">
+          <span class="summary-label">Delivery Charges</span>
+          <span class="summary-value delivery-charge">
+            <%= order.deliveryCharge === 0 ? 
+              '<span class="free-badge"><i class="bi bi-truck"></i> FREE</span>' : 
+              '₹' + order.deliveryCharge.toLocaleString('en-IN', {minimumFractionDigits: 2}) 
+            %>
+          </span>
+        </div>
 
-      <hr />
+        <div class="summary-divider"></div>
 
-      <div class="summary-total-row">
-        <span><strong>Total Amount</strong></span>
-        <span><strong>₹<%= order.finalAmount.toLocaleString('en-IN') %></strong></span>
+        <div class="summary-row summary-total">
+          <span class="summary-label">Total Amount</span>
+          <span class="summary-value total-amount">₹<%= order.finalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2}) %></span>
+        </div>
       </div>
     </div>
 
-    <!-- PAYMENT METHOD -->
-    <h3 class="sub-title">Payment Method</h3>
-    <div class="payment-method-display">
-      <div class="payment-icon-wrap payment-online">
-        <i class="bi bi-wallet2"></i>
+    <!-- Payment & Shipping Info -->
+    <div class="details-grid">
+      <!-- Payment Method -->
+      <div class="detail-card">
+        <div class="detail-header">
+          <i class="bi bi-credit-card-2-front"></i>
+          <h3>Payment Method</h3>
+        </div>
+        <div class="payment-method-box">
+          <div class="payment-icon">
+            <% if (order.paymentMethod === 'razorpay') { %>
+              <i class="bi bi-credit-card"></i>
+            <% } else if (order.paymentMethod === 'wallet') { %>
+              <i class="bi bi-wallet2"></i>
+            <% } else { %>
+              <i class="bi bi-cash-coin"></i>
+            <% } %>
+          </div>
+          <div class="payment-info">
+            <div class="payment-name">
+              <%= order.paymentMethod === 'cod' ? 'Cash on Delivery' : 
+                  order.paymentMethod === 'razorpay' ? 'Razorpay (Online)' : 
+                  order.paymentMethod === 'wallet' ? 'Wallet Payment' : 
+                  order.paymentMethod.toUpperCase() %>
+            </div>
+            <div class="payment-status">
+              <% 
+                let paymentStatusClass = '';
+                if (order.paymentStatus === 'Paid') paymentStatusClass = 'status-paid';
+                else if (order.paymentStatus === 'Pending') paymentStatusClass = 'status-pending';
+                else if (order.paymentStatus === 'Failed') paymentStatusClass = 'status-failed';
+              %>
+              <span class="status-badge <%= paymentStatusClass %>">
+                <%= order.paymentStatus %>
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
-      <p class="payment-value"><%= order.paymentMethod.toUpperCase() %></p>
+
+      <!-- Shipping Address -->
+      <div class="detail-card">
+        <div class="detail-header">
+          <i class="bi bi-geo-alt"></i>
+          <h3>Shipping Address</h3>
+        </div>
+        <div class="address-box">
+          <div class="address-type-badge">
+            <% if (order.shippingAddress.addressType === 'home') { %>
+              <i class="bi bi-house-door"></i>
+            <% } else if (order.shippingAddress.addressType === 'office') { %>
+              <i class="bi bi-briefcase"></i>
+            <% } else { %>
+              <i class="bi bi-geo-alt"></i>
+            <% } %>
+            <%= order.shippingAddress.addressType || 'Address' %>
+          </div>
+          <div class="address-name"><%= order.shippingAddress.fullName %></div>
+          <div class="address-text">
+            <%= order.shippingAddress.address1 %><%= order.shippingAddress.address2 ? ', ' + order.shippingAddress.address2 : '' %><br>
+            <%= order.shippingAddress.city %>, <%= order.shippingAddress.state %> - <%= order.shippingAddress.pincode %><br>
+            <%= order.shippingAddress.country %>
+          </div>
+          <div class="address-phone">
+            <i class="bi bi-telephone"></i>
+            <%= order.shippingAddress.phone %>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- ADDRESS -->
-    <h3 class="sub-title">Shipping Address</h3>
-
-    <div class="address-display">
-      <div class="address-icon-wrap">
-        <i class="bi bi-geo-alt-fill"></i>
+    <!-- Order Items -->
+    <div class="items-card">
+      <div class="items-header">
+        <i class="bi bi-box-seam"></i>
+        <h2>Order Items (<%= order.orderedItems.length %>)</h2>
       </div>
-      <p class="address-box">
-        <strong><%= order.shippingAddress.fullName %></strong><br>
-        <%= order.shippingAddress.address1 %> <%= order.shippingAddress.address2 ? ", " + order.shippingAddress.address2 : ""%> <br>
-        <%= order.shippingAddress.city %>, <%= order.shippingAddress.state %> - <%= order.shippingAddress.pincode %><br>
-        <%= order.shippingAddress.country %><br>
-        <i class="bi bi-telephone-fill"></i> <%= order.shippingAddress.phone %>
+
+      <div class="items-list">
+        <% order.orderedItems.forEach((item, index) => { %>
+          <div class="item-card">
+            <div class="item-image-wrapper">
+              <% if (item.productId?.images && item.productId.images.length > 0) { %>
+                <img src="<%= item.productId.images[0] %>" alt="<%= item.productId.name %>" class="item-image">
+              <% } else { %>
+                <div class="item-no-image">
+                  <i class="bi bi-image"></i>
+                </div>
+              <% } %>
+            </div>
+
+            <div class="item-details">
+              <h4 class="item-name"><%= item.productId?.name || 'Product' %></h4>
+              
+              <% if (item.variantId) { %>
+                <div class="item-variant">
+                  <i class="bi bi-box"></i>
+                  <%= item.variantId.quantityValue %><%= item.variantId.quantityType %>
+                </div>
+              <% } %>
+
+              <div class="item-quantity">
+                <i class="bi bi-cart"></i>
+                Quantity: <strong><%= item.quantity %></strong>
+              </div>
+
+              <% if (item.itemStatus) { %>
+                <div class="item-status">
+                  <span class="status-badge status-pending">
+                    <i class="bi bi-clock-history"></i>
+                    <%= item.itemStatus %>
+                  </span>
+                </div>
+              <% } %>
+            </div>
+
+            <div class="item-pricing">
+              <div class="item-total-price">₹<%= (item.price * item.quantity).toLocaleString('en-IN', {minimumFractionDigits: 2}) %></div>
+              <div class="item-unit-price">₹<%= item.price.toLocaleString('en-IN', {minimumFractionDigits: 2}) %> each</div>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <a href="/orders" class="btn btn-primary">
+        <i class="bi bi-card-list"></i>
+        View Order Details
+      </a>
+      <a href="/products" class="btn btn-secondary">
+        <i class="bi bi-shop"></i>
+        Continue Shopping
+      </a>
+    </div>
+
+    <!-- Help Section -->
+    <div class="help-section">
+      <p>
+        <i class="bi bi-question-circle"></i>
+        Need help with your order? 
+        <a href="/contact">Contact Support</a>
       </p>
-    </div>
-
-    <!-- ORDER ITEMS -->
-    <h3 class="sub-title">Order Items</h3>
-    <div class="item-box">
-      <% order.orderedItems.forEach(item => { %>
-        <div class="item-row">
-  <div class="item-info">
-
-    <div class="item-image-wrap">
-      <img src="<%= item.productId.images[0] %>" class="item-image"/>
-    </div>
-
-    <div class="item-text">
-      <strong><%= item.productId.name %></strong><br>
-      Qty: <%= item.quantity %>
-    </div>
-  </div>
-
- <div class="item-price">
-  <strong>₹<%= item.price.toLocaleString('en-IN') %></strong>
-</div>
-
-</div>
-
-      <% }) %>
-    </div>
-
-    <!-- BUTTONS -->
-    <div class="button-row">
-      <a href="/orders" class="btn-primary"><i class="bi bi-card-list"></i> View Order Details</a>
-      <a href="/products" class="btn-outline"><i class="bi bi-cart-plus"></i> Continue Shopping</a>
     </div>
 
   </div>

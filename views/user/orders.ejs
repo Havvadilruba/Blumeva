@@ -1,96 +1,237 @@
 <%- include("../partials/user/header") %>
 
-<link rel="stylesheet" href="/style/user/orders.css" />
-
-<section class="profile-section">
-  <div class="profile-wrapper">
-
-    <!-- Sidebar -->
+<div class="orders-page">
+  <div class="container layout-wrapper">
     <%- include("../partials/user/sidebar", { activePage }) %>
-
-    <!-- Main Content -->
-    <div class="profile-container">
-<div class="header-section">
-  <h2>My Orders</h2>
-
-  <div class="search-wrapper">
-    <form id="searchForm" class="search-box">
-      <input
-        type="text"
-        name="search"
-        value="<%= search %>"
-        placeholder="Search Order ID"
-      />
-      <button type="submit" class="search-btn">Search</button>
-    </form>
-  </div>
-</div>
-
-
-      <p class="sub-text">View and manage your orders</p>
-
-      <!-- Orders List -->
-      <div class="order-list">
-        <% if (orders.length === 0) { %>
-          <p class="no-address">No orders found.</p>
-        <% } %>
-
-        <% orders.forEach((order) => { %>
-          <div class="order-card">
-
-  <div class="order-header">
-    <h3><%= order.orderId %></h3>
-    <span class="order-status <%= order.orderStatus.toLowerCase() %>">
-      <%= order.orderStatus %>
-    </span>
-  </div>
-
-  <% order.orderedItems.slice(0,2).forEach(item => { %>
-    <div class="product-row">
-      <img src="<%= item.productId.images[0] %>" class="product-thumb" />
-      <p><%= item.productId.name %></p>
+       <div class="orders-content"> 
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1>My Orders</h1>
+      <p class="subtitle">Track and manage your orders</p>
     </div>
-  <% }) %>
 
-  <% if (order.orderedItems.length > 2) { %>
-    <p class="more-items">+ <%= order.orderedItems.length - 2 %> more items</p>
-  <% } %>
+    <!-- Search and Filters -->
+    <div class="filters-section">
+      <div class="search-container">
+        <i class="bi bi-search"></i>
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="Search by Order ID..."
+          value="<%= search %>"
+        />
+      </div>
 
-  <p><strong>Placed On:</strong> <%= order.createdAt.toDateString() %></p>
-  <p><strong>Total Amount:</strong> ₹<%= order.finalAmount.toFixed(2) %></p>
+      <div class="filter-container">
+        <label for="statusFilter">Filter by Status:</label>
+        <select id="statusFilter" class="filter-select">
+          <option value="">All Orders</option>
+          <option value="Pending" <%= statusFilter === 'Pending' ? 'selected' : '' %>>Pending</option>
+          <option value="Confirmed" <%= statusFilter === 'Confirmed' ? 'selected' : '' %>>Confirmed</option>
+          <option value="Processing" <%= statusFilter === 'Processing' ? 'selected' : '' %>>Processing</option>
+          <option value="Shipped" <%= statusFilter === 'Shipped' ? 'selected' : '' %>>Shipped</option>
+          <option value="Out for Delivery" <%= statusFilter === 'Out for Delivery' ? 'selected' : '' %>>Out for Delivery</option>
+          <option value="Delivered" <%= statusFilter === 'Delivered' ? 'selected' : '' %>>Delivered</option>
+          <option value="Cancelled" <%= statusFilter === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
+        </select>
 
-  <div class="order-actions">
-    <a class="details-btn" href="/orders/<%= order.orderId %>">
-      View Details
-    </a>
-  </div>
+        <% if (search || statusFilter) { %>
+          <button class="btn-clear" onclick="clearFilters()">
+            <i class="bi bi-x-circle"></i> Clear
+          </button>
+        <% } %>
+      </div>
+    </div>
 
-</div>
+    <!-- Orders List -->
+    <% if (orders.length === 0) { %>
+      <div class="empty-state">
+        <i class="bi bi-bag-x"></i>
+        <h3>No Orders Found</h3>
+        <p>You haven't placed any orders yet.</p>
+        <a href="/shop" class="btn-primary">Start Shopping</a>
+      </div>
+    <% } else { %>
+      <div class="orders-list">
+        <% orders.forEach(order => { %>
+          <div class="order-card">
+            <!-- Order Header -->
+            <div class="order-header">
+              <div class="order-info">
+                <h3 class="order-id">Order #<%= order.orderId %></h3>
+                <span class="order-date">
+                  <i class="bi bi-calendar3"></i>
+                  <%= new Date(order.createdAt).toLocaleDateString('en-IN', { 
+                    day: '2-digit', 
+                    month: 'short', 
+                    year: 'numeric' 
+                  }) %>
+                </span>
+              </div>
+              <div class="order-actions">
+                <% 
+                  let statusClass = '';
+                  if (order.orderStatus === 'Delivered') statusClass = 'status-delivered';
+                  else if (order.orderStatus === 'Shipped' || order.orderStatus === 'Out for Delivery') statusClass = 'status-shipping';
+                  else if (order.orderStatus === 'Pending') statusClass = 'status-pending';
+                  else if (order.orderStatus === 'Confirmed' || order.orderStatus === 'Processing') statusClass = 'status-processing';
+                  else if (order.orderStatus === 'Cancelled') statusClass = 'status-cancelled';
+                  else statusClass = 'status-returned';
+                %>
+                <span class="status-badge <%= statusClass %>"><%= order.orderStatus %></span>
+              </div>
+            </div>
 
-        <% }) %>
+            <!-- Order Items Preview -->
+            <div class="order-items-preview">
+              <% order.orderedItems.slice(0, 3).forEach(item => { %>
+                <div class="item-preview">
+                  <div class="item-image">
+                    <% 
+                      let imageUrl = '';
+                      if (item.productId && item.productId.images && item.productId.images.length > 0) {
+                        imageUrl = item.productId.images[0];
+                      }
+                    %>
+                    <% if (imageUrl) { %>
+                      <img src="<%= imageUrl %>" alt="<%= item.productId?.name || 'Product' %>" onerror="this.parentElement.innerHTML='<div class=\'no-image\'><i class=\'bi bi-image\'></i></div>'">
+                    <% } else { %>
+                      <div class="no-image">
+                        <i class="bi bi-image"></i>
+                      </div>
+                    <% } %>
+                  </div>
+                  <div class="item-info">
+                    <p class="item-name"><%= item.productId?.name || 'Product' %></p>
+                    <p class="item-variant">
+                      <% if (item.variantId) { %>
+                        <%= item.variantId.quantityValue %><%= item.variantId.quantityType %>
+                      <% } %>
+                    </p>
+                    <p class="item-quantity">Qty: <%= item.quantity %> × ₹<%= item.price.toLocaleString('en-IN') %></p>
+                  </div>
+                </div>
+              <% }); %>
+
+              <% if (order.orderedItems.length > 3) { %>
+                <div class="more-items">
+                  +<%= order.orderedItems.length - 3 %> more item<%= order.orderedItems.length - 3 > 1 ? 's' : '' %>
+                </div>
+              <% } %>
+            </div>
+
+            <!-- Order Footer -->
+            <div class="order-footer">
+              <div class="order-total">
+                <span class="label">Total Amount:</span>
+                <span class="amount">₹<%= order.finalAmount.toLocaleString('en-IN') %></span>
+              </div>
+              <div class="footer-actions">
+                <a href="/orders/<%= order._id %>" class="btn-secondary">
+                  View Details
+                </a>
+                <% if (order.orderStatus === 'Delivered') { %>
+                  <a href="/orders/<%= order._id %>/invoice" class="btn-outline">
+                    <i class="bi bi-download"></i> Invoice
+                  </a>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        <% }); %>
       </div>
 
       <!-- Pagination -->
-      <div class="pagination">
-        <% if (currentPage > 1) { %>
-          <a href="?page=<%= currentPage - 1 %>&search=<%= search %>">« Prev</a>
-        <% } %>
+      <% if (totalPages > 1) { %>
+        <div class="pagination">
+          <button 
+            class="pagination-btn" 
+            onclick="changePage(<%= currentPage - 1 %>)"
+            <%= currentPage === 1 ? 'disabled' : '' %>
+          >
+            <i class="bi bi-chevron-left"></i>
+          </button>
 
-        <% for (let i = 1; i <= totalPages; i++) { %>
-          <a href="?page=<%= i %>&search=<%= search %>" class="<%= currentPage === i ? 'active' : '' %>">
-            <%= i %>
-          </a>
-        <% } %>
+          <% 
+            const maxPagesToShow = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+            let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+            
+            if (endPage - startPage + 1 < maxPagesToShow) {
+              startPage = Math.max(1, endPage - maxPagesToShow + 1);
+            }
+          %>
 
-        <% if (currentPage < totalPages) { %>
-          <a href="?page=<%= currentPage + 1 %>&search=<%= search %>">Next »</a>
-        <% } %>
-      </div>
+          <% if (startPage > 1) { %>
+            <button class="pagination-btn" onclick="changePage(1)">1</button>
+            <% if (startPage > 2) { %>
+              <span class="pagination-dots">...</span>
+            <% } %>
+          <% } %>
 
-    </div>
+          <% for (let i = startPage; i <= endPage; i++) { %>
+            <button 
+              class="pagination-btn <%= i === currentPage ? 'active' : '' %>" 
+              onclick="changePage(<%= i %>)"
+            >
+              <%= i %>
+            </button>
+          <% } %>
+
+          <% if (endPage < totalPages) { %>
+            <% if (endPage < totalPages - 1) { %>
+              <span class="pagination-dots">...</span>
+            <% } %>
+            <button class="pagination-btn" onclick="changePage(<%= totalPages %>)"><%= totalPages %></button>
+          <% } %>
+
+          <button 
+            class="pagination-btn" 
+            onclick="changePage(<%= currentPage + 1 %>)"
+            <%= currentPage === totalPages ? 'disabled' : '' %>
+          >
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+      <% } %>
+    <% } %>
   </div>
-</section>
+</div>
 
-<script src="/js/user/orders.js"></script>
+<script>
+  // Search with debounce
+  let searchTimeout;
+  document.getElementById('searchInput')?.addEventListener('input', (e) => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      applyFilters();
+    }, 500);
+  });
+
+  // Filter change
+  document.getElementById('statusFilter')?.addEventListener('change', applyFilters);
+
+  function applyFilters() {
+    const search = document.getElementById('searchInput').value;
+    const status = document.getElementById('statusFilter').value;
+
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (status) params.set('status', status);
+    params.set('page', '1');
+
+    window.location.href = `/orders?${params.toString()}`;
+  }
+
+  function clearFilters() {
+    window.location.href = '/orders';
+  }
+
+  function changePage(page) {
+    const params = new URLSearchParams(window.location.search);
+    params.set('page', page);
+    window.location.href = `/orders?${params.toString()}`;
+  }
+</script>
 <%- include("../partials/user/footer") %>
 

@@ -1,176 +1,261 @@
 <%- include('../partials/admin/sidebar') %>
-
-<div class="orders-page-container">
-
-  <!-- PAGE HEADER -->
-  <div class="orders-header">
+<div class="orders-container">
+  <!-- Header -->
+  <div class="page-header">
     <div>
       <h1>Orders Management</h1>
-      <p class="subtitle-text">Track, filter, and manage all customer orders.</p>
-    </div>
-
-    <button class="btn-primary" onclick="exportOrders()">
-      <i class="bi bi-download"></i> Export Orders
-    </button>
-  </div>
-
-  <!-- STATS CARDS -->
-  <div class="stats-container">
-    <div class="stat-card blue">
-      <i class="bi bi-cart3 stat-icon"></i>
-      <div>
-        <p>Total Orders</p>
-        <h3><%= analytics.totalOrders %></h3>
-      </div>
-    </div>
-
-    <div class="stat-card green">
-      <i class="bi bi-check-circle stat-icon"></i>
-      <div>
-        <p>Active Orders</p>
-        <h3><%= analytics.activeOrders %></h3>
-      </div>
-    </div>
-
-    <div class="stat-card orange">
-      <i class="bi bi-arrow-return-left stat-icon"></i>
-      <div>
-        <p>Returned</p>
-        <h3><%= analytics.returnedOrders %></h3>
-      </div>
-    </div>
-
-    <div class="stat-card red">
-      <i class="bi bi-x-circle stat-icon"></i>
-      <div>
-        <p>Cancelled</p>
-        <h3><%= analytics.cancelledOrders %></h3>
-      </div>
-    </div>
-
-    <div class="stat-card purple">
-      <i class="bi bi-currency-rupee stat-icon"></i>
-      <div>
-        <p>Total Revenue</p>
-        <h3>₹<%= analytics.totalRevenue.toLocaleString("en-IN") %></h3>
-      </div>
+      <p class="subtitle">Manage and track all customer orders</p>
     </div>
   </div>
 
-  <!-- FILTERS -->
+  <!-- Filters & Search -->
   <div class="filters-section">
     <div class="search-box">
       <i class="bi bi-search"></i>
-      <input type="text" id="searchInput" placeholder="Search order ID, customer, or email..."
-        value="<%= searchQuery %>" onkeyup="handleSearch()" />
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="Search by Order ID, customer name, or email..."
+        value="<%= search %>"
+      />
     </div>
 
-    <select id="statusFilter" onchange="applyFilters()">
-      <option value="">All Status</option>
-      <% ["Pending","Confirmed","Processing","Shipped","Out for Delivery","Delivered","Cancelled","Returned"].forEach(st => { %>
-        <option value="<%= st %>" <%= statusFilter === st ? 'selected' : '' %>><%= st %></option>
-      <% }) %>
-    </select>
+    <div class="filter-controls">
+      <select id="statusFilter" class="filter-select">
+        <option value="">All Status</option>
+        <option value="Pending" <%= statusFilter === 'Pending' ? 'selected' : '' %>>Pending</option>
+        <option value="Confirmed" <%= statusFilter === 'Confirmed' ? 'selected' : '' %>>Confirmed</option>
+        <option value="Processing" <%= statusFilter === 'Processing' ? 'selected' : '' %>>Processing</option>
+        <option value="Shipped" <%= statusFilter === 'Shipped' ? 'selected' : '' %>>Shipped</option>
+        <option value="Out for Delivery" <%= statusFilter === 'Out for Delivery' ? 'selected' : '' %>>Out for Delivery</option>
+        <option value="Delivered" <%= statusFilter === 'Delivered' ? 'selected' : '' %>>Delivered</option>
+        <option value="Cancelled" <%= statusFilter === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
+        <option value="Returned" <%= statusFilter === 'Returned' ? 'selected' : '' %>>Returned</option>
+      </select>
+      <select id="paymentFilter" class="filter-select">
+  <option value="">All Payments</option>
+  <option value="razorpay" <%= paymentFilter === 'razorpay' ? 'selected' : '' %>>Online</option>
+  <option value="cod" <%= paymentFilter === 'cod' ? 'selected' : '' %>>COD</option>
+  <option value="wallet" <%= paymentFilter === 'wallet' ? 'selected' : '' %>>Wallet</option>
+</select>
 
-    <select id="paymentStatusFilter" onchange="applyFilters()">
-      <option value="">Payment</option>
-      <% ["Pending","Paid","Failed","Refunded"].forEach(pay => { %>
-        <option value="<%= pay %>" <%= paymentStatusFilter === pay ? 'selected' : '' %>><%= pay %></option>
-      <% }) %>
-    </select>
+<select id="sortOrder" class="filter-select">
+  <option value="desc" <%= sortOrder === 'desc' ? 'selected' : '' %>>Highest / Recent</option>
+  <option value="asc" <%= sortOrder === 'asc' ? 'selected' : '' %>>Lowest / Oldest</option>
+</select>
 
-    <select id="sortFilter" onchange="applyFilters()">
-      <option value="recent" <%= sortFilter==='recent'?'selected':'' %>>Recent</option>
-      <option value="oldest" <%= sortFilter==='oldest'?'selected':'' %>>Oldest</option>
-      <option value="amount-high" <%= sortFilter==='amount-high'?'selected':'' %>>Amount High → Low</option>
-      <option value="amount-low" <%= sortFilter==='amount-low'?'selected':'' %>>Amount Low → High</option>
-    </select>
+
+      <button class="btn-secondary" onclick="clearFilters()">
+        <i class="bi bi-x-circle"></i> Clear
+      </button>
+    </div>
   </div>
 
-  <!-- TABLE -->
-  <div class="table-container">
-    <table>
-      <thead>
-        <tr>
-          <th>Order ID</th>
-          <th>Customer</th>
-          <th>Date</th>
-          <th>Items</th>
-          <th>Amount</th>
-          <th>Payment</th>
-          <th>Status</th>
-          <th></th>
-        </tr>
-      </thead>
+  <!-- Orders Table -->
+  <div class="table-card">
+    <div class="table-header">
+      <h3>Orders (<%= totalOrders %>)</h3>
+    </div>
 
-      <tbody>
-        <% if(orders.length > 0){ %>
-          <% orders.forEach(order => { %>
+    <% if (orders.length === 0) { %>
+      <div class="empty-state">
+        <i class="bi bi-inbox"></i>
+        <p>No orders found</p>
+      </div>
+    <% } else { %>
+      <div class="table-responsive">
+        <table class="orders-table">
+          <thead>
             <tr>
-              <td>#<%= order.orderId %></td>
-              <td>
-                <strong><%= order.userId?.name %></strong>
-                <div class="email-text"><%= order.userId?.email %></div>
-              </td>
-              <td><%= new Date(order.createdAt).toLocaleDateString() %></td>
-              <td><%= order.orderedItems.length %></td>
-              <td>₹<%= order.finalAmount %></td>
-
-              <td><span class="status-badge <%= order.paymentStatus.toLowerCase() %>">
-                  <%= order.paymentStatus %>
-                </span></td>
-
-              <td><span class="status-badge <%= order.orderStatus.toLowerCase().replaceAll(' ', '-') %>">
-                  <%= order.orderStatus %>
-                </span></td>
-
-              <td><a href="/admin/orders/<%= order._id %>" class="view-btn">View</a></td>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Date</th>
+              <th>Items</th>
+              <th>Amount</th>
+              <th>Payment</th>
+              <th>Status</th>
+              <th>Actions</th>
             </tr>
-          <% }) %>
-        <% } else { %>
-          <tr><td colspan="8" class="empty-row">No orders found</td></tr>
-        <% } %>
-      </tbody>
-    </table>
-  </div>
+          </thead>
+          <tbody>
+            <% orders.forEach(order => { %>
+              <tr>
+                <td>
+                  <div class="order-id">
+                    <strong>#<%= order.orderId %></strong>
+                  </div>
+                </td>
+                <td>
+                  <div class="customer-info">
+                    <div class="customer-name"><%= order.userId?.name || 'N/A' %></div>
+                    <div class="customer-email"><%= order.userId?.email || 'N/A' %></div>
+                  </div>
+                </td>
+                <td>
+                  <div class="order-date">
+                    <%= new Date(order.createdAt).toLocaleDateString('en-IN', { 
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric'
+                    }) %>
+                  </div>
+                  <div class="order-time">
+                    <%= new Date(order.createdAt).toLocaleTimeString('en-IN', {
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    }) %>
+                  </div>
+                </td>
+                <td>
+                  <span class="items-count"><%= order.orderedItems.length %> items</span>
+                </td>
+                <td>
+                  <div class="amount">₹<%= order.finalAmount.toLocaleString('en-IN') %></div>
+                </td>
+                <td>
+                  <div class="payment-method">
+                    <% if (order.paymentMethod === 'razorpay') { %>
+                      <i class="bi bi-credit-card"></i> Online
+                    <% } else if (order.paymentMethod === 'cod') { %>
+                      <i class="bi bi-cash"></i> COD
+                    <% } else if (order.paymentMethod === 'wallet') { %>
+                      <i class="bi bi-wallet2"></i> Wallet
+                    <% } %>
+                  </div>
+                  <% 
+                    let paymentClass = '';
+                    if (order.paymentStatus === 'Paid') paymentClass = 'status-paid';
+                    else if (order.paymentStatus === 'Pending') paymentClass = 'status-pending';
+                    else if (order.paymentStatus === 'Failed') paymentClass = 'status-failed';
+                    else if (order.paymentStatus === 'Refunded') paymentClass = 'status-refunded';
+                  %>
+                  <span class="payment-status <%= paymentClass %>"><%= order.paymentStatus %></span>
+                </td>
+                <td>
+                  <% 
+                    let statusClass = '';
+                    if (order.orderStatus === 'Delivered') statusClass = 'status-delivered';
+                    else if (order.orderStatus === 'Shipped' || order.orderStatus === 'Out for Delivery') statusClass = 'status-shipping';
+                    else if (order.orderStatus === 'Pending') statusClass = 'status-pending';
+                    else if (order.orderStatus === 'Confirmed' || order.orderStatus === 'Processing') statusClass = 'status-processing';
+                    else if (order.orderStatus === 'Cancelled') statusClass = 'status-cancelled';
+                    else if (order.orderStatus === 'Returned' || order.orderStatus.includes('Returned')) statusClass = 'status-returned';
+                  %>
+                  <span class="status-badge <%= statusClass %>"><%= order.orderStatus %></span>
+                </td>
+                <td>
+                  <div class="action-buttons">
+                    <a href="/admin/orders/<%= order._id %>" class="btn-view" title="View Details">
+                      <i class="bi bi-eye"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
 
-  <!-- PAGINATION -->
-  <div class="pagination-wrapper">
-    <% if(currentPage > 1){ %>
-      <button onclick="changePage(<%= currentPage-1 %>)">Prev</button>
-    <% } %>
+      <!-- Pagination -->
+      <% if (totalPages > 1) { %>
+        <div class="pagination">
+          <button 
+            class="pagination-btn" 
+            onclick="changePage(<%= currentPage - 1 %>)"
+            <%= currentPage === 1 ? 'disabled' : '' %>
+          >
+            <i class="bi bi-chevron-left"></i>
+          </button>
 
-    <% for(let i=1;i<=totalPages;i++){ %>
-      <button class="<%= currentPage===i?'active':'' %>" onclick="changePage(<%= i %>)"><%= i %></button>
-    <% } %>
+          <% 
+            const maxPagesToShow = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+            let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+            
+            if (endPage - startPage + 1 < maxPagesToShow) {
+              startPage = Math.max(1, endPage - maxPagesToShow + 1);
+            }
+          %>
 
-    <% if(currentPage < totalPages){ %>
-      <button onclick="changePage(<%= currentPage+1 %>)">Next</button>
+          <% if (startPage > 1) { %>
+            <button class="pagination-btn" onclick="changePage(1)">1</button>
+            <% if (startPage > 2) { %>
+              <span class="pagination-dots">...</span>
+            <% } %>
+          <% } %>
+
+          <% for (let i = startPage; i <= endPage; i++) { %>
+            <button 
+              class="pagination-btn <%= i === currentPage ? 'active' : '' %>" 
+              onclick="changePage(<%= i %>)"
+            >
+              <%= i %>
+            </button>
+          <% } %>
+
+          <% if (endPage < totalPages) { %>
+            <% if (endPage < totalPages - 1) { %>
+              <span class="pagination-dots">...</span>
+            <% } %>
+            <button class="pagination-btn" onclick="changePage(<%= totalPages %>)"><%= totalPages %></button>
+          <% } %>
+
+          <button 
+            class="pagination-btn" 
+            onclick="changePage(<%= currentPage + 1 %>)"
+            <%= currentPage === totalPages ? 'disabled' : '' %>
+          >
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+      <% } %>
     <% } %>
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
-function changePage(p){ const url=new URL(location); url.searchParams.set("page",p); location=url; }
-function exportOrders(){ location="/admin/orders/export" }
+ 
+let searchTimeout;
 
-function applyFilters(){
-  const url = new URL(location);
-  url.searchParams.set("status", document.getElementById("statusFilter").value);
-  url.searchParams.set("paymentStatus", document.getElementById("paymentStatusFilter").value);
-  url.searchParams.set("sort", document.getElementById("sortFilter").value);
-  url.searchParams.set("page",1);
-  location = url;
+document.getElementById('searchInput').addEventListener('input', (e) => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => applyFilters(), 500);
+});
+
+document.getElementById('statusFilter').addEventListener('change', applyFilters);
+document.getElementById('paymentFilter').addEventListener('change', applyFilters);
+document.getElementById('sortBy').addEventListener('change', applyFilters);
+document.getElementById('sortOrder').addEventListener('change', applyFilters);
+
+function applyFilters() {
+  const search = document.getElementById('searchInput').value;
+  const status = document.getElementById('statusFilter').value;
+  const payment = document.getElementById('paymentFilter').value;
+  const sortBy = document.getElementById('sortBy').value;
+  const sortOrder = document.getElementById('sortOrder').value;
+
+  const params = new URLSearchParams();
+  if (search) params.set('search', search);
+  if (status) params.set('status', status);
+  if (payment) params.set('payment', payment);
+
+  params.set('sortBy', sortBy);
+  params.set('sortOrder', sortOrder);
+  params.set('page', '1');
+
+  window.location.href = `/admin/orders?${params.toString()}`;
 }
 
-let timer;
-function handleSearch(){
-  clearTimeout(timer);
-  timer=setTimeout(()=>{
-    const url=new URL(location);
-    const v=document.getElementById("searchInput").value;
-    v?url.searchParams.set("search",v):url.searchParams.delete("search");
-    url.searchParams.set("page",1); location=url;
-  },500);
+function clearFilters() {
+  window.location.href = `/admin/orders`;
 }
+
+function changePage(page) {
+  const params = new URLSearchParams(window.location.search);
+  params.set('page', page);
+  window.location.href = `/admin/orders?${params.toString()}`;
+}
+
+
 </script>

@@ -87,5 +87,4 @@ const logout = (req, res) => {
     res.redirect("/admin");
   }
 };
-
 export default { loadLogin, login, logout };

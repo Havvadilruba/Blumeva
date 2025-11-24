@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import crypto from "crypto";
 
 // -------------------------------
-// Ordered Item Schema (with item-level status)
+// Ordered Item Schema (with item-level tracking)
 // -------------------------------
 const orderedItemSchema = new mongoose.Schema({
   productId: {
@@ -18,7 +18,7 @@ const orderedItemSchema = new mongoose.Schema({
   quantity: { type: Number, required: true, min: 1 },
   price: { type: Number, required: true }, // salePrice at purchase time
 
-  // Item-level status
+  // Item-level status (allows individual item tracking)
   itemStatus: {
     type: String,
     enum: [
@@ -50,9 +50,9 @@ const orderedItemSchema = new mongoose.Schema({
     returnedAt: Date,
   },
 
-  // Reason for cancel/return
+  // Reason for cancellation or return
   reason: { type: String },
-  adminNote: { type: String },
+  adminNote: { type: String }, // Admin notes for returns/cancellations
 });
 
 // -------------------------------
@@ -155,7 +155,9 @@ const orderSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Auto-generate readable orderId
+// -------------------------------
+// Auto-generate human-readable orderId
+// -------------------------------
 orderSchema.pre("save", function (next) {
   if (!this.orderId) {
     const random = crypto.randomBytes(3).toString("hex").toUpperCase();

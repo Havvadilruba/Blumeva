@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoice - <%= order.orderId %></title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+
+    .btn-print {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 12px 24px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+    }
+
+    .btn-print:hover {
+      background-color: #45a049;
+    }
+
+    .invoice-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 40px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .logo img {
+      height: 50px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      border-bottom: 2px solid #4CAF50;
+      padding-bottom: 20px;
+    }
+
+    .header h1 {
+      font-size: 32px;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .subheader {
+      display: flex;
+      justify-content: space-between;
+      color: #666;
+      font-size: 14px;
+    }
+
+    .info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+
+    .info h3 {
+      font-size: 16px;
+      color: #333;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #e0e0e0;
+      padding-bottom: 5px;
+    }
+
+    .info p {
+      color: #666;
+      line-height: 1.6;
+      font-size: 14px;
+      margin: 5px 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 30px;
+    }
+
+    thead {
+      background-color: #f5f5f5;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    th {
+      font-weight: 600;
+      color: #333;
+      font-size: 14px;
+    }
+
+    td {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .total-row td {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .total-row:last-child {
+      border-top: 2px solid #333;
+      font-size: 16px;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #e0e0e0;
+      color: #666;
+      font-size: 14px;
+    }
+
+    @media print {
+      body {
+        background-color: white;
+        padding: 0;
+      }
+
+      .btn-print {
+        display: none;
+      }
+
+      .invoice-container {
+        box-shadow: none;
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <button class="btn-print" onclick="window.print()">Download Invoice</button>
+
+  <div class="invoice-container">
+    <div class="logo">
+      <h2 style="color: #4CAF50;">Your Company Name</h2>
+    </div>
+
+    <div class="header">
+      <h1>INVOICE</h1>
+      <div class="subheader">
+        <p><strong>Order ID:</strong> <%= order.orderId %></p>
+        <p><strong>Date:</strong> <%= new Date(order.createdAt).toLocaleDateString('en-IN', { 
+          day: 'numeric', month: 'long', year: 'numeric' 
+        }) %></p>
+      </div>
+    </div>
+
+    <div class="info">
+      <div>
+        <h3>Billing Details</h3>
+        <p><strong><%= order.shippingAddress.fullName %></strong></p>
+        <p><%= order.shippingAddress.phone %></p>
+        <p>
+          <%= order.shippingAddress.address1 %><br>
+          <% if (order.shippingAddress.address2) { %>
+            <%= order.shippingAddress.address2 %><br>
+          <% } %>
+          <%= order.shippingAddress.city %>, <%= order.shippingAddress.state %><br>
+          <%= order.shippingAddress.pincode %>, <%= order.shippingAddress.country %>
+        </p>
+      </div>
+
+      <div>
+        <h3>Payment Information</h3>
+        <p><strong>Payment Method:</strong> 
+          <% if (order.paymentMethod === 'razorpay') { %>
+            Online Payment
+          <% } else if (order.paymentMethod === 'wallet') { %>
+            Wallet
+          <% } else { %>
+            Cash on Delivery
+          <% } %>
+        </p>
+        <p><strong>Payment Status:</strong> <%= order.paymentStatus %></p>
+        <p><strong>Order Status:</strong> <%= order.orderStatus %></p>
+      </div>
+    </div>
+
+    <h3 style="margin-bottom: 15px;">Products</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Variant</th>
+          <th>Qty</th>
+          <th>Unit Price</th>
+          <th style="text-align: right;">Total</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <% order.orderedItems.forEach(item => { %>
+          <tr>
+            <td><%= item.productId.name %></td>
+            <td><%= item.variantId.quantityValue %><%= item.variantId.quantityType %></td>
+            <td><%= item.quantity %></td>
+            <td>₹<%= item.price.toLocaleString('en-IN') %></td>
+            <td style="text-align: right;">₹<%= (item.price * item.quantity).toLocaleString('en-IN') %></td>
+          </tr>
+        <% }); %>
+
+        <!-- Totals -->
+        <tr class="total-row">
+          <td colspan="4" style="text-align:right;">Subtotal</td>
+          <td style="text-align:right;">₹<%= order.subtotal.toLocaleString('en-IN') %></td>
+        </tr>
+
+        <% if (order.discount > 0) { %>
+          <tr class="total-row">
+            <td colspan="4" style="text-align:right;">Discount</td>
+            <td style="text-align:right; color: #4CAF50;">- ₹<%= order.discount.toLocaleString('en-IN') %></td>
+          </tr>
+        <% } %>
+
+        <tr class="total-row">
+          <td colspan="4" style="text-align:right;">Delivery Charge</td>
+          <td style="text-align:right;">
+            <% if (order.deliveryCharge === 0) { %>
+              <span style="color: #4CAF50;">FREE</span>
+            <% } else { %>
+              ₹<%= order.deliveryCharge.toLocaleString('en-IN') %>
+            <% } %>
+          </td>
+        </tr>
+
+        <tr class="total-row">
+          <td colspan="4" style="text-align:right;">Final Amount</td>
+          <td style="text-align:right;">₹<%= order.finalAmount.toLocaleString('en-IN') %></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="footer">
+      <p>Thank you for shopping with us!</p>
+      <p style="margin-top: 10px; font-size: 12px;">
+        This is a computer-generated invoice and does not require a signature.
+      </p>
+    </div>
+  </div>
+
+</body>
+</html>
