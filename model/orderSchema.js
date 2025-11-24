@@ -1,9 +1,6 @@
 import mongoose from "mongoose";
 import crypto from "crypto";
 
-// -------------------------------
-// Ordered Item Schema (with item-level tracking)
-// -------------------------------
 const orderedItemSchema = new mongoose.Schema({
   productId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -16,9 +13,8 @@ const orderedItemSchema = new mongoose.Schema({
     required: true,
   },
   quantity: { type: Number, required: true, min: 1 },
-  price: { type: Number, required: true }, // salePrice at purchase time
+  price: { type: Number, required: true }, 
 
-  // Item-level status (allows individual item tracking)
   itemStatus: {
     type: String,
     enum: [
@@ -37,7 +33,6 @@ const orderedItemSchema = new mongoose.Schema({
     default: "Pending",
   },
 
-  // Item-level timeline
   itemTimeline: {
     confirmedAt: Date,
     processedAt: Date,
@@ -50,14 +45,11 @@ const orderedItemSchema = new mongoose.Schema({
     returnedAt: Date,
   },
 
-  // Reason for cancellation or return
   reason: { type: String },
-  adminNote: { type: String }, // Admin notes for returns/cancellations
+  adminNote: { type: String }, 
 });
 
-// -------------------------------
-// Shipping Address Snapshot Schema
-// -------------------------------
+
 const shippingAddressSchema = new mongoose.Schema({
   fullName: { type: String, required: true },
   phone: { type: String, required: true },
@@ -67,15 +59,13 @@ const shippingAddressSchema = new mongoose.Schema({
   state: { type: String, required: true },
   pincode: { type: String, required: true },
   country: { type: String, required: true },
-  addressType: { type: String }, // home, office, other
+  addressType: { type: String }, 
 });
 
-// -------------------------------
-// Main Order Schema
-// -------------------------------
+
 const orderSchema = new mongoose.Schema(
   {
-    // Human-readable unique orderID
+    
     orderId: { type: String, unique: true, index: true },
 
     userId: {
@@ -90,7 +80,7 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
 
-    // Overall order status
+    
     orderStatus: {
       type: String,
       enum: [
@@ -109,7 +99,7 @@ const orderSchema = new mongoose.Schema(
       default: "Pending",
     },
 
-    // Order-level timeline
+   
     statusTimeline: {
       confirmedAt: Date,
       processedAt: Date,
@@ -155,9 +145,6 @@ const orderSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// -------------------------------
-// Auto-generate human-readable orderId
-// -------------------------------
 orderSchema.pre("save", function (next) {
   if (!this.orderId) {
     const random = crypto.randomBytes(3).toString("hex").toUpperCase();

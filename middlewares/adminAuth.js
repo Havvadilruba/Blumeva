@@ -20,7 +20,6 @@ const adminAuth = async (req, res, next) => {
 
 const checkAdmin = async (req, res, next) => {
   try {
-    console.log("checkAdmin running");
     res.locals.admin = null;
     if (req.session.admin) {
       const admin = await Admin.findById(req.session.admin.id);

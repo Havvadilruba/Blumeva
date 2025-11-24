@@ -1,7 +1,4 @@
-// Order Detail Page JavaScript
-// Uses Toastify for notifications and Axios for API calls
 
-// Notification helper
 function notify(message, type = "info") {
   Toastify({
     text: message,

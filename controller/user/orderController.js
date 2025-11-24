@@ -12,19 +12,25 @@ const placeOrder = async (req, res) => {
   try {
     const userId = req.session.user?._id;
     if (!userId) {
-      return res.json({ success: false, message: "Login required" });
+      return res.json({ 
+        success: false,
+         message: "Login required" });
     }
 
     const { error } = orderValidation.validate(req.body);
     if (error) {
-      return res.json({ success: false, message: error.message });
+      return res.json({ 
+        success: false,
+         message: error.message });
     }
 
     const { addressId, paymentMethod } = req.body;
 
     const items = await getCartItems(userId);
     if (!items.length) {
-      return res.json({ success: false, message: "Cart is empty" });
+      return res.json({ 
+        success: false,
+         message: "Cart is empty" });
     }
 
     for (const item of items) {
@@ -215,11 +221,11 @@ const loadOrderDetail = async (req, res) => {
     const order = await Order.findOne({ _id: id, userId })
       .populate({
         path: "orderedItems.productId",
-        select: "name images description brand category",
+        select: "name images",
       })
       .populate({
         path: "orderedItems.variantId",
-        select: "quantityValue quantityType stock regularPrice salePrice",
+        select: "quantityValue quantityType regularPrice salePrice",
       })
       .lean();
 
@@ -240,7 +246,7 @@ const loadOrderDetail = async (req, res) => {
   }
 };
 
-// FIXED: Cancel order items with proper validation
+
 const cancelOrderItems = async (req, res) => {
   try {
     const userId = req.session.user?._id;
@@ -251,7 +257,7 @@ const cancelOrderItems = async (req, res) => {
     const { id } = req.params;
     const { itemIds, reason } = req.body;
 
-    // Validate itemIds
+  
     if (!itemIds || !Array.isArray(itemIds) || itemIds.length === 0) {
       return res.json({ success: false, message: "No items selected for cancellation" });
     }
@@ -269,19 +275,17 @@ const cancelOrderItems = async (req, res) => {
     let cannotCancelCount = 0;
     const now = new Date();
 
-    // Process each selected item
+    //  each 
     for (const itemIdStr of itemIds) {
       const item = order.orderedItems.id(itemIdStr);
       
       if (!item) continue;
 
-      // Check if already cancelled
       if (item.itemStatus === "Cancelled") {
         alreadyCancelledCount++;
         continue;
       }
 
-      // Check if can be cancelled
       if (!cancellableStatuses.includes(item.itemStatus)) {
         cannotCancelCount++;
         continue;
@@ -344,7 +348,7 @@ const cancelOrderItems = async (req, res) => {
   }
 };
 
-// FIXED: Request return with proper validation
+
 const requestReturn = async (req, res) => {
   try {
     const userId = req.session.user?._id;
@@ -355,7 +359,7 @@ const requestReturn = async (req, res) => {
     const { id } = req.params;
     const { itemId, reason } = req.body;
 
-    // Validate reason (mandatory for returns)
+   
     if (!reason || reason.trim() === "") {
       return res.json({
         success: false,
@@ -369,13 +373,13 @@ const requestReturn = async (req, res) => {
       return res.json({ success: false, message: "Order not found" });
     }
 
-    // Find the item
+  
     const item = order.orderedItems.id(itemId);
     if (!item) {
       return res.json({ success: false, message: "Item not found" });
     }
 
-    // Check if item is delivered
+
     if (item.itemStatus !== "Delivered") {
       return res.json({
         success: false,
@@ -383,7 +387,7 @@ const requestReturn = async (req, res) => {
       });
     }
 
-    // Check if already in return process
+    // Check already  
     if (["ReturnRequested", "ReturnApproved", "Returned"].includes(item.itemStatus)) {
       return res.json({
         success: false,
@@ -391,7 +395,7 @@ const requestReturn = async (req, res) => {
       });
     }
 
-    // Check return window (7 days from item delivery)
+    // 7 days from item delivery
     const deliveredDate = item.itemTimeline?.deliveredAt || order.deliveredDate;
     if (deliveredDate) {
       const daysSinceDelivery = Math.floor(
@@ -419,26 +423,43 @@ const requestReturn = async (req, res) => {
     item.reason = reason.trim();
 
     // Update order status
-    const returnStatuses = ["ReturnRequested", "ReturnApproved", "Returned"];
-    const someReturning = order.orderedItems.some(i => 
-      returnStatuses.includes(i.itemStatus)
-    );
-    const allDeliveredOrReturning = order.orderedItems.every(i => 
-      i.itemStatus === "Delivered" || returnStatuses.includes(i.itemStatus)
-    );
+    // const returnStatuses = ["ReturnRequested", "ReturnApproved", "Returned"];
+    // const someReturning = order.orderedItems.some(i => 
+    //   returnStatuses.includes(i.itemStatus)
+    // );
+    // const allDeliveredOrReturning = order.orderedItems.every(i => 
+    //   i.itemStatus === "Delivered" || returnStatuses.includes(i.itemStatus)
+    // );
 
-    if (someReturning) {
-      if (allDeliveredOrReturning) {
-        order.orderStatus = "Partially Returned";
-      }
-    }
+    // if (someReturning) {
+    //   if (allDeliveredOrReturning) {
+    //     order.orderStatus = "Partially Returned";
+    //   }
+    // }
+   
+
+
+            const returnedItems = order.orderedItems.filter(
+              (i) => i.itemStatus === "Returned"
+            ).length;
+
+            const totalItems = order.orderedItems.length;
+
+            if (returnedItems === totalItems && totalItems > 0) {
+              order.orderStatus = "Returned";
+            }
+            else if (returnedItems > 0 && returnedItems < totalItems) {
+              order.orderStatus = "Partially Returned";
+            }
+
+
 
     order.markModified("orderedItems");
     await order.save();
 
     res.json({
       success: true,
-      message: "Return request submitted successfully. Admin will review your request",
+      message: "Return request submitted successfully",
     });
   } catch (error) {
     console.error("Request return error:", error);

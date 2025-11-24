@@ -49,7 +49,9 @@ const updateProfile = async (req, res) => {
   try {
 
   
-    const { error } = profileValidation.validate(req.body, { abortEarly: true });
+    const { error } = profileValidation
+    .validate(req.body, { abortEarly: true });
+
     if (error) {
       console.log("Validation Error:", error.details[0].message);
       return res.status(400).json({
@@ -133,8 +135,10 @@ const editEmail = async (req, res) => {
 
     const newEmail = req.body.newEmail;
 
-    //  existing user email 
-    const user = await User.findById(req.session.user._id).select("email");
+   
+    const user = await User
+    .findById(req.session.user._id)
+    .select("email");
     const oldEmail = user.email;
 
     // Same email check
@@ -145,7 +149,7 @@ const editEmail = async (req, res) => {
       });
     }
 
-    // Already existing email check
+    // existing 
     const existUser = await User.findOne({ email: newEmail });
     if (existUser) {
       return res.status(400).json({
@@ -223,7 +227,6 @@ const verifyEmailOtp = async (req, res) => {
       email: req.session.newEmail
     });
 
-    // Clear temp session
     delete req.session.emailOTP;
     delete req.session.newEmail;
 
@@ -253,7 +256,7 @@ const resendEmailOtp = async (req, res) => {
     }
 
     const otp = generateOtp();
-    console.log("RESEND OTP:", otp);  // debug only
+    console.log("RESEND OTP:", otp); 
 
     const emailSent = await sendVerificationEmail(newEmail, otp);
 
@@ -264,7 +267,7 @@ const resendEmailOtp = async (req, res) => {
       });
     }
 
-    req.session.emailOTP = otp;  // UPDATE stored OTP
+    req.session.emailOTP = otp;  
 
     return res.status(200).json({
       success: true,
@@ -300,7 +303,7 @@ const loadChangePassword = async (req, res) => {
 
  const updatePassword = async (req, res) => {
   try {
-    // Joi validation
+   
     const { error } = changePassValidation.validate(req.body);
     if (error) {
       return res.status(400).json({
@@ -312,7 +315,7 @@ const loadChangePassword = async (req, res) => {
     const { currentPassword, newPassword } = req.body;
     const userId = req.session.user._id;
 
-    // Check if user exists
+    // exists
     const user = await User.findById(userId);
     if (!user || !user.password) {
       return res.status(404).json({
@@ -321,7 +324,7 @@ const loadChangePassword = async (req, res) => {
       });
     }
 
-    // Compare old password
+    // Compare 
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
       return res.status(400).json({
@@ -330,7 +333,7 @@ const loadChangePassword = async (req, res) => {
       });
     }
 
-    // Hash new password
+  
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
     await user.save();

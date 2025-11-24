@@ -52,7 +52,7 @@ const checkUser = async (req, res, next) => {
         req.session.destroy();
       }
     }
-console.log("🛑 USER AUTH RUNNING");
+
 
     next();
   } catch (err) {

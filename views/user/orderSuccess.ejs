@@ -118,7 +118,7 @@
           <span class="summary-label">Delivery Charges</span>
           <span class="summary-value delivery-charge">
             <%= order.deliveryCharge === 0 ? 
-              '<span class="free-badge"><i class="bi bi-truck"></i> FREE</span>' : 
+              'FREE' : 
               '₹' + order.deliveryCharge.toLocaleString('en-IN', {minimumFractionDigits: 2}) 
             %>
           </span>

@@ -5,14 +5,12 @@ import Variant from "../../model/variantSchema.js";
 const loadOrders = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const limit = parseInt(req.query.limit) || 6;
     const skip = (page - 1) * limit;
 
     const search = req.query.search || "";
     const statusFilter = req.query.status || "";
-    const sortBy = req.query.sortBy || "createdAt";
     const paymentFilter = req.query.payment || "";  
-    const sortOrder = req.query.sortOrder === "asc" ? 1 : -1;
     let query = {};
 
     if (search) {
@@ -38,7 +36,6 @@ const loadOrders = async (req, res) => {
     
     const orders = await Order.find(query)
       .populate("userId", "name email")
-      .sort({ [sortBy]: sortOrder })
       .skip(skip)
       .limit(limit)
       .lean();
@@ -58,8 +55,6 @@ const loadOrders = async (req, res) => {
       search,
       paymentFilter,  
       statusFilter,
-      sortBy,
-      sortOrder: req.query.sortOrder || "desc",
       limit,
     });
   } catch (err) {
@@ -266,9 +261,6 @@ const updateOrderStatus = async (req, res) => {
 
 
 
-// ===========================
-// HANDLE RETURN REQUEST (Approve/Reject) - FIXED
-// ===========================
 const handleReturnRequest = async (req, res) => {
   try {
     const { id } = req.params;
@@ -306,7 +298,7 @@ const handleReturnRequest = async (req, res) => {
     if (item.itemStatus !== "ReturnRequested") {
       return res.status(400).json({
         success: false,
-        message: "Only pending return requests can be approved/rejected",
+        message: "cant approved/rejected",
       });
     }
 
@@ -322,7 +314,7 @@ const handleReturnRequest = async (req, res) => {
       if (adminNote) item.adminNote = adminNote;
     }
 
-    // Only update order status based on ACTUALLY RETURNED items
+    // Only update order status based
     const actuallyReturnedItems = order.orderedItems.filter(
       (i) => i.itemStatus === "Returned"
     );
@@ -355,9 +347,7 @@ const handleReturnRequest = async (req, res) => {
   }
 };
 
-// ===========================
-// MARK ITEM RETURNED - FIXED
-// ===========================
+
 const markItemReturned = async (req, res) => {
   try {
     const { id } = req.params;
@@ -369,7 +359,9 @@ const markItemReturned = async (req, res) => {
         .json({ success: false, message: "Missing itemId" });
     }
 
-    const order = await Order.findById(id).populate("orderedItems.variantId");
+    const order = await Order
+    .findById(id)
+    .populate("orderedItems.variantId");
     if (!order) {
       return res
         .status(404)
@@ -386,13 +378,12 @@ const markItemReturned = async (req, res) => {
     if (item.itemStatus !== "ReturnApproved") {
       return res.status(400).json({
         success: false,
-        message: "Only approved returns can be marked as returned",
+        message: "Only approved returns can ",
       });
     }
 
     const now = new Date();
 
-    // Restore stock when item is returned
     if (item.variantId && item.variantId._id) {
       await Variant.findByIdAndUpdate(
         item.variantId._id,
@@ -405,7 +396,7 @@ const markItemReturned = async (req, res) => {
     if (!item.itemTimeline) item.itemTimeline = {};
     item.itemTimeline.returnedAt = now;
 
-    // Update order status based on ALL items being returned
+    // Update order status 
     const allReturned = order.orderedItems.every(
       (i) => i.itemStatus === "Returned"
     );
