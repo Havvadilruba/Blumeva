@@ -55,6 +55,8 @@ const addToCart = async (req, res) => {
       });
     }
 
+    
+
     // Check for existing cart item
     const exists = await Cart.findOne({ 
       userId: req.session.user._id, 

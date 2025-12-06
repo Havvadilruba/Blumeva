@@ -60,7 +60,9 @@ const placeOrder = async (req, res) => {
         productId: item.product._id,
         variantId: item.variant._id,
         quantity: item.quantity,
-        price: item.salePrice,
+        regularPrice: item.regularPrice,
+        salePrice: item.salePrice,
+        discountAmount: item.discountAmount || 0,
         itemStatus: "Pending",
         itemTimeline: {}, 
       })),
@@ -159,7 +161,7 @@ const loadOrders = async (req, res) => {
     }
 
     const page = parseInt(req.query.page) || 1;
-    const limit = 10;
+    const limit = 6;
     const skip = (page - 1) * limit;
 
     const search = req.query.search || "";

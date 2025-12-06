@@ -1,0 +1,202 @@
+<%- include("../partials/user/header") %>
+
+<div class="wishlist-container">
+  <div class="wishlist-header">
+    <div class="header-content">
+      <h1 class="page-title">My Wishlist</h1>
+      <p class="wishlist-count">
+        <span id="wishlist-count"><%= wishlist?.items?.length || 0 %></span> items in your wishlist
+      </p>
+    </div>
+    <% if (wishlist && wishlist.items && wishlist.items.length > 0) { %>
+    <button onclick="clearWishlist()" class="btn-clear">
+      <i class="bi bi-trash"></i> Clear All
+    </button>
+    <% } %>
+  </div>
+
+  <div class="wishlist-content">
+    <% if (wishlist && wishlist.items && wishlist.items.length > 0) { %>
+    <div class="wishlist-grid">
+      <% wishlist.items.forEach(function(item) { 
+        const outOfStock = item.variantId.stock <= 0;
+      %>
+      <div class="wishlist-card <%= outOfStock ? 'out-of-stock' : '' %>">
+        <div class="card-image">
+          <a href="/product/<%= item.variantId._id %>">
+            <img src="<%= item.productId.images[0] %>" alt="<%= item.productId.name %>" />
+          </a>
+
+          <% if (outOfStock) { %>
+          <span class="badge badge-out">Out of Stock</span>
+          <% } else if (item.variantId.stock <= 5) { %>
+          <span class="badge badge-low">Only <%= item.variantId.stock %> left</span>
+          <% } %>
+
+          <button onclick="removeFromWishlist('<%= item.variantId._id %>')" class="btn-remove" title="Remove">
+            <i class="bi bi-x-circle-fill"></i>
+          </button>
+        </div>
+
+        <div class="card-content">
+          <a href="/product/<%= item.variantId._id %>" class="product-name">
+            <%= item.productId.name %>
+          </a>
+
+          <div class="product-variant">
+            <%= item.variantId.quantityValue %><%= item.variantId.quantityType %>
+          </div>
+
+          <div class="product-rating">
+            <% for(let i = 0; i < 5; i++) { %>
+              <i class="bi bi-star-fill <%= i < item.productId.avgRating ? 'active' : '' %>"></i>
+            <% } %>
+            <span>(<%= item.productId.avgRating.toFixed(1) %>)</span>
+          </div>
+
+          <div class="product-price">
+            <span class="sale-price">₹<%= item.variantId.salePrice.toLocaleString('en-IN') %></span>
+            <% if (item.variantId.regularPrice > item.variantId.salePrice) { %>
+            <span class="regular-price">₹<%= item.variantId.regularPrice.toLocaleString('en-IN') %></span>
+            <% const discount = Math.round(((item.variantId.regularPrice - item.variantId.salePrice) / item.variantId.regularPrice) * 100); %>
+            <span class="discount-badge"><%= discount %>% OFF</span>
+            <% } %>
+          </div>
+
+          <p class="added-date">
+            <i class="bi bi-calendar"></i> Added <%= new Date(item.addedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) %>
+          </p>
+
+          <div class="card-actions">
+            <% if (!outOfStock) { %>
+            <button onclick="moveToCart('<%= item.variantId._id %>')" class="btn-cart">
+              <i class="bi bi-cart-plus"></i> Add to Cart
+            </button>
+            <% } else { %>
+            <button disabled class="btn-cart btn-disabled">
+              <i class="bi bi-x-circle"></i> Out of Stock
+            </button>
+            <% } %>
+            <a href="/product/<%= item.variantId._id %>" class="btn-view">
+              <i class="bi bi-eye"></i> View
+            </a>
+          </div>
+        </div>
+      </div>
+      <% }); %>
+    </div>
+
+    <% if (totalPages > 1) { %>
+    <div class="pagination">
+      <div class="pagination-info">
+        Showing <%= (currentPage - 1) * limit + 1 %> to <%= Math.min(currentPage * limit, totalDocuments) %> of <%= totalDocuments %> items
+      </div>
+
+      <div class="pagination-controls">
+        <% if (currentPage > 1) { %>
+        <button onclick="changePage(<%= currentPage - 1 %>)" class="page-btn">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+        <% } %>
+
+        <% for (let i = 1; i <= totalPages; i++) { %>
+        <button onclick="changePage(<%= i %>)" class="page-btn <%= currentPage === i ? 'active' : '' %>">
+          <%= i %>
+        </button>
+        <% } %>
+
+        <% if (currentPage < totalPages) { %>
+        <button onclick="changePage(<%= currentPage + 1 %>)" class="page-btn">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+        <% } %>
+      </div>
+    </div>
+    <% } %>
+
+    <% } else { %>
+    <div class="empty-wishlist">
+      <div class="empty-icon">
+        <i class="bi bi-heart"></i>
+      </div>
+      <h3>Your Wishlist is Empty</h3>
+      <p>Save your favorite items to your wishlist</p>
+      <a href="/products" class="btn-shop">
+        <i class="bi bi-shop"></i> Start Shopping
+      </a>
+    </div>
+    <% } %>
+  </div>
+</div>
+<%- include("../partials/user/footer") %>
+<script>
+  function showToast(message, type = "success") {
+    Toastify({
+      text: message,
+      duration: 2000,
+      close: true,
+      gravity: "top",
+      position: "right",
+      backgroundColor: type === "success" ? "#16a34a" : "#dc2626"
+    }).showToast();
+  }
+
+  async function removeFromWishlist(variantId) {
+    try {
+      const { data } = await axios.post('/wishlist/toggle', { variantId });
+
+      if (data.success) {
+        showToast('Item removed from wishlist', "success");
+        setTimeout(() => window.location.reload(), 800);
+      } else {
+        showToast(data.message || 'Failed to remove item', "error");
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      showToast(error.response?.data?.message || 'Something went wrong', "error");
+    }
+  }
+
+  async function clearWishlist() {
+    if (!confirm('Are you sure you want to clear your entire wishlist?')) return;
+
+    try {
+      const { data } = await axios.delete('/wishlist/clear');
+
+      if (data.success) {
+        showToast('Wishlist cleared successfully', "success");
+        setTimeout(() => window.location.reload(), 800);
+      } else {
+        showToast(data.message || 'Failed to clear wishlist', "error");
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      showToast(error.response?.data?.message || 'Something went wrong', "error");
+    }
+  }
+
+  async function moveToCart(variantId) {
+    try {
+      const { data } = await axios.post('/cart/add', {
+        variantId,
+        quantity: 1
+      });
+
+      if (data.success) {
+        showToast('Item moved to cart', "success");
+        setTimeout(() => window.location.reload(), 800);
+      } else {
+        showToast(data.message || 'Failed to add to cart', "error");
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      showToast(error.response?.data?.message || 'Something went wrong', "error");
+    }
+  }
+
+  function changePage(page) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('page', page);
+    window.location.href = url.toString();
+  }
+</script>

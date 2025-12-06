@@ -6,7 +6,10 @@ const adminAuth = async (req, res, next) => {
     if (!req.session.admin) return res.redirect("/admin/login");
     const admin = await Admin.findById(req.session.admin.id);
     if (!admin) {
-      req.session.destroy(() => res.redirect("/admin/login"));
+      return req.session.destroy(() => {
+        res.clearCookie("adminSession"); 
+        res.redirect("/admin/login");
+      });
     } else {
       req.admin = admin;
       res.locals.admin = admin;
@@ -17,7 +20,6 @@ const adminAuth = async (req, res, next) => {
     res.status(500).send("Internal Server Error");
   }
 };
-
 const checkAdmin = async (req, res, next) => {
   try {
     res.locals.admin = null;

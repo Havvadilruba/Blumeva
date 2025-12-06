@@ -5,7 +5,10 @@
     <a href="/signup" class="signup">Sign Up</a>
   <% } else { %>
     <span>Welcome, <%= user.name %></span>
-    <a href="/logout">Logout</a>
+   <form action="/logout" method="POST">
+  <button>Logout</button>
+</form>
+
   <% } %>
   <a href="#">Contact Us</a>
 </div>

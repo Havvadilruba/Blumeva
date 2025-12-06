@@ -1,31 +1,97 @@
+<style>
+
+/* ===== Wishlist Icon ===== */
+.image-container {
+  position: relative;
+}
+
+.wishlist-icon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: white;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.wishlist-icon:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.wishlist-icon i {
+  font-size: 18px;
+  color: #2196F3;  /* Blue outline by default */
+  transition: all 0.3s ease;
+}
+
+.wishlist-icon.active i {
+  font-weight: 900;  /* Filled blue when active */
+}
+
+.wishlist-icon:hover i {
+  color: #1976D2;  /* Darker blue on hover */
+}
+</style>
+
 <div class="product-card" onclick="goToProduct('<%= product._id %>')">
   <div class="image-container">
     <img src="<%= product.images?.[0] %>" alt="<%= product.name %>">
 
-    <% 
+    <%
       const regular = product.regularPrice;
       const sale = product.salePrice;
-      const hasDiscount = regular > sale;
-      const discountPercent = hasDiscount 
-        ? Math.round(((regular - sale) / regular) * 100)
+      const offerAmount = product.discountAmount || 0;   // 🔹 from aggregation
+      const current = sale - offerAmount;
+
+      const hasDiscount = regular > current;
+      const discountPercent = hasDiscount
+        ? Math.round(((regular - current) / regular) * 100)
         : 0;
     %>
 
     <% if (hasDiscount) { %>
       <span class="offer-badge"><%= discountPercent %>% OFF</span>
     <% } %>
+
+    <!-- WISHLIST ICON -->
+    <!-- DYNAMIC BASED ON WISHLIST STATUS -->
+<button 
+  class="wishlist-icon <%= product.isInWishlist ? 'active' : '' %>"
+  onclick="toggleWishlist(event, '<%= product.variantId %>')">
+  <i class="<%= product.isInWishlist ? 'fa-solid' : 'fa-regular' %> fa-heart"></i>
+</button>
+
   </div>
 
   <h3><%= product.name %></h3>
   <p class="category"><%= product.category?.name %></p>
 
+  <!-- PRICE -->
   <div class="price">
-    <span class="sale">₹<%= sale %></span>
+    <span class="sale">₹<%= current.toLocaleString('en-IN') %></span>
     <% if (hasDiscount) { %>
-      <span class="regular">₹<%= regular %></span>
+      <span class="regular">₹<%= regular.toLocaleString('en-IN') %></span>
     <% } %>
   </div>
 
+  <!-- SAVE MESSAGE EXACT LIKE REFERENCE -->
+  <% if (offerAmount > 0) { %>
+    <p class="text-green-600 text-xs font-semibold mt-1">
+      Save ₹<%= (regular - current).toLocaleString('en-IN') %> with offers
+    </p>
+  <% } %>
+
+  <!-- RATING SAME STYLE -->
   <div class="rating">
     <% for (let i = 1; i <= 5; i++) { %>
       <% if (i <= Math.round(product.avgRating || 0)) { %>
@@ -37,11 +103,69 @@
   </div>
 
   <button 
-  class="btn add-to-cart"
-  onclick="addToCart(event, '<%= product.variantId %>')">
-  Add to Cart
-</button>
-
-
+    class="btn add-to-cart"
+    onclick="addToCart(event, '<%= product.variantId %>')">
+    Add to Cart
+  </button>
 </div>
 
+<script>
+async function toggleWishlist(event, variantId) {
+  event.stopPropagation();
+
+  const btn = event.currentTarget;
+  const icon = btn.querySelector('i');
+
+  try {
+    const res = await axios.post('/wishlist/toggle', { variantId });
+    const data = res.data;
+
+    if (!data.success) {
+      return showToast(data.message || "Wishlist update failed", "error");
+    }
+
+    if (data.action === "added") {
+      icon.classList.replace("fa-regular", "fa-solid");
+      btn.classList.add("active");
+      showToast("Added to Wishlist ❤️", "success");
+    } else {
+      icon.classList.replace("fa-solid", "fa-regular");
+      btn.classList.remove("active");
+      showToast("Removed from Wishlist 💔", "info");
+    }
+
+  } catch (error) {
+    console.error(error);
+    showToast("Something went wrong!", "error");
+  }
+}
+
+
+
+// Toastify Helper
+function showToast(message, type = "success") {
+  Toastify({
+    text: message,
+    duration: 1500,
+    close: false,
+    gravity: "top",
+    position: "right",
+    stopOnFocus: true,
+    style: {
+      background: type === "success" ? "#00C853" 
+          : type === "info" ? "#2196f3"
+          : "#E53935",
+      color: "#fff",
+      fontWeight: "600",
+      borderRadius: "8px",
+      padding: "10px 16px",
+      fontSize: "14px",
+      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+    },
+    offset: {
+      x: 20,
+      y: 70
+    }
+  }).showToast();
+}
+</script>

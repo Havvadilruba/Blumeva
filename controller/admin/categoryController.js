@@ -1,111 +1,95 @@
-import Category from "../../model/categorySchema.js";
 import categoryValidation from "../../validations/categoryValidation.js";
+import {
+  categoryListService,
+  addCategoryService,
+  updateCategoryService,
+  toggleCategoryStatusService,
+} from "../../services/categoryService.js";
 
-
-// CATEGORY LIST
+import { findCategoryById } from "../../repositories/categoryRepository.js";
 const categoryInfo = async (req, res) => {
   try {
     const search = req.query.search?.trim() || "";
     const page = parseInt(req.query.page) || 1;
     const limit = 5;
 
-    const filter = search
-      ? { name: { $regex: new RegExp(`^${search}`, "i") } }
-      : {};
-
-    const totalCategories = await Category.countDocuments(filter);
-    const totalPages = Math.ceil(totalCategories / limit);
-
-    const categories = await Category.find(filter)
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit);
+    const { categories, total } = await categoryListService(search, page, limit);
 
     res.render("admin/categoryList", {
       layout: "layouts/admin",
       title: "Manage Categories",
       categories,
       currentPage: page,
-      totalPages,
+      totalPages: Math.ceil(total / limit),
       search,
       pageCSS: "categoryList",
       activePage: "categoryList",
     });
   } catch (error) {
-    console.error("Error :", error);
+    console.error("Error:", error);
     res.redirect("/admin/page-404");
   }
 };
 
 
-
-//  ADD CATEGORY PAGE
 const loadAddCategory = async (req, res) => {
-  try {
-    res.render("admin/addCategory", {
-      layout: "layouts/admin",
-      title: "Add New Category",
-      pageCSS: "addCategory",
-      activePage: "addCategory",
-    });
-  } catch {
-    res.redirect("/admin/page-404");
-  }
+  res.render("admin/addCategory", {
+    layout: "layouts/admin",
+    title: "Add New Category",
+    pageCSS: "addCategory",
+    activePage: "addCategory",
+  });
 };
 
 
-// ADD CATEGORY 
 const addCategory = async (req, res) => {
   try {
     const { name } = req.body;
 
+    // Validate name
     const { error } = categoryValidation.validate({ name });
     if (error) {
-      return res.status(400).json({
-        success: false,
-        message: error.details[0].message,
+      console.log("Validation failed:", error.details[0].message);
+      return res.status(400).json({ 
+        success: false, 
+        message: error.details[0].message 
       });
     }
-    const existing = await Category.findOne({
-      name: { $regex: new RegExp(`^${name}$`, "i") },
-    });
-    if (existing) {
-      return res.status(400).json({
-        success: false,
-        message: "Category already exists",
-      });
-    }
+
+    // Check if file exists
     if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: "Please upload a category image",
+      console.log("No file uploaded");
+      return res.status(400).json({ 
+        success: false, 
+        message: "Please upload a category image" 
       });
     }
 
-    await Category.create({
-      name,
-      image: req.file.path,
-      isListed: true,
-    });
+    // Call service
+    const result = await addCategoryService(name, req.file.path);
+  
 
-    res.status(201).json({
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
+    return res.status(201).json({
       success: true,
-      message: "Category added successfully ",
+      message: "Category added successfully",
       redirectUrl: "/admin/category",
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Server error while adding category",
+  } catch (err) {
+  
+    
+    return res.status(500).json({ 
+      success: false, 
+      message: "Server error: " + err.message 
     });
   }
 };
-
-// EDIT CATEGORY PAGE
-
 const editCategory = async (req, res) => {
   try {
-    const category = await Category.findById(req.params.id);
+    const category = await findCategoryById(req.params.id);
     if (!category) return res.redirect("/admin/page-404");
 
     res.render("admin/editCategory", {
@@ -115,96 +99,44 @@ const editCategory = async (req, res) => {
       activePage: "categoryList",
       category,
     });
-  } catch {
-    res.redirect("/admin/page-404");
-  }
+  }catch (err) {
+  console.error("Edit Category Error:", err)
+  res.redirect("/admin/page-404");
+}
 };
 
-
-// UPDATE CATEGORY 
 
 const updateCategory = async (req, res) => {
   try {
     const { name } = req.body;
-    const id = req.params.id;
-
-    const category = await Category.findById(id);
-    if (!category) {
-      return res.status(404).json({
-        success: false,
-        message: "Category not found",
-      });
-    }
 
     const { error } = categoryValidation.validate({ name });
-    if (error) {
-      return res.status(400).json({
-        success: false,
-        message: error.details[0].message,
-      });
-    }
-    const existing = await Category.findOne({
-      name: { $regex: new RegExp(`^${name}$`, "i") },
-      _id: { $ne: id }, 
-    });
+    if (error) return res.status(400).json({ success: false, message: error.details[0].message });
 
-    if (existing) {
-      return res.status(400).json({
-        success: false,
-        message: " this name already exists.",
-      });
-    }
+    const result = await updateCategoryService(req.params.id, name, req.file?.path);
+    if (!result.success) return res.status(400).json(result);
 
-    if (req.file) {
-      category.image = req.file.path;
-    }
-
-    category.name = name;
-    await category.save();
-
-    res.json({
-      success: true,
-      message: "Category updated successfully ",
-      redirectUrl: "/admin/category",
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Server error while updating category",
-    });
+    res.json({ success: true, message: "Category updated successfully", redirectUrl: "/admin/category" });
+  } catch {
+    res.status(500).json({ success: false, message: "Server error while updating category" });
   }
 };
-
 
 
 const toggleListStatus = async (req, res) => {
   try {
-    const category = await Category.findById(req.params.id);
-
-    if (!category) {
-      return res.status(404).json({
-        success: false,
-        message: "Category not found",
-      });
-    }
-
-    category.isListed = !category.isListed;
-    await category.save();
+    const result = await toggleCategoryStatusService(req.params.id);
+    if (!result.success) return res.status(404).json(result);
 
     res.status(200).json({
       success: true,
-      message: `Category ${category.isListed ? "unblocked " : "blocked "} successfully`,
-      isListed: category.isListed,
+      message: `Category ${result.isListed ? "unblocked" : "blocked"} successfully`,
+      isListed: result.isListed,
     });
-  } catch (error) {
-    console.error(" Toggle category error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error while toggling category",
-    });
+  } catch {
+    res.status(500).json({ success: false, message: "Server error while toggling category" });
   }
 };
 
 
-export default{ categoryInfo, loadAddCategory, addCategory, editCategory, updateCategory, toggleListStatus };
-
+export default { categoryInfo, loadAddCategory, addCategory, editCategory, updateCategory, toggleListStatus };

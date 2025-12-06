@@ -398,7 +398,11 @@ const saveNewPassword = async (req, res) => {
 
 const logout = (req, res) => {
   try {
-    req.session.destroy(() => {
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Logout Error:", err);
+      }
+      res.clearCookie("userSession");
       res.redirect("/login");
     });
   } catch (error) {

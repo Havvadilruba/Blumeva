@@ -1,0 +1,412 @@
+<%- include('../partials/admin/sidebar') %>
+
+<div class="page-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <div>
+        <h1>Offers Management</h1>
+        <p class="subtitle">Create and manage product and category offers</p>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="openAddOfferModal()">
+      <i class="bi bi-plus-circle"></i>
+      Add New Offer
+    </button>
+  </div>
+
+  <!-- Analytics Cards -->
+  <div class="stats-grid">
+    <div class="stat-card stat-blue">
+      <div class="stat-icon">
+        <i class="bi bi-percent"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Total Offers</div>
+        <div class="stat-value"><%= analytics.totalOffers || 0 %></div>
+      </div>
+    </div>
+
+    <div class="stat-card stat-green">
+      <div class="stat-icon">
+        <i class="bi bi-check-circle"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Active Offers</div>
+        <div class="stat-value"><%= analytics.activeOffers || 0 %></div>
+      </div>
+    </div>
+
+    <div class="stat-card stat-purple">
+      <div class="stat-icon">
+        <i class="bi bi-box-seam"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Product Offers</div>
+        <div class="stat-value"><%= analytics.productOffers || 0 %></div>
+      </div>
+    </div>
+
+    <div class="stat-card stat-orange">
+      <div class="stat-icon">
+        <i class="bi bi-tag"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Category Offers</div>
+        <div class="stat-value"><%= analytics.categoryOffers || 0 %></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs-container">
+    <button class="tab-btn <%= !offerType || offerType === 'product' ? 'active' : '' %>" onclick="switchTab('product')">
+      <i class="bi bi-box-seam"></i> Product Offers
+    </button>
+    <button class="tab-btn <%= offerType === 'category' ? 'active' : '' %>" onclick="switchTab('category')">
+      <i class="bi bi-tag"></i> Category Offers
+    </button>
+  </div>
+
+<div class="filters-bar">
+  <div class="search-field">
+    <i class="bi bi-search search-icon"></i>
+    <input
+  type="text"
+  id="searchInput"
+  placeholder="Search offers..."
+  value="<%= searchQuery || '' %>"
+  onkeyup="handleSearch()"
+/>
+
+   <button class="clear-btn" id="clearBtn" onclick="clearSearch()">
+  <i class="bi bi-x-circle-fill"></i>
+</button>
+
+  </div>
+
+  <div class="filter-group">
+    <label>Status:</label>
+    <select id="statusFilter" onchange="applyFilters()">
+      <option value="">All</option>
+      <option value="active" <%= statusFilter === 'active' ? 'selected' : '' %>>Active</option>
+      <option value="inactive" <%= statusFilter === 'inactive' ? 'selected' : '' %>>Inactive</option>
+      <option value="expired" <%= statusFilter === 'expired' ? 'selected' : '' %>>Expired</option>
+    </select>
+  </div>
+
+  <div class="filter-group">
+    <label>Sort By:</label>
+    <select id="sortFilter" onchange="applyFilters()">
+      <option value="recent" <%= sortFilter === 'recent' ? 'selected' : '' %>>Recent</option>
+      <option value="oldest" <%= sortFilter === 'oldest' ? 'selected' : '' %>>Oldest</option>
+      <option value="value-high" <%= sortFilter === 'value-high' ? 'selected' : '' %>>Discount High</option>
+      <option value="value-low" <%= sortFilter === 'value-low' ? 'selected' : '' %>>Discount Low</option>
+    </select>
+  </div>
+</div>
+
+<!-- Offers Table -->
+<% if (offers && offers.length > 0) { %>
+  <table class="offers-table">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Offer Name</th>
+        <th>Target</th>
+        <th>Discount</th>
+        <th>Start Date</th>
+        <th>End Date</th>
+        <th>Status</th>
+        <th style="text-align:center;">Actions</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <% offers.forEach(offer => { %>
+        <% 
+          const now = new Date();
+          const start = new Date(offer.startDate);
+          const end = new Date(offer.endDate);
+
+          let statusClass = '';
+          let statusText = '';
+
+          if (!offer.isActive) {
+            statusClass = 'status-cancelled';
+            statusText = 'Inactive';
+          } else if (now > end) {
+            statusClass = 'status-cancelled';
+            statusText = 'Expired';
+          } else if (now < start) {
+            statusClass = 'status-pending';
+            statusText = 'Scheduled';
+          } else {
+            statusClass = 'status-delivered';
+            statusText = 'Active';
+          }
+        %>
+
+        <tr>
+          <td>
+            <span class="type-badge <%= offer.offerType === 'product' ? 'type-product' : 'type-category' %>">
+              <%= offer.offerType === 'product' ? 'Product' : 'Category' %>
+            </span>
+          </td>
+
+          <td><%= offer.offerName %></td>
+
+          <td>
+            <% if (offer.offerType === 'category') { %>
+              <%= offer.categoryID?.name || 'N/A' %>
+            <% } else { %>
+              <% if (offer.productID && offer.productID.length > 0) { %>
+                <%= offer.productID[0].name %>
+                <% if (offer.productID.length > 1) { %>
+                  <span class="extra-count">(+<%= offer.productID.length - 1 %>)</span>
+                <% } %>
+              <% } else { %> N/A <% } %>
+            <% } %>
+          </td>
+
+          <td>
+            <% if (offer.discountType === "percentage") { %>
+              <%= offer.discountValue %>% OFF
+            <% } else { %>
+              ₹<%= offer.discountValue %>
+            <% } %>
+          </td>
+
+          <td><%= new Date(offer.startDate).toLocaleDateString('en-IN') %></td>
+          <td><%= new Date(offer.endDate).toLocaleDateString('en-IN') %></td>
+
+          <td>
+            <span class="status-badge <%= statusClass %>"><%= statusText %></span>
+          </td>
+
+          <td class="actions-col">
+            <button class="btn-action btn-edit" onclick="editOffer('<%= offer._id %>')">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <button class="btn-action <%= offer.isActive ? 'btn-toggle-off' : 'btn-toggle-on' %>"
+                    onclick="toggleOfferStatus('<%= offer._id %>', <%= offer.isActive %>)">
+              <i class="bi <%= offer.isActive ? 'bi-toggle-on' : 'bi-toggle-off' %>"></i>
+            </button>
+            <button class="btn-action btn-delete" onclick="deleteOffer('<%= offer._id %>')">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+<% } else { %>
+  <div class="empty-state">
+    <i class="bi bi-percent"></i>
+    <p>No offers found</p>
+    <button class="btn-primary" onclick="openAddOfferModal()">Create Your First Offer</button>
+  </div>
+<% } %>
+
+
+  <!-- Pagination -->
+  <% if (offers && offers.length > 0) { %>
+    <div class="pagination-container">
+      <div class="pagination-info">
+        <% const startItem = (currentPage - 1) * limit + 1; %>
+        <% const endItem = Math.min((currentPage - 1) * limit + offers.length, totalOffers); %>
+        Showing <%= startItem %> to <%= endItem %> of <%= totalOffers %> offers
+      </div>
+
+      <div class="pagination-controls">
+        <% if(currentPage > 1) { %>
+          <button class="page-btn" onclick="changePage(<%= currentPage - 1 %>)">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+        <% } else { %>
+          <button class="page-btn" disabled>
+            <i class="bi bi-chevron-left"></i>
+          </button>
+        <% } %>
+        
+        <% 
+          const maxPagesToShow = 5;
+          let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+          let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+          
+          if (endPage - startPage < maxPagesToShow - 1) {
+            startPage = Math.max(1, endPage - maxPagesToShow + 1);
+          }
+        %>
+        
+        <% if (startPage > 1) { %>
+          <button class="page-btn" onclick="changePage(1)">1</button>
+          <% if (startPage > 2) { %>
+            <span class="pagination-dots">...</span>
+          <% } %>
+        <% } %>
+        
+        <% for(let i = startPage; i <= endPage; i++) { %>
+          <button 
+            class="page-btn <%= currentPage === i ? 'active' : '' %>" 
+            onclick="changePage(<%= i %>)"
+          >
+            <%= i %>
+          </button>
+        <% } %>
+        
+        <% if (endPage < totalPages) { %>
+          <% if (endPage < totalPages - 1) { %>
+            <span class="pagination-dots">...</span>
+          <% } %>
+          <button class="page-btn" onclick="changePage(<%= totalPages %>)"><%= totalPages %></button>
+        <% } %>
+        
+        <% if(currentPage < totalPages) { %>
+          <button class="page-btn" onclick="changePage(<%= currentPage + 1 %>)">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        <% } else { %>
+          <button class="page-btn" disabled>
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        <% } %>
+      </div>
+    </div>
+  <% } %>
+</div>
+
+<!-- Add/Edit Offer Modal -->
+<div id="offerModal" class="modal">
+  <div class="modal-content modal-large">
+    <div class="modal-header">
+      <h2 id="modalTitle">Add New Offer</h2>
+      <button class="modal-close" onclick="closeOfferModal()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <form id="offerForm">
+      <input type="hidden" id="offerId" name="offerId">
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="offerType">Offer Type <span class="required">*</span></label>
+          <select id="offerTypeSelect" name="offerType" class="form-select" onchange="handleOfferTypeChange()">
+            <option value="">Select Offer Type</option>
+            <option value="product">Product Offer</option>
+            <option value="category">Category Offer</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="offerName">Offer Name <span class="required">*</span></label>
+          <input type="text" id="offerName" name="offerName" class="form-input" placeholder="e.g., Summer Sale 2025">
+        </div>
+      </div>
+
+      <!-- Product Selection -->
+      <div id="productSelectionSection" class="form-section" style="display: none;">
+        <div class="form-group">
+          <label for="productSearch">Select Products <span class="required">*</span></label>
+          <div class="search-select-wrapper">
+  <input 
+    type="text" 
+    id="productSearch"
+    class="form-input"
+    placeholder="Search and add products..." 
+    autocomplete="off"
+    oninput="searchProducts(this.value)"
+  >
+  <i class="bi bi-search search-icon"></i>
+
+  <!-- Move inside -->
+  <div id="productSearchResults" class="search-results"></div>
+</div>
+
+          
+          <div id="selectedProductsContainer" class="selected-items-container" style="display: none;">
+            <div class="selected-items-header">
+              <span class="selected-count">0 products selected</span>
+              <button type="button" class="btn-link" onclick="clearAllProducts()">Clear All</button>
+            </div>
+            <div id="selectedProductsList" class="selected-items-list"></div>
+          </div>
+          
+          <input type="hidden" id="productIDs" name="productIDs">
+        </div>
+      </div>
+
+      <!-- Category Selection -->
+      <div id="categorySelectionSection" class="form-section" style="display: none;">
+        <div class="form-group">
+          <label for="categoryID">Select Category <span class="required">*</span></label>
+          <select id="categoryID" name="categoryID" class="form-select">
+            <option value="">Choose a category</option>
+            <% if (typeof categories !== 'undefined' && categories) { %>
+              <% categories.forEach(category => { %>
+                <option value="<%= category._id %>"><%= category.name %></option>
+              <% }); %>
+            <% } %>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="discountType">Discount Type <span class="required">*</span></label>
+          <select id="discountType" name="discountType" class="form-select"  onchange="handleDiscountTypeChange()">
+            <option value="">Select Discount Type</option>
+            <option value="percentage">Percentage (%)</option>
+            <option value="fixed">Fixed Amount (₹)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="discountValue">Discount Value <span class="required">*</span></label>
+          <div class="input-with-suffix">
+            <input 
+              type="number" 
+              id="discountValue" 
+              name="discountValue"
+              class="form-input"
+              placeholder="Enter value" 
+        
+            >
+            <span class="input-suffix" id="discountSuffix">%</span>
+          </div>
+          <small class="form-help" id="discountHelp">Enter discount percentage (1-90%)</small>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="startDate">Start Date <span class="required">*</span></label>
+          <input type="date" id="startDate" name="startDate" class="form-input">
+        </div>
+
+        <div class="form-group">
+          <label for="endDate">End Date <span class="required">*</span></label>
+          <input type="date" id="endDate" name="endDate" class="form-input">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="isActive">Status</label>
+        <select id="isActive" name="isActive" class="form-select">
+          <option value="true">Active</option>
+          <option value="false">Inactive</option>
+        </select>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeOfferModal()">Cancel</button>
+        <button type="submit" class="btn-primary" id="submitBtn">
+          <i class="bi bi-check-circle"></i>
+          <span id="submitBtnText">Create Offer</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="/js/admin/offers.js"></script>

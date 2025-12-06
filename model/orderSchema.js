@@ -13,7 +13,9 @@ const orderedItemSchema = new mongoose.Schema({
     required: true,
   },
   quantity: { type: Number, required: true, min: 1 },
-  price: { type: Number, required: true }, 
+  regularPrice: { type: Number, required: true },
+  salePrice: { type: Number, required: true },
+  discountAmount: { type: Number, default: 0 },
 
   itemStatus: {
     type: String,

@@ -187,10 +187,51 @@
           </div>
         </div>
 
-        <div class="order-price">
-          <h4>₹<%= (item.salePrice * item.quantity).toLocaleString('en-IN') %></h4>
-          <del class="old-price">₹<%= (item.regularPrice * item.quantity).toLocaleString('en-IN') %></del>
-        </div>
+       <div class="order-price" style="text-align:right;">
+  <%
+    const regular = item.regularPrice;
+    const sale = item.salePrice;
+    const offerAmount = item.discountAmount || 0;
+    const current = sale - offerAmount;
+    const hasDiscount = regular > current;
+    const discountPercent = hasDiscount
+      ? Math.round(((regular - current) / regular) * 100)
+      : 0;
+  %>
+
+  <!-- FINAL PRICE -->
+  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
+
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span style="font-size:16px;font-weight:700;color:#111;">
+        ₹<%= (current * item.quantity).toLocaleString('en-IN') %>
+      </span>
+
+      <% if(hasDiscount) { %>
+        <del style="font-size:13px;color:#888;text-decoration:line-through;">
+          ₹<%= (regular * item.quantity).toLocaleString('en-IN') %>
+        </del>
+      <% } %>
+    </div>
+
+    <% if(hasDiscount) { %>
+      <span style="
+        background:#16a34a;color:#fff;
+        font-size:10px;font-weight:600;
+        padding:1px 6px;border-radius:4px;">
+        <%= discountPercent %>% OFF
+      </span>
+    <% } %>
+
+    <% if(offerAmount > 0) { %>
+      <span style="color:#16a34a;font-size:11px;font-weight:600;">
+        Save ₹<%= ((regular - current) * item.quantity).toLocaleString('en-IN') %> with offers
+      </span>
+    <% } %>
+
+  </div>
+</div>
+
       </div>
     <% }) %>
   </div>

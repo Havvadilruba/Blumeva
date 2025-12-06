@@ -4,7 +4,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchForm = document.getElementById("searchForm");
   const clearSearch = document.getElementById("clearSearch");
 
-  if (searchInput && searchForm) {
+  // Only initialize search if we're on the category list page
+  const isCategoryListPage = window.location.pathname === "/admin/category";
+  
+  if (searchInput && searchForm && isCategoryListPage) {
     let debounceTimer;
     searchInput.addEventListener("input", () => {
       clearTimeout(debounceTimer);
@@ -18,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  if (clearSearch) {
+  if (clearSearch && isCategoryListPage) {
     clearSearch.addEventListener("click", (e) => {
       e.preventDefault();
       searchInput.value = "";
@@ -50,17 +53,32 @@ document.addEventListener("DOMContentLoaded", () => {
       const formData = new FormData(addForm);
       const url = addForm.getAttribute("action"); 
 
+      for (let [key, value] of formData.entries()) {
+      }
+
       try {
         const res = await axios.post(url, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
 
+
         if (res.data.success) {
           showToast(res.data.message, "success");
           setTimeout(() => (window.location.href = res.data.redirectUrl), 1500);
+        } else {
+          showToast(res.data.message || "Failed to add category", "error");
         }
       } catch (error) {
-        handleAxiosError(error, "adding category");
+       
+        if (error.response?.data?.message) {
+          showToast(error.response.data.message, "error");
+        } else if (error.response?.status === 500) {
+          showToast("Server error: " + (error.response.data || "Unknown error"), "error");
+        } else if (error.request) {
+          showToast("No response from server. Check your connection.", "error");
+        } else {
+          showToast("Error: " + error.message, "error");
+        }
       }
     });
   }
@@ -75,6 +93,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const formData = new FormData(editForm);
       const url = editForm.getAttribute("action");
+
+      console.log("Edit form submission started");
+      console.log("URL:", url);
 
       try {
         const res = await axios.patch(url, formData, {
@@ -95,58 +116,57 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // TOGGLE 
 
- const toggleButtons = document.querySelectorAll(".btn-toggle");
+  const toggleButtons = document.querySelectorAll(".btn-toggle");
 
-toggleButtons.forEach((btn) => {
-  btn.addEventListener("click", async (e) => {
-    e.preventDefault();
-    const id = btn.dataset.id;
+  toggleButtons.forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const id = btn.dataset.id;
 
-    try {
-      const res = await axios.patch(`/admin/category/toggle/${id}`);
-      if (res.data.success) {
-        showToast(res.data.message, "success");
-        setTimeout(() => window.location.reload(), 1000);
-      } else {
-        showToast(res.data.message, "error");
+      try {
+        const res = await axios.patch(`/admin/category/toggle/${id}`);
+        if (res.data.success) {
+          showToast(res.data.message, "success");
+          setTimeout(() => window.location.reload(), 1000);
+        } else {
+          showToast(res.data.message, "error");
+        }
+      } catch (err) {
+        console.error("Toggle error:", err);
+        showToast("Server error", "error");
       }
-    } catch (err) {
-      console.error("Toggle error:", err);
-      showToast("Server error ", "error");
-    }
+    });
   });
+
 });
 
-  });
+function handleAxiosError(error, action = "performing action") {
+  console.error(`Error ${action}:`, error);
 
-  function handleAxiosError(error, action = "performing action") {
-    console.error(`Error ${action}:`, error);
-
-    if (error.response && error.response.data) {
-      const message =
-        error.response.data.message ||
-        `An error occurred while ${action}.`;
-      showToast(message, "error");
-    } else {
-      showToast(`Server error while ${action}.`, "error");
-    }
+  if (error.response && error.response.data) {
+    const message =
+      error.response.data.message ||
+      `An error occurred while ${action}.`;
+    showToast(message, "error");
+  } else {
+    showToast(`Server error while ${action}.`, "error");
   }
+}
 
-  function showToast(message, type = "info") {
-    const colors = {
-      success: "#4CAF50",
-      error: "#e74c3c",
-      warning: "#f39c12",
-      info: "#3498db",
-    };
+function showToast(message, type = "info") {
+  const colors = {
+    success: "#4CAF50",
+    error: "#e74c3c",
+    warning: "#f39c12",
+    info: "#3498db",
+  };
 
-    Toastify({
-      text: message,
-      backgroundColor: colors[type] || colors.info,
-      duration: 3000,
-      gravity: "top",
-      position: "right",
-      close: true,
-    }).showToast();
-  }
-
+  Toastify({
+    text: message,
+    backgroundColor: colors[type] || colors.info,
+    duration: 3000,
+    gravity: "top",
+    position: "right",
+    close: true,
+  }).showToast();
+}

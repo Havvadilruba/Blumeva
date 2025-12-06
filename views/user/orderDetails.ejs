@@ -179,13 +179,48 @@
                       <% } %>
                     </div>
                     <div class="item-price">
-                      <p class="price">₹<%= (item.price * item.quantity).toLocaleString('en-IN') %></p>
-                      <p class="price-unit">₹<%= item.price.toLocaleString('en-IN') %> each</p>
-                    </div>
+  <%
+    const regular = item.regularPrice;
+    const sale = item.salePrice;
+    const offerAmount = item.discountAmount || 0;
+    const current = sale - offerAmount;
+
+    const hasDiscount = regular > current;
+    const discountPercent = hasDiscount
+      ? Math.round(((regular - current) / regular) * 100)
+      : 0;
+  %>
+
+  <!-- Final price * quantity -->
+  <p class="price">
+    ₹<%= (current * item.quantity).toLocaleString('en-IN') %>
+  </p>
+
+  <!-- Per unit pricing + strike-off if discount -->
+  <div class="unit-prices">
+    <span class="sale-unit">
+      ₹<%= current.toLocaleString('en-IN') %> each
+    </span>
+
+    <% if (hasDiscount) { %>
+      <del class="regular-unit">
+        ₹<%= regular.toLocaleString('en-IN') %>
+      </del>
+    <% } %>
+  </div>
+
+  <% if (hasDiscount) { %>
+    <span class="offer-badge">
+      <%= discountPercent %>% OFF
+    </span>
+  <% } %>
+</div>
+
                   </div>
 
                   <!-- Item Actions -->
                   <div class="item-actions">
+
                     <!-- Cancel Item Button -->
                     <% if (cancellableStatuses.includes(item.itemStatus)) { %>
                       <button class="btn-cancel-item" onclick="showCancelItemModal('<%= item._id %>', '<%= (item.productId?.name || 'this item').replace(/'/g, "\\'") %>')">
@@ -476,6 +511,7 @@
   </div>
 </div>
 
+
 <%- include('../partials/user/footer') %>
 
 <script>
@@ -671,5 +707,50 @@
       }
     });
   });
+
+  // Track Item Modal
+window.showTrackItemModal = function (itemId, name) {
+  const item = orderItems.find(i => i._id === itemId);
+  
+  if (!item) {
+    Toastify({
+      text: "Item not found",
+      duration: 2000,
+      style: { background: "orange" }
+    }).showToast();
+    return;
+  }
+
+  // Set item name and status
+  document.getElementById("trackItemName").innerText = name;
+  const statusBadge = document.getElementById("trackItemStatus");
+  statusBadge.innerText = item.itemStatus;
+  
+  // Set status class
+  let statusClass = '';
+  if (item.itemStatus === 'Delivered') statusClass = 'status-delivered';
+  else if (item.itemStatus === 'Shipped' || item.itemStatus === 'Out for Delivery') statusClass = 'status-shipping';
+  else if (item.itemStatus === 'Pending') statusClass = 'status-pending';
+  else if (item.itemStatus === 'Confirmed' || item.itemStatus === 'Processing') statusClass = 'status-processing';
+  else if (item.itemStatus === 'Cancelled') statusClass = 'status-cancelled';
+  else if (item.itemStatus === 'ReturnRequested') statusClass = 'status-return-pending';
+  else if (item.itemStatus === 'ReturnApproved') statusClass = 'status-return-approved';
+  else if (item.itemStatus === 'Returned') statusClass = 'status-returned';
+  
+  statusBadge.className = 'item-status ' + statusClass;
+
+  // Build timeline HTML
+  const timelineHTML = buildItemTimeline(item);
+  document.getElementById("itemTrackingTimeline").innerHTML = timelineHTML;
+
+  // Show modal
+  document.getElementById("trackItemModal").style.display = "flex";
+};
+
+window.closeTrackItemModal = function () {
+  document.getElementById("trackItemModal").style.display = "none";
+};
+
+
 </script>
 

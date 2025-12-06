@@ -43,6 +43,12 @@
       <li><a href="/admin/brands"><i class="ri-price-tag-3-line"></i><span>Brands</span></a></li>
       <li><a href="#"><i class="ri-bank-card-line"></i><span>Payments</span></a></li>
       <li><a href="#"><i class="ri-gift-line"></i><span>Referrals</span></a></li>
+<li>
+  <a href="/admin/offers" class="<%= activePage === 'offer' ? 'active' : '' %>">
+    <i class="ri-price-tag-2-line"></i><span>Offers</span>
+  </a>
+</li>
+
     </ul>
   </div>
 
@@ -50,8 +56,8 @@
     <div class="profile">
       <img src="https://via.placeholder.com/45" alt="Admin Profile">
       <div class="profile-info">
-        <h4>Admin</h4>
-        <p>admin@blumeva.com</p>
+        <h4><%= admin?.name %></h4>
+       <p><%= admin?.email %></p>
       </div>
     </div>
 

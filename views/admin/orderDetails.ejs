@@ -214,10 +214,44 @@
                     <% } %>
                   </div>
                   <div class="item-price">
-                    <div class="price-label">Price</div>
-                    <div class="price-value">₹<%= (item.price * item.quantity).toLocaleString('en-IN', {minimumFractionDigits: 2}) %></div>
-                    <div class="price-per-unit">₹<%= item.price.toLocaleString('en-IN') %> each</div>
-                  </div>
+  <%
+    const regular = item.regularPrice;
+    const sale = item.salePrice;
+    const offer = item.discountAmount || 0;
+    const current = sale - offer;
+
+    const hasDiscount = regular > current;
+    const discountPercent = hasDiscount
+      ? Math.round(((regular - current) / regular) * 100)
+      : 0;
+  %>
+
+  <!-- Total Price -->
+  <p class="price">
+    ₹<%= (current * item.quantity).toLocaleString('en-IN') %>
+  </p>
+
+  <!-- Unit Price -->
+  <div class="unit-prices">
+    <span class="sale-unit">
+      ₹<%= current.toLocaleString('en-IN') %> each
+    </span>
+
+    <% if (hasDiscount) { %>
+      <del class="regular-unit">
+        ₹<%= regular.toLocaleString('en-IN') %>
+      </del>
+    <% } %>
+  </div>
+
+  <% if (hasDiscount) { %>
+    <span class="offer-badge"><%= discountPercent %>% OFF</span>
+    <span class="save-msg">
+      Save ₹<%= ((regular - current) * item.quantity).toLocaleString('en-IN') %>
+    </span>
+  <% } %>
+</div>
+
                 </div>
 
                 <!-- Return Request Section -->

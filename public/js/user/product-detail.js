@@ -16,45 +16,48 @@ document.addEventListener("DOMContentLoaded", function () {
     return Number(el.dataset[key]) || 0;
   }
 
-  // Update price & offer display
+  // ✅ Update price & offer display (NOW WITH DISCOUNT)
   function updatePrice() {
     const active = document.querySelector(".variant-badge.active");
     if (!active) return;
 
     const salePrice = num(active, "saleprice");
     const regularPrice = num(active, "regularprice");
+    const discount = num(active, "discount");
 
-    const discountPercent =
-      regularPrice > salePrice
-        ? Math.round(((regularPrice - salePrice) / regularPrice) * 100)
-        : 0;
+    const current = salePrice - discount;
+    const hasDiscount = current < regularPrice;
+    const discountPercent = hasDiscount
+      ? Math.round(((regularPrice - current) / regularPrice) * 100)
+      : 0;
 
     priceSection.innerHTML = `
-      <span class="sale">₹${salePrice.toLocaleString()}</span>
+      <span class="sale">₹${current.toLocaleString("en-IN")}</span>
       ${
-        salePrice < regularPrice
-          ? `<span class="regular">₹${regularPrice.toLocaleString()}</span>
-             <span class="discount">${discountPercent}% OFF</span>`
+        hasDiscount
+          ? `<span class="regular">₹${regularPrice.toLocaleString("en-IN")}</span>
+             <span class="discount">${discountPercent}% OFF</span>
+             <p class="save-msg">Save ₹${(regularPrice - current).toLocaleString("en-IN")}</p>`
           : ""
       }
     `;
   }
 
-  // Update stock display
+  // Update stock display (same as yours)
   function updateStock(stock) {
     if (stock <= 0) {
       stockInfo.innerHTML = `<div class="stock out-stock-msg"><i class="fa-solid fa-circle-exclamation"></i> Out of Stock</div>`;
-      addCartBtn.disabled = true;
+      if (addCartBtn) addCartBtn.disabled = true;
     } else if (stock < 20) {
       stockInfo.innerHTML = `<div class="stock low-stock-msg"><i class="fa-solid fa-clock"></i> Only ${stock} left!</div>`;
-      addCartBtn.disabled = false;
+      if (addCartBtn) addCartBtn.disabled = false;
     } else {
       stockInfo.innerHTML = `<div class="stock in-stock-msg"><i class="fa-solid fa-check-circle"></i> In Stock</div>`;
-      addCartBtn.disabled = false;
+      if (addCartBtn) addCartBtn.disabled = false;
     }
   }
 
-  // Handle variant clicking
+  // Handle variant clicking (same as yours, with updatePrice using discount)
   variantBadges.forEach(badge => {
     badge.addEventListener("click", () => {
       variantBadges.forEach(b => b.classList.remove("active"));
@@ -70,7 +73,10 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // Initialize first active variant
-  const firstActive = document.querySelector(".variant-badge.active") || document.querySelector(".variant-badge");
+  const firstActive =
+    document.querySelector(".variant-badge.active") ||
+    document.querySelector(".variant-badge");
+
   if (firstActive) {
     firstActive.classList.add("active");
     if (addCartBtn) addCartBtn.dataset.variantid = firstActive.dataset.variantid;
@@ -78,7 +84,7 @@ document.addEventListener("DOMContentLoaded", function () {
     updateStock(num(firstActive, "stock"));
   }
 
-  // ==== IMAGE ZOOM FIX ====
+  // ==== IMAGE ZOOM (exactly as you gave) ====
   const container = document.getElementById("imageContainer");
   const img = document.getElementById("mainImage");
   const lens = document.getElementById("zoomLens");
@@ -113,5 +119,3 @@ document.addEventListener("DOMContentLoaded", function () {
 
   img.onload = initZoom; // Wait until image fully loads
 });
-
-

@@ -1,21 +1,27 @@
 import express from "express";
 import path from "path";
 import dotenv from "dotenv";
-import session from "express-session";
 import expressLayouts from "express-ejs-layouts";
 import passport from "./config/passport.js";
 import connectDB from "./config/db.js";
 import userRouter from "./routes/userRouter.js";
 import adminRouter from "./routes/adminRouter.js";
+import { sessionConfig } from "./middlewares/session.js";
+import { setUser } from "./middlewares/setUser.js";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Load environment variables
 dotenv.config();
+
 const app = express();
+
+// Connect to database
 connectDB();
 
-
+// Middleware
 app.use((req, res, next) => {
   res.set("cache-control", "no-store");
   next();
@@ -24,41 +30,58 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: true,
-    cookie: {
-      secure: false,
-      httpOnly: true,
-      maxAge: 72 * 60 * 60 * 1000, 
-    },
-  })
-);
+// Session configuration
+sessionConfig(app);
 
+// Set user locals
+app.use(setUser);
 
+// Passport - Applied globally (will gracefully skip admin routes)
 app.use(passport.initialize());
 app.use(passport.session());
 
-
-
-app.use("/",(req, res, next) => {
-  res.locals.user = req.session.user || null;
-  next();
-});
-
-
+// View engine setup
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.use(expressLayouts);
 
-
+// Static files
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+// Routes
 app.use("/", userRouter);
 app.use("/admin", adminRouter);
 
+// Error handling middleware (add this after all routes)
+app.use((err, req, res, next) => {
+  console.error("=== GLOBAL ERROR HANDLER ===");
+  console.error("Error name:", err.name);
+  console.error("Error message:", err.message);
+  console.error("Error stack:", err.stack);
 
-app.listen(process.env.PORT, () => console.log(`Server  ${process.env.PORT}`));
+  // Handle multer errors
+  if (err instanceof multer.MulterError) {
+    return res.status(400).json({
+      success: false,
+      message: `Upload error: ${err.message}`
+    });
+  }
+
+  // Handle other errors
+  if (err.message) {
+    return res.status(500).json({
+      success: false,
+      message: err.message
+    });
+  }
+
+  res.status(500).json({
+    success: false,
+    message: "An unexpected error occurred"
+  });
+});
+
+// Start server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server  ${PORT}`));

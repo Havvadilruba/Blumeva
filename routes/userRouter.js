@@ -8,6 +8,7 @@ import addressController from "../controller/user/addressController.js";
 import cartController from "../controller/user/cartController.js";
 import checkoutController from "../controller/user/checkoutController.js";
 import orderController from "../controller/user/orderController.js";
+import wishlistController from "../controller/user/wishlistController.js";
 import noCache from "../middlewares/noCache.js";
 import upload from "../middlewares/multer.js"; 
 
@@ -27,7 +28,7 @@ router.post("/verifyOtp",authController.verifyOtp)
 router.post("/resendOtp", authController.resendOtp)
 router.get("/login",noCache,authController.loadLogin)
 router.post("/login",authController.login)
-router.get("/logout",middle.userAuth, authController.logout);
+router.post("/logout",middle.userAuth, authController.logout);
 
 router.get("/forgot-password",noCache, authController.loadForgotPassword);
 router.post("/forgot-password", authController.sendResetOtp);
@@ -76,11 +77,12 @@ router.get("/orders", orderController.loadOrders);
 
 router.get("/orders/:id", middle.userAuth,orderController.loadOrderDetail);
 router.post("/orders/:id/cancel-items", middle.userAuth, orderController.cancelOrderItems);
-
-// Request return for an item
 router.post("/orders/:id/return-item", middle.userAuth, orderController.requestReturn);
-
-// Download invoice (PDF)
 router.get("/orders/:id/invoice", middle.userAuth, orderController.downloadInvoice);
+
+router.get("/wishlist", middle.userAuth, wishlistController.loadWishlist);
+router.post("/wishlist/toggle", middle.userAuth, wishlistController.toggleWishlist);
+router.delete("/wishlist/clear", middle.userAuth, wishlistController.clearWishlist);
+router.get("/wishlist/check/:variantId", middle.userAuth, wishlistController.checkWishlist);
 
 export default router;

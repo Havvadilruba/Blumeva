@@ -17,7 +17,7 @@ const storage = new CloudinaryStorage({
 
     return {
       folder,
-      allowed_formats: ["jpg", "jpeg", "png", "webp"],
+      allowed_formats: ["jpg", "jpeg", "png", "webp","avif", "gif"],
       public_id: file.originalname.split(".")[0] + "-" + Date.now(), // unique filename
     };
   },

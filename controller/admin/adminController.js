@@ -16,20 +16,19 @@ const loadDashboard = async (req, res) => {
 
 const logout = (req, res) => {
   try {
-    req.session.destroy(err => {
+    req.session.destroy((err) => {
       if (err) {
         console.error("Logout Error:", err);
         return res.redirect("/admin");
       }
-      res.clearCookie("connect.sid");
-      res.redirect("/admin/login");
+      res.clearCookie("adminSession");
+      res.redirect("/admin/login?logout=1");
     });
   } catch (error) {
     console.error("Admin Logout Error:", error);
     res.redirect("/admin");
   }
 };
-
 
 const pageNotFound = (req, res) => {
   res.status(404).render("admin/page-404", {

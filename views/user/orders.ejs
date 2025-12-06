@@ -108,7 +108,17 @@
                         <%= item.variantId.quantityValue %><%= item.variantId.quantityType %>
                       <% } %>
                     </p>
-                    <p class="item-quantity">Qty: <%= item.quantity %> × ₹<%= item.price.toLocaleString('en-IN') %></p>
+                    <%
+  const regular = item.regularPrice;
+  const sale = item.salePrice;
+  const offerAmount = item.discountAmount || 0;
+  const current = sale - offerAmount;
+%>
+
+<p class="item-quantity">
+  Qty: <%= item.quantity %> × ₹<%= current.toLocaleString('en-IN') %>
+</p>
+
                   </div>
                 </div>
               <% }); %>
