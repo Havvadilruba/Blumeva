@@ -71,3 +71,6 @@ export const findVariantsByProduct = async (productId) => {
   return Variant.find({ productId }).lean();
 };
 
+export const findVariantByIdWithProduct = (variantId) => {
+  return Variant.findById(variantId).populate("productId");
+};

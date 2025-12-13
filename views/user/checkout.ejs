@@ -1,9 +1,7 @@
 <%- include("../partials/user/header") %>
 
-
 <div class="checkout-page">
   <div class="checkout-container">
-
     <h1 class="checkout-title">Checkout</h1>
 
     <div class="checkout-grid">
@@ -18,10 +16,9 @@
               Shipping Address
             </h2>
             <button class="link-button" onclick="openModal()">
-  <i class="bi bi-plus-circle"></i>
-  Add New
-</button>
-
+              <i class="bi bi-plus-circle"></i>
+              Add New
+            </button>
           </div>
 
           <% if (addresses && addresses.length > 0) { %>
@@ -75,68 +72,68 @@
             <div class="card-empty">
               <p>No addresses found. Please add a shipping address.</p>
               <button class="btn-primary" onclick="openModal()">
-  <i class="bi bi-plus-circle"></i>
-  Add Address
-</button>
-
+                <i class="bi bi-plus-circle"></i>
+                Add Address
+              </button>
             </div>
           <% } %>
         </section>
 
         <!-- 2. Payment Method -->
         <section class="card">
-  <h2 class="card-title mb-16">
-    <i class="bi bi-credit-card-2-front-fill card-icon"></i>
-    Payment Method
-  </h2>
+          <h2 class="card-title mb-16">
+            <i class="bi bi-credit-card-2-front-fill card-icon"></i>
+            Payment Method
+          </h2>
 
-  <div class="payment-list">
+          <div class="payment-list">
+            <!-- Online Payment -->
+            <label class="payment-item">
+              <input type="radio" name="paymentMethod" value="razorpay" checked />
+              <div class="payment-card">
+                <div class="payment-icon-wrap payment-online">
+                  <i class="bi bi-credit-card-2-front"></i>
+                </div>
+                <div class="payment-content">
+                  <h4>Online Payment (Razorpay)</h4>
+                  <p>Credit Card, Debit Card, UPI, Net Banking</p>
+                </div>
+                <span class="badge-secure">Secure</span>
+              </div>
+            </label>
 
-    <!-- Online Payment -->
-    <label class="payment-item">
-      <input type="radio" name="paymentMethod" value="razorpay" checked />
-      <div class="payment-card">
-        <div class="payment-icon-wrap payment-online">
-          <i class="bi bi-credit-card-2-front"></i>
-        </div>
-        <div class="payment-content">
-          <h4>Online Payment (Razorpay)</h4>
-        </div>
-        <span class="badge-secure">Secure</span>
-      </div>
-    </label>
+            <!-- Wallet -->
+            <label class="payment-item">
+              <input type="radio" name="paymentMethod" value="wallet" />
+              <div class="payment-card">
+                <div class="payment-icon-wrap payment-wallet">
+                  <i class="bi bi-wallet-fill"></i>
+                </div>
+                <div class="payment-content">
+                  <h4>Wallet</h4>
+                  <p>Available Balance: ₹<%= user.walletBalance?.toLocaleString('en-IN') || 0 %></p>
+                </div>
+                <% if (user.walletBalance < cart.total) { %>
+                  <span class="badge-insufficient">Insufficient</span>
+                <% } %>
+              </div>
+            </label>
 
-    <!-- Wallet -->
-    <label class="payment-item">
-      <input type="radio" name="paymentMethod" value="wallet" />
-      <div class="payment-card">
-        <div class="payment-icon-wrap payment-wallet">
-          <i class="bi bi-wallet-fill"></i>
-        </div>
-        <div class="payment-content">
-          <h4>Wallet</h4>
-          <p>Available Balance: ₹0</p>
-        </div>
-      </div>
-    </label>
-
-    <!-- Cash on Delivery -->
-    <label class="payment-item">
-      <input type="radio" name="paymentMethod" value="cod" />
-      <div class="payment-card">
-        <div class="payment-icon-wrap payment-cod">
-          <i class="bi bi-cash-coin"></i>
-        </div>
-        <div class="payment-content">
-          <h4>Cash on Delivery</h4>
-          <p>Pay when you receive</p>
-        </div>
-      </div>
-    </label>
-
-  </div>
-</section>
-
+            <!-- Cash on Delivery -->
+            <label class="payment-item">
+              <input type="radio" name="paymentMethod" value="cod" />
+              <div class="payment-card">
+                <div class="payment-icon-wrap payment-cod">
+                  <i class="bi bi-cash-coin"></i>
+                </div>
+                <div class="payment-content">
+                  <h4>Cash on Delivery</h4>
+                  <p>Pay when you receive</p>
+                </div>
+              </div>
+            </label>
+          </div>
+        </section>
 
         <!-- 3. Apply Coupon -->
         <section class="card">
@@ -148,140 +145,177 @@
           <div class="coupon-row">
             <input
               type="text"
+              id="couponCodeInput"
               placeholder="ENTER COUPON CODE"
               class="coupon-input"
+              value="<%= appliedCoupon ? appliedCoupon.code : '' %>"
+
             />
-            <button class="btn-primary">Apply</button>
+            <button class="btn-primary" onclick="applyCoupon()">Apply</button>
           </div>
 
-          <button class="link-button mt-12">
+          <!-- Applied Coupon Success Message -->
+          <% if (appliedCoupon) { %>
+            <div class="coupon-applied-box">
+              <div class="coupon-applied-info">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Coupon "<%= appliedCoupon.code %>" applied!</span>
+              </div>
+              <button class="coupon-remove-btn" onclick="removeCoupon()">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+          <% } %>
+
+          <button class="link-button mt-12" onclick="openCouponsModal()">
             <i class="bi bi-eye"></i>
             View Available Coupons
           </button>
         </section>
 
         <!-- 4. Order Items -->
-       <!-- 4. Order Items -->
-<section class="card">
-  <h2 class="card-title mb-16">
-    <i class="bi bi-box-seam-fill card-icon"></i>
-    Order Items (<%= cart.items.length %>)
-  </h2>
+        <section class="card">
+          <h2 class="card-title mb-16">
+            <i class="bi bi-box-seam-fill card-icon"></i>
+            Order Items (<%= cart.items.length %>)
+          </h2>
 
-  <div class="order-items">
-    <% cart.items.forEach(function(item){ %>
-      <div class="order-item">
-        <div class="order-image-wrap">
-          <img src="<%= item.images?.[0] %>" class="order-item-image" />
-        </div>
+          <div class="order-items">
+            <% cart.items.forEach(function(item){ %>
+              <div class="order-item">
+                <div class="order-image-wrap">
+                  <img src="<%= item.images?.[0] %>" class="order-item-image" />
+                </div>
 
-        <div class="order-info">
-          <h3 class="order-product-name"><%= item.product.name %></h3>
+                <div class="order-info">
+                  <h3 class="order-product-name"><%= item.product.name %></h3>
 
-          <div class="order-variant">
-            <span><%= item.variant.quantityValue %><%= item.variant.quantityType %></span>
+                  <div class="order-variant">
+                    <span><%= item.variant.quantityValue %><%= item.variant.quantityType %></span>
+                  </div>
+
+                  <div class="order-qty">
+                    Qty: <%= item.quantity %>
+                  </div>
+                </div>
+
+                <div class="order-price" style="text-align:right;">
+                  <%
+                    const regular = item.regularPrice;
+                    const sale = item.salePrice;
+                    const offerAmount = item.discountAmount || 0;
+                    const current = sale - offerAmount;
+                    const hasDiscount = regular > current;
+                    const discountPercent = hasDiscount
+                      ? Math.round(((regular - current) / regular) * 100)
+                      : 0;
+                  %>
+
+                  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
+                    <div style="display:flex;align-items:center;gap:6px;">
+                      <span style="font-size:16px;font-weight:700;color:#111;">
+                        ₹<%= (current * item.quantity).toLocaleString('en-IN') %>
+                      </span>
+
+                      <% if(hasDiscount) { %>
+                        <del style="font-size:13px;color:#888;text-decoration:line-through;">
+                          ₹<%= (regular * item.quantity).toLocaleString('en-IN') %>
+                        </del>
+                      <% } %>
+                    </div>
+
+                    <% if(hasDiscount) { %>
+                      <span style="background:#16a34a;color:#fff;font-size:10px;font-weight:600;padding:1px 6px;border-radius:4px;">
+                        <%= discountPercent %>% OFF
+                      </span>
+                    <% } %>
+
+                    <% if(offerAmount > 0) { %>
+                      <span style="color:#16a34a;font-size:11px;font-weight:600;">
+                        Save ₹<%= ((regular - current) * item.quantity).toLocaleString('en-IN') %> with offers
+                      </span>
+                    <% } %>
+                  </div>
+                </div>
+              </div>
+            <% }) %>
           </div>
-
-          <div class="order-qty">
-            Qty: <%= item.quantity %>
-          </div>
-        </div>
-
-       <div class="order-price" style="text-align:right;">
-  <%
-    const regular = item.regularPrice;
-    const sale = item.salePrice;
-    const offerAmount = item.discountAmount || 0;
-    const current = sale - offerAmount;
-    const hasDiscount = regular > current;
-    const discountPercent = hasDiscount
-      ? Math.round(((regular - current) / regular) * 100)
-      : 0;
-  %>
-
-  <!-- FINAL PRICE -->
-  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
-
-    <div style="display:flex;align-items:center;gap:6px;">
-      <span style="font-size:16px;font-weight:700;color:#111;">
-        ₹<%= (current * item.quantity).toLocaleString('en-IN') %>
-      </span>
-
-      <% if(hasDiscount) { %>
-        <del style="font-size:13px;color:#888;text-decoration:line-through;">
-          ₹<%= (regular * item.quantity).toLocaleString('en-IN') %>
-        </del>
-      <% } %>
-    </div>
-
-    <% if(hasDiscount) { %>
-      <span style="
-        background:#16a34a;color:#fff;
-        font-size:10px;font-weight:600;
-        padding:1px 6px;border-radius:4px;">
-        <%= discountPercent %>% OFF
-      </span>
-    <% } %>
-
-    <% if(offerAmount > 0) { %>
-      <span style="color:#16a34a;font-size:11px;font-weight:600;">
-        Save ₹<%= ((regular - current) * item.quantity).toLocaleString('en-IN') %> with offers
-      </span>
-    <% } %>
-
-  </div>
-</div>
-
-      </div>
-    <% }) %>
-  </div>
-</section>
+        </section>
 
       </div>
 
-      <!-- RIGHT SIDE (1/3) -->
-      <!-- Order Summary -->
-<div class="summary-box">
-  <h2 class="summary-title">Order Summary</h2>
+      <!-- RIGHT SIDE (1/3) - Order Summary -->
+      <div class="summary-box">
+        <h2 class="summary-title">Order Summary</h2>
 
-  <div class="summary-row">
-    <span>Subtotal (<%= cart.items.length %> items)</span>
-    <span id="summary-subtotal">₹<%= cart.subtotal.toLocaleString('en-IN') %></span>
-  </div>
+        <div class="summary-row">
+          <span>Subtotal (<%= cart.items.length %> items)</span>
+          <span id="summary-subtotal">₹<%= cart.subtotal.toLocaleString('en-IN') %></span>
+        </div>
 
-  <div class="summary-row">
-    <span>Delivery Charges</span>
-    <span id="summary-delivery">₹<%= cart.deliveryCharge.toLocaleString('en-IN') %></span>
-  </div>
+        <% if (cart.discount > 0) { %>
+          <div class="summary-row saving">
+            <span>Discount</span>
+            <span id="summary-discount">-₹<%= cart.discount.toLocaleString('en-IN') %></span>
+          </div>
+        <% } %>
 
-  <div class="summary-row saving">
-    <span>Savings</span>
-    <span id="summary-discount">-₹<%= cart.discount.toLocaleString('en-IN') %></span>
-  </div>
+        <!-- Coupon Discount Row -->
+        <% if (appliedCoupon && appliedCoupon.discount > 0) { %>
+          <div class="summary-row saving">
+            <span>Coupon (<%= appliedCoupon.code %>)</span>
+            <span>-₹<%= appliedCoupon.discount.toLocaleString('en-IN') %></span>
+          </div>
+        <% } %>
 
-  <div class="summary-row">
-    <span>Tax</span>
-    <span id="summary-tax">₹<%= cart.tax.toLocaleString('en-IN') %></span>
-  </div>
+        <div class="summary-row">
+          <span>Delivery Charges</span>
+          <% if (cart.deliveryCharge === 0) { %>
+            <span style="color:#16a34a;font-weight:600;">FREE</span>
+          <% } else { %>
+            <span id="summary-delivery">₹<%= cart.deliveryCharge.toLocaleString('en-IN') %></span>
+          <% } %>
+        </div>
 
-  <hr class="summary-divider"/>
+        <div class="summary-row">
+          <span>Tax</span>
+          <span id="summary-tax">₹<%= cart.tax.toLocaleString('en-IN') %></span>
+        </div>
 
-  <div class="summary-total">
-    <span>Total Amount</span>
-    <span id="summary-total">₹<%= cart.total.toLocaleString('en-IN') %></span>
-  </div>
+        <hr class="summary-divider"/>
 
-  <button id="placeOrderBtn" onclick="placeOrder()" class="place-order-btn">
-  Place Order
-</button>
+        <div class="summary-total">
+          <span>Total Amount</span>
+          <% 
+            const totalAmount = appliedCoupon 
+              ? appliedCoupon.finalAmount 
+              : cart.total;
+          %>
+          <span id="summary-total">₹<%= totalAmount.toLocaleString('en-IN') %></span>
+        </div>
 
-  <a href="/cart" class="back-cart-btn">Back to Cart</a>
-</div>
+        <!-- Savings Message -->
+        <% if (appliedCoupon && appliedCoupon.discount > 0) { %>
+          <% const totalSavings = appliedCoupon.discount + cart.discount; %>
+          <div class="savings-badge">
+            <i class="bi bi-tag-fill"></i>
+            You're saving ₹<%= totalSavings.toLocaleString('en-IN') %> on this order!
+          </div>
+        <% } %>
 
+        <button id="placeOrderBtn" onclick="placeOrder()" class="place-order-btn">
+          <i class="bi bi-check-circle"></i> Place Order
+        </button>
+
+        <a href="/cart" class="back-cart-btn">
+          <i class="bi bi-arrow-left"></i> Back to Cart
+        </a>
+      </div>
 
     </div>
   </div>
 </div>
+
 <!-- ADD / EDIT ADDRESS MODAL -->
 <div class="modal-overlay" id="addressModal">
   <div class="modal-box">
@@ -291,7 +325,6 @@
     </div>
 
     <form id="addressForm">
-
       <label>Address Type</label>
       <select id="addressType" required>
         <option value="home">Home</option>
@@ -331,14 +364,101 @@
 
       <div class="modal-buttons">
         <button type="button" id="saveBtn" class="save-btn">Save</button>
-
         <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
       </div>
-
     </form>
   </div>
 </div>
 
+<!-- AVAILABLE COUPONS MODAL -->
+<div class="modal-overlay" id="couponsModal">
+  <div class="modal-box" style="max-width: 700px;">
+    <div class="modal-header">
+      <h2>Available Coupons</h2>
+      <button class="close-btn" onclick="closeCouponsModal()">×</button>
+    </div>
+
+    <div class="coupons-list">
+      <% if (availableCoupons && availableCoupons.length > 0) { %>
+        <% availableCoupons.forEach(function(coupon) { %>
+          <div class="coupon-card">
+            <div class="coupon-header">
+              <div>
+                <span class="coupon-code-badge"><%= coupon.code %></span>
+                <span class="coupon-value">
+                  <%= coupon.type === 'percentage' ? coupon.discountValue + '% OFF' : '₹' + coupon.discountValue + ' OFF' %>
+                </span>
+                <% if (!coupon.isActive) { %>
+                  <span class="badge-inactive">Inactive</span>
+                <% } %>
+              </div>
+            </div>
+
+            <h4 class="coupon-name"><%= coupon.name %></h4>
+            <% if (coupon.description) { %>
+              <p class="coupon-desc"><%= coupon.description %></p>
+            <% } %>
+
+            <div class="coupon-details">
+              <p>
+                <i class="bi bi-cart-check"></i>
+                Min. order: ₹<%= coupon.minPurchaseAmount?.toLocaleString('en-IN') || 0 %>
+                <% if (coupon.type === 'percentage' && coupon.maxDiscount > 0) { %>
+                  | Max: ₹<%= coupon.maxDiscount.toLocaleString('en-IN') %>
+                <% } %>
+              </p>
+
+              <p>
+                <i class="bi bi-calendar-check"></i>
+                <%= new Date(coupon.startDate).toLocaleDateString('en-IN') %> - 
+                <%= new Date(coupon.endDate).toLocaleDateString('en-IN') %>
+              </p>
+
+              <% if (coupon.usageLimitPerUser > 0) { %>
+                <p>
+                  <i class="bi bi-person"></i>
+                  Limit: <%= coupon.usageLimitPerUser %> per user
+                </p>
+              <% } %>
+
+              <% if (coupon.userEligibility === 'new_users') { %>
+                <p class="coupon-eligibility">
+                  <i class="bi bi-star"></i> For new users only
+                </p>
+              <% } %>
+            </div>
+
+            <% 
+              const now = new Date();
+              const isExpired = new Date(coupon.endDate) < now;
+              const notStarted = new Date(coupon.startDate) > now;
+              const isExhausted = coupon.totalUsageLimit > 0 && coupon.currentUsageCount >= coupon.totalUsageLimit;
+              const canApply = coupon.isActive && !isExpired && !notStarted && !isExhausted;
+            %>
+
+            <% if (canApply) { %>
+              <button class="coupon-apply-btn" onclick="applyCouponCode('<%= coupon.code %>')">
+                Apply Coupon
+              </button>
+            <% } else { %>
+              <button class="coupon-apply-btn" disabled style="background:#ccc;cursor:not-allowed;">
+                <% if (isExpired) { %>Expired
+                <% } else if (notStarted) { %>Upcoming
+                <% } else if (isExhausted) { %>Exhausted
+                <% } else { %>Inactive<% } %>
+              </button>
+            <% } %>
+          </div>
+        <% }); %>
+      <% } else { %>
+        <div class="card-empty">
+          <i class="bi bi-tag" style="font-size:48px;color:#ccc;"></i>
+          <p>No coupons available at the moment.</p>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
 
 <script src="/js/user/checkout.js"></script>
 <%- include("../partials/user/footer") %>

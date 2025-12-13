@@ -1,0 +1,110 @@
+<%- include("../partials/user/header") %>
+
+<div class="wallet-page">
+  <div class="container">
+    <div class="page-layout">
+
+      <!-- Sidebar -->
+      <%- include("../partials/user/sidebar", { activePage }) %>
+
+      <!-- MAIN CONTENT -->
+      <div class="main-content">
+
+        <!-- Page Title -->
+        <h2 class="page-title">Refer & Earn</h2>
+
+        <!-- Referral Card -->
+        <div class="wallet-card referral-main-card">
+
+          <div class="referral-header">
+            <div>
+              <p class="balance-label">Your Referral Code</p>
+              <h1 class="ref-code"><%= user.referralCode %></h1>
+              <button class="btn-add-money" onclick="copyReferralCode()">
+                Copy Code
+              </button>
+            </div>
+
+            <div class="referral-stats">
+              <p class="stat-text">Total Referrals</p>
+              <h2 class="stat-number"><%= referrals.length %></h2>
+
+              <p class="stat-text">Total Earnings</p>
+              <h2 class="stat-number">₹<%= user.referralRewards || 0 %></h2>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Referred Users Table -->
+        <div class="transaction-history">
+
+          <div class="history-header">
+            <div>
+              <h2>Referred Users</h2>
+              <p class="header-subtitle">People who used your referral code</p>
+            </div>
+          </div>
+
+          <% if (referrals.length > 0) { %>
+
+          <table class="ref-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>User</th>
+                <th>Email</th>
+                <th>Date</th>
+                <th>Rewards (You / User)</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <% referrals.forEach((r, i) => { %>
+              <tr>
+                <td><%= i + 1 %></td>
+                <td><%= r.referred.name %></td>
+                <td><%= r.referred.email %></td>
+                <td>
+                  <%= new Date(r.createdAt).toLocaleDateString('en-IN', {
+                    day:'numeric', month:'short', year:'numeric'
+                  }) %>
+                </td>
+                <td>
+                  ₹<%= r.referrerAmount %> / ₹<%= r.referredAmount %>
+                </td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+
+          <% } else { %>
+
+          <div class="empty-state">
+            <div class="empty-icon">
+              <i class="bi bi-people"></i>
+            </div>
+            <h3 class="empty-title">No Referrals Yet</h3>
+            <p class="empty-text">Share your code and earn rewards!</p>
+          </div>
+
+          <% } %>
+
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  function copyReferralCode() {
+    const code = "<%= user.referralCode %>";
+    navigator.clipboard.writeText(code);
+    alert("Copied: " + code);
+  }
+</script>
+
+<%- include("../partials/user/footer") %>
+

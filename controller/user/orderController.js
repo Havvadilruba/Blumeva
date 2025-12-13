@@ -5,68 +5,112 @@ import Variant from "../../model/variantSchema.js";
 import { getCartItems, calculateCartTotals } from "../../services/cartServices.js";
 import { orderValidation } from "../../validations/placeOrderValidation.js";
 import Product from "../../model/productSchema.js";
-import PDFDocument from "pdfkit";
+import { couponUsageCreate } from "../../repositories/couponUsageRepository.js";
+import Coupon from "../../model/couponSchema.js";
+import {
+  findWalletByUserId,
+  updateWalletBalance,
+  updateWalletHoldBalance,
+  updateWalletTotalDebits,
+  saveWallet,
+} from "../../repositories/walletRepository.js";
+import mongoose from "mongoose";
+import {
+  createLedgerEntry,
+} from "../../repositories/walletLedgerRepository.js";
+import {
+  createHoldRecord,
+  updateHoldStatus,
+} from "../../repositories/walletHoldRepository.js";
+import Wallet from "../../model/walletSchema.js";
+import { updateUserWalletBalance } from "../../repositories/userRepository.js";
 
+const decrementVariantStock = (variantId, qty, session) => {
+  return Variant.updateOne(
+    { _id: variantId, stock: { $gte: qty } },
+    { $inc: { stock: -qty } },
+    { session }
+  );
+};
+
+const incrementVariantStock = (variantId, qty, session) => {
+  return Variant.updateOne(
+    { _id: variantId },
+    { $inc: { stock: qty } },
+    { session }
+  );
+};
 
 const placeOrder = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const userId = req.session.user?._id;
     if (!userId) {
-      return res.json({ 
-        success: false,
-         message: "Login required" });
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(401).json({ success: false, message: "Login required" });
     }
 
     const { error } = orderValidation.validate(req.body);
     if (error) {
-      return res.json({ 
-        success: false,
-         message: error.message });
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ success: false, message: error.message });
     }
 
     const { addressId, paymentMethod } = req.body;
 
+    // fetch items & totals
     const items = await getCartItems(userId);
-    if (!items.length) {
-      return res.json({ 
-        success: false,
-         message: "Cart is empty" });
-    }
-
-    for (const item of items) {
-      const variant = await Variant.findById(item.variant._id);
-      if (!variant || variant.stock < item.quantity) {
-        return res.json({
-          success: false,
-          message: `${item.product.name} has insufficient stock`,
-        });
-      }
+    if (!items || !items.length) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ success: false, message: "Cart is empty" });
     }
 
     const totals = calculateCartTotals(items);
-    const address = await Address.findById(addressId);
+    const appliedCoupon = req.session.appliedCoupon || null;
+
+    //  final amount
+    let finalAmount = totals.total;
+    if (appliedCoupon) finalAmount = finalAmount - (appliedCoupon.discount || 0);
+
+    // address
+    const address = await Address.findById(addressId).session(session);
     if (!address) {
-      return res.json({ success: false, message: "Invalid address" });
+      throw { status: 400, message: "Invalid address" };
     }
 
+    // Expected delivery
     const expectedDelivery = new Date();
     expectedDelivery.setDate(expectedDelivery.getDate() + 5);
 
-    const newOrder = new Order({
+    // 1) reduce stock 
+    for (const item of items) {
+      const result = await decrementVariantStock(item.variant._id, item.quantity, session);
+      if (!result || result.modifiedCount === 0) {
+        throw { status: 400, message: `Insufficient stock for product ${item.product.name}` };
+      }
+    }
+
+    // Prepare ordered items
+    const orderedItems = items.map((item) => ({
+      productId: item.product._id,
+      variantId: item.variant._id,
+      quantity: item.quantity,
+      regularPrice: item.regularPrice,
+      salePrice: item.salePrice,
+      discountAmount: item.discountAmount || 0,
+      price: item.salePrice || item.regularPrice || 0,
+    }));
+
+    // 2) create order (inside txn)
+    const orderPayload = {
       userId,
       addressId,
-      
-      orderedItems: items.map((item) => ({
-        productId: item.product._id,
-        variantId: item.variant._id,
-        quantity: item.quantity,
-        regularPrice: item.regularPrice,
-        salePrice: item.salePrice,
-        discountAmount: item.discountAmount || 0,
-        itemStatus: "Pending",
-        itemTimeline: {}, 
-      })),
-
+      orderedItems,
       shippingAddress: {
         fullName: address.fullName,
         phone: address.phone,
@@ -78,47 +122,169 @@ const placeOrder = async (req, res) => {
         country: address.country,
         addressType: address.addressType,
       },
-
-      orderStatus: "Pending",
-      statusTimeline: {}, 
-
-      
-      tax: totals.tax,
       subtotal: totals.subtotal,
       discount: totals.discount,
+      tax: totals.tax,
       deliveryCharge: totals.deliveryCharge,
-      finalAmount: totals.total,
-
+      couponDiscount: appliedCoupon?.discount || 0,
+      couponId: appliedCoupon?.couponId || null,
+      finalAmount,
       paymentMethod,
-      paymentStatus: paymentMethod === "cod" ? "Pending" : "Paid",
-
+      paymentStatus: paymentMethod === "wallet" ? "Pending" : (paymentMethod === "cod" ? "Pending" : "Paid"),
       expectedDelivery,
-    });
+    };
 
-    const savedOrder = await newOrder.save();
+    const createdOrders = await Order.create([orderPayload], { session });
+    const savedOrder = createdOrders[0];
 
-    for (const item of items) {
-      await Variant.findByIdAndUpdate(
-        item.variant._id,
-        { $inc: { stock: -item.quantity } }, 
-        { new: true }
-      );
+    // 3) create coupon usage & increment 
+    if (appliedCoupon) {
+      try {
+        // try to call repo with session if it accepts it
+        await couponUsageCreate(
+          appliedCoupon.couponId,
+          userId,
+          savedOrder._id, 
+          appliedCoupon.discount,
+          session);
+      } catch (e) {
+        try {
+          await couponUsageCreate(
+            appliedCoupon.couponId, 
+            userId, 
+            savedOrder._id, 
+            appliedCoupon.discount);
+        } catch (err) {
+          console.warn('couponUsageCreate failed', err);
+        }
+      }
+
+      await Coupon.findByIdAndUpdate(
+        appliedCoupon.couponId,
+         { 
+          $inc:
+           { 
+            currentUsageCount: 1 
+          } 
+        },
+         {
+           session 
+          });
     }
 
-    await Cart.deleteMany({ userId });
+    //  WALLET: HOLD
+    let holdRecord = null;
+    if (paymentMethod === "wallet") {
+      const wallet = await findWalletByUserId(userId, session);
+      if (!wallet || (wallet.balance - wallet.holdBalance) < finalAmount) {
+        throw { status: 400, message: "Insufficient wallet balance" };
+      }
 
-    return res.json({
-      success: true,
-      orderId: savedOrder.orderId,
-      message: "Order placed successfully",
-    });
+      // increase hold balance
+      await updateWalletHoldBalance(userId,finalAmount, session);
+
+      // create hold
+      const [hold] = await createHoldRecord({ 
+        userId, 
+        walletId: wallet._id, 
+        orderId: savedOrder._id, 
+        amount: finalAmount, 
+        status: "HELD" }, 
+        session);
+
+      holdRecord = hold;
+
+      // ledger: HOLD
+      await createLedgerEntry({ 
+        walletId: wallet._id, 
+        userId, amount: finalAmount, 
+        type: "HOLD", 
+        referenceId: savedOrder._id, 
+        note: "Wallet amount reserved for order", 
+        balanceAfter: wallet.balance }, 
+        session);
+    }
+
+    // Clear cart 
+    await Cart.deleteMany({ userId }).session(session);
+
+    //  CAPTURE wallet
+    if (paymentMethod === "wallet") {
+      try {
+        const wallet = await findWalletByUserId(userId, session);
+
+        // reduce holdBalance and reduce actual balance
+        await updateWalletHoldBalance(userId, -finalAmount, session);
+        await updateWalletBalance(userId, -finalAmount, session);
+
+        const newBalance = wallet.balance - finalAmount;
+
+        // update total debits
+        await updateWalletTotalDebits(userId, finalAmount, session);
+
+        // update hold status
+        await updateHoldStatus(holdRecord._id, "CAPTURED", session);
+
+        // ledger: DEBIT entry (positive amount)
+        await createLedgerEntry({ 
+          walletId: wallet._id, 
+          userId, 
+          amount: finalAmount, 
+          type: "DEBIT", 
+          referenceId: savedOrder._id, 
+          note: `Wallet payment captured for order: ${savedOrder._id}`, 
+          balanceAfter: newBalance }, 
+          session);
+
+        // update user snapshot
+        await updateUserWalletBalance(userId, newBalance, session);
+
+        // mark order paid
+        await Order.findByIdAndUpdate(savedOrder._id, { paymentStatus: "Paid" }, { session });
+
+      } catch (err) {
+        // capture failed — release hold, restore stock and abort
+        try {
+          await updateWalletHoldBalance(userId, -finalAmount, session);
+          if (holdRecord && holdRecord._id) await updateHoldStatus(holdRecord._id, "RELEASED", session);
+
+          // ledger: RELEASE entry
+          if (holdRecord) {
+            await createLedgerEntry({ walletId: holdRecord.walletId, userId, amount: finalAmount, type: "RELEASE", referenceId: savedOrder._id, note: "Wallet capture failed → Hold released" }, session);
+          }
+
+          // restore stock
+          for (const item of orderedItems) {
+            await incrementVariantStock(item.variantId, item.quantity, session);
+          }
+
+        } catch (innerErr) {
+          console.error('Error during wallet capture rollback:', innerErr);
+        }
+
+        throw { status: 400, message: "Wallet payment failed" };
+      }
+    }
+
+    // 7) commit txn
+    await session.commitTransaction();
+    session.endSession();
+
+    // clear applied coupon in session
+    req.session.appliedCoupon = null;
+
+    return res.status(200).json({ success: true, orderId: savedOrder.orderId, message: "Order placed successfully" });
 
   } catch (err) {
-    console.error("Order place error:", err);
-    return res.json({ 
-      success: false, 
-      message: "Order creation failed. Please try again." 
-    });
+    try {
+      await session.abortTransaction();
+    } catch (e) {
+      // ignore
+    }
+    session.endSession();
+
+    console.error('placeOrder error:', err);
+    return res.status(err.status || 500).json({ success: false, message: err.message || 'Order creation failed' });
   }
 };
 
@@ -250,6 +416,9 @@ const loadOrderDetail = async (req, res) => {
 
 
 const cancelOrderItems = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const userId = req.session.user?._id;
     if (!userId) {
@@ -259,97 +428,122 @@ const cancelOrderItems = async (req, res) => {
     const { id } = req.params;
     const { itemIds, reason } = req.body;
 
-  
     if (!itemIds || !Array.isArray(itemIds) || itemIds.length === 0) {
-      return res.json({ success: false, message: "No items selected for cancellation" });
+      return res.json({ success: false, message: "No items selected" });
     }
 
+    // Fetch order inside session
     const order = await Order.findOne({ _id: id, userId })
-      .populate("orderedItems.variantId");
+      .populate("orderedItems.variantId")
+      .session(session);
 
     if (!order) {
+      await session.abortTransaction();
       return res.json({ success: false, message: "Order not found" });
     }
 
-    const cancellableStatuses = ["Pending", "Confirmed", "Processing"];
+    const cancellable = ["Pending", "Confirmed", "Processing"];
     let cancelledCount = 0;
-    let alreadyCancelledCount = 0;
-    let cannotCancelCount = 0;
+    let refundAmount = 0;
+
     const now = new Date();
 
-    //  each 
+    // Loop selected items
     for (const itemIdStr of itemIds) {
       const item = order.orderedItems.id(itemIdStr);
-      
       if (!item) continue;
 
-      if (item.itemStatus === "Cancelled") {
-        alreadyCancelledCount++;
-        continue;
-      }
+      if (!cancellable.includes(item.itemStatus)) continue;
 
-      if (!cancellableStatuses.includes(item.itemStatus)) {
-        cannotCancelCount++;
-        continue;
-      }
-
-      // Cancel the item
+      // Mark cancelled
       item.itemStatus = "Cancelled";
       item.reason = reason || "";
-      if (!item.itemTimeline) item.itemTimeline = {};
+      item.itemTimeline = item.itemTimeline || {};
       item.itemTimeline.cancelledAt = now;
 
-      // Restore stock
-      if (item.variantId && item.variantId._id) {
-        await Variant.findByIdAndUpdate(
-          item.variantId._id,
-          { $inc: { stock: item.quantity } }
-        );
-      }
+      // Restore stock (session-safe)
+      await Variant.updateOne(
+        { _id: item.variantId._id },
+        { $inc: { stock: item.quantity } },
+        { session }
+      );
 
       cancelledCount++;
+
+      // Wallet refund calculation
+      if (order.paymentMethod === "wallet" && order.paymentStatus === "Paid") {
+        const itemRefund = item.salePrice * item.quantity;
+        refundAmount += itemRefund;
+      }
     }
 
-    // Update order status based on all items
-    const allItemStatuses = order.orderedItems.map(i => i.itemStatus);
-    const allCancelled = allItemStatuses.every(s => s === "Cancelled");
-    const someCancelled = allItemStatuses.some(s => s === "Cancelled");
-    const someActive = allItemStatuses.some(s => cancellableStatuses.includes(s));
+    // NO CANCELLATION?
+    if (cancelledCount === 0) {
+      await session.abortTransaction();
+      return res.json({
+        success: false,
+        message: "No items were cancelled",
+      });
+    }
 
+    // Update order status
+    const allCancelled = order.orderedItems.every(i => i.itemStatus === "Cancelled");
+    order.orderStatus = allCancelled ? "Cancelled" : "Partially Cancelled";
     if (allCancelled) {
-      order.orderStatus = "Cancelled";
+      order.statusTimeline = order.statusTimeline || {};
       order.statusTimeline.cancelledAt = now;
-    } else if (someCancelled) {
-      order.orderStatus = "Partially Cancelled";
     }
 
-    order.markModified("orderedItems");
-    order.markModified("statusTimeline");
-    await order.save();
+    // Process wallet refund (inside transaction)
+    if (refundAmount > 0) {
+      const wallet = await Wallet.findOne({ userId }).session(session);
 
-    // Build response message
-    let message = "";
-    if (cancelledCount > 0) {
-      message = `${cancelledCount} item(s) cancelled successfully`;
+      await Wallet.updateOne(
+        { userId },
+        { 
+          $inc: { balance: refundAmount, totalCredits: refundAmount },
+          lastTransactionAt: now
+        },
+        { session }
+      );
+
+      const newBal = wallet.balance + refundAmount;
+
+      await createLedgerEntry(
+        {
+          walletId: wallet._id,
+          userId,
+          amount: refundAmount,
+          type: "REFUND",
+          referenceId: order._id,
+          note: `Refund for cancelled items in order ${order.orderId}`,
+          balanceAfter: newBal,
+        },
+        session
+      );
+
+      await updateUserWalletBalance(userId, newBal, session);
     }
-    if (alreadyCancelledCount > 0) {
-      message += `. ${alreadyCancelledCount} item(s) already cancelled`;
-    }
-    if (cannotCancelCount > 0) {
-      message += `. ${cannotCancelCount} item(s) cannot be cancelled at this stage`;
-    }
+
+    // Save order
+    await order.save({ session });
+
+    await session.commitTransaction();
 
     return res.json({
-      success: cancelledCount > 0,
-      message: message || "No items were cancelled",
+      success: true,
+      message: `${cancelledCount} item(s) cancelled successfully`,
+      refund: refundAmount,
     });
 
   } catch (err) {
     console.error("Cancel Error:", err);
-    res.json({ success: false, message: "Something went wrong" });
+    await session.abortTransaction();
+    return res.json({ success: false, message: "Something went wrong" });
+  } finally {
+    session.endSession();
   }
 };
-
 
 const requestReturn = async (req, res) => {
   try {

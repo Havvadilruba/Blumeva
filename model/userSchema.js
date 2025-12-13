@@ -20,10 +20,13 @@ const userSchema=new Schema({
     type: String,
     default: ""   
     },
-    googleId:{
-        type:String,
-        unique:true
-    },
+    googleId: {
+  type: String,
+  default: null,
+  unique: true,
+  sparse: true
+},
+
     isBlocked:{
         type:Boolean,
         default:false
@@ -32,6 +35,25 @@ const userSchema=new Schema({
       type: String,
       default: "user",
     },
+referralCode: {
+  type: String,
+  unique: true,
+  sparse: true,
+  index: true,
+},
+
+referredBy: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "User",
+  default: null,
+},
+
+referralRewards: {
+  type: Number,
+  default: 0,
+  min: 0
+},
+
     
 }, { timestamps: true }
 )

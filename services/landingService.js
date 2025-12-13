@@ -2,8 +2,23 @@
 import Category from "../model/categorySchema.js";
 import Brand from "../model/brandSchema.js";
 import Product from "../model/productSchema.js";
+import Wishlist from "../model/wishlistSchema.js";
+import mongoose from "mongoose";
 
-export const getLandingPageData = async () => {
+export const getLandingPageData = async (userId) => {
+
+  let wishlistVariantIds = [];
+  if (userId) {
+    const wishlist = await Wishlist.findOne({
+      userId: new mongoose.Types.ObjectId(userId)
+    });
+
+    if (wishlist) {
+      wishlistVariantIds = wishlist.items.map(item =>
+        item.variantId.toString()
+      );
+    }
+  }
   const categories = await Category.find({ isListed: true })
     .sort({ createdAt: -1 })
     .limit(6);
@@ -66,6 +81,16 @@ export const getLandingPageData = async () => {
     },
   },
   { $unwind: "$variant" },
+   {
+      $addFields: {
+        isInWishlist: {
+          $in: [
+            { $toString: "$variant._id" },
+            wishlistVariantIds
+          ]
+        }
+      }
+    },
 
   // Product Offer
   {
@@ -188,6 +213,7 @@ export const getLandingPageData = async () => {
       stock: "$variant.stock",
 
       discountAmount: "$offer",
+      isInWishlist: 1
     }
   }
 ]);

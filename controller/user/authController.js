@@ -3,6 +3,8 @@ import bcrypt from "bcrypt";
 import { generateOtp } from "../../helpers/otpHelper.js";
 import { sendVerificationEmail } from "../../helpers/emailHelper.js";
 import { signupValidation, otpValidation, loginValidation } from "../../validations/userauthValidation.js";
+import { processReferral } from "../../services/referralService.js";
+
 import Joi from "joi";
 
 
@@ -31,7 +33,7 @@ const loadSignup=async(req,res)=>{
 //sing Up
 const signup = async (req, res) => {
   try {
-    const { name, email, password, cpassword } = req.body;
+    const { name, email, password, cpassword ,referralCode} = req.body;
 
     const { error } = signupValidation.validate({ name, email, password, cpassword });
     if (error)
@@ -58,7 +60,7 @@ const signup = async (req, res) => {
 
     req.session.userOtp = otp;
     req.session.userOtpTime = Date.now();
-    req.session.userData = { name, email, password };
+    req.session.userData = { name, email, password,referralCode };
 
     console.log("OTP :", otp);
 
@@ -100,41 +102,89 @@ const verifyOtp = async (req, res) => {
 
     const { error } = otpValidation.validate({ otp });
     if (error) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-         message: error.details[0].message });
+        message: error.details[0].message,
+      });
     }
 
     if (otp !== req.session.userOtp) {
       return res.status(400).json({
-         success: false,
-          message: "Invalid OTP." });
+        success: false,
+        message: "Invalid OTP.",
+      });
     }
 
-    const user = req.session.userData;
-    const hashedPassword = await bcrypt.hash(user.password, 10);
+    const userSession = req.session.userData;
+    const hashedPassword = await bcrypt.hash(userSession.password, 10);
 
+    /** Generate a unique referral code */
+    async function generateUniqueReferralCode() {
+      const prefix = "BLM";
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+      for (let attempt = 0; attempt < 6; attempt++) {
+        let code = prefix;
+        for (let i = 0; i < 6; i++) {
+          code += chars[Math.floor(Math.random() * chars.length)];
+        }
+
+        const exists = await User.findOne({ referralCode: code });
+        if (!exists) return code;
+      }
+
+      return prefix + Date.now().toString(36).toUpperCase();
+    }
+
+    /** Create new user */
     const newUser = new User({
-      name: user.name,
-      email: user.email.toLowerCase(),
+      name: userSession.name,
+      email: userSession.email.toLowerCase(),
       password: hashedPassword,
       isVerified: true,
+      referralCode: await generateUniqueReferralCode(),
+      referredBy: null,
     });
+
+    /** Check if user entered a valid referral code */
+    let referredByUser = null;
+
+    if (userSession.referralCode) {
+      referredByUser = await User.findOne({
+        referralCode: userSession.referralCode,
+      });
+
+      if (referredByUser) {
+        newUser.referredBy = referredByUser._id;
+      }
+    }
 
     await newUser.save();
 
+    /** Process referral rewards */
+    if (referredByUser) {
+      try {
+        await processReferral(referredByUser._id, newUser._id, userSession.referralCode );
+      } catch (err) {
+        console.error("Referral processing failed:", err);
+      }
+    }
 
+    /** Cleanup session */
     delete req.session.userOtp;
     delete req.session.userData;
 
-    res.json({ success: true, redirectUrl: "/login" });
+    return res.json({ success: true, redirectUrl: "/login" });
+
   } catch (error) {
     console.error("Error verifying OTP:", error);
-    res.status(500).json({ 
-      success: false, 
-      message: "Internal server error" });
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
+
 
 const resendOtp = async (req, res) => {
   try {

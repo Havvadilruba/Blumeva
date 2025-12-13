@@ -2,8 +2,11 @@
 import Category from "../model/categorySchema.js";
 import Brand from "../model/brandSchema.js";
 import Product from "../model/productSchema.js";
+import Wishlist from "../model/wishlistSchema.js";
+import mongoose from "mongoose";
 
-export const getFilteredProducts = async (query) => {
+
+export const getFilteredProducts = async (query,userId ) => {
   const categoryName = query.category || "";
   const brandName = query.brand || "";
   const minPrice = query.priceMin;
@@ -51,6 +54,21 @@ export const getFilteredProducts = async (query) => {
   const priceStage = {};
   if (minPrice) priceStage["$gte"] = Number(minPrice);
   if (maxPrice) priceStage["$lte"] = Number(maxPrice);
+
+  let wishlistVariantIds = [];
+
+if (userId) {
+  const wishlist = await Wishlist.findOne({
+    userId: new mongoose.Types.ObjectId(userId)
+  });
+
+  if (wishlist) {
+    wishlistVariantIds = wishlist.items.map(item =>
+      item.variantId.toString()
+    );
+  }
+}
+
 
   // ============= BASE PIPELINE (your logic + in-stock + min variant) =============
   const basePipeline = [
@@ -106,6 +124,17 @@ export const getFilteredProducts = async (query) => {
     { $unwind: "$variants" },
 
     // inStock flag (kept from your service)
+    {
+  $addFields: {
+    isInWishlist: {
+      $in: [
+        { $toString: "$variants._id" },
+        wishlistVariantIds
+      ]
+    }
+  }
+},
+
     {
       $addFields: {
         inStock: { $gt: ["$variants.stock", 0] }
@@ -257,6 +286,7 @@ export const getFilteredProducts = async (query) => {
         inStock: 1,
 
         discountAmount: 1, // 🔹 for your EJS (same as latestProducts)
+        isInWishlist: 1 
       },
     }
   );

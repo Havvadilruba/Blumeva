@@ -1,0 +1,273 @@
+<%- include("../partials/user/header") %>
+
+<div class="wallet-page">
+  <div class="container">
+    <div class="page-layout">
+
+      <!-- Sidebar -->
+      <%- include("../partials/user/sidebar", { activePage }) %>
+
+      <!-- MAIN CONTENT -->
+      <div class="main-content">
+
+        <!-- Wallet Balance Card -->
+        <div class="wallet-card">
+          <div class="wallet-header">
+            <div class="balance-info">
+              <p class="balance-label">Available Balance</p>
+              <h1 class="balance-amount">
+                ₹<%= Number(wallet?.balance || 0).toLocaleString("en-IN") %>
+              </h1>
+              <p class="wallet-id">Wallet ID: <%= wallet?._id || "N/A" %></p>
+            </div>
+
+            <div class="wallet-icon">
+              <i class="bi bi-wallet2"></i>
+            </div>
+          </div>
+
+          <div class="add-money-btn-container">
+            <button onclick="openAddMoneyModal()" class="btn-add-money">
+              <i class="bi bi-plus-circle"></i> Add Money
+            </button>
+          </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="stats-grid">
+
+          <!-- Total Credits -->
+          <div class="stat-card stat-credit">
+            <div class="stat-content">
+              <div class="stat-info">
+                <p class="stat-label">Total Credits</p>
+                <h2 class="stat-value">
+                  ₹<%= Number(wallet?.totalCredits || 0).toLocaleString("en-IN") %>
+                </h2>
+              </div>
+              <div class="stat-icon"><i class="bi bi-arrow-down-circle"></i></div>
+            </div>
+          </div>
+
+          <!-- Total Debits -->
+          <div class="stat-card stat-debit">
+            <div class="stat-content">
+              <div class="stat-info">
+                <p class="stat-label">Total Debits</p>
+                <h2 class="stat-value">
+                  ₹<%= Number(wallet?.totalDebits || 0).toLocaleString("en-IN") %>
+                </h2>
+              </div>
+              <div class="stat-icon"><i class="bi bi-arrow-up-circle"></i></div>
+            </div>
+          </div>
+
+          <!-- Transactions -->
+          <div class="stat-card stat-transactions">
+            <div class="stat-content">
+              <div class="stat-info">
+                <p class="stat-label">Transactions</p>
+                <h2 class="stat-value"><%= totalDocuments || 0 %></h2>
+              </div>
+              <div class="stat-icon"><i class="bi bi-receipt"></i></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Transaction History -->
+        <div class="transaction-history">
+          <div class="history-header">
+            <div>
+              <h2>Transaction History</h2>
+              <p class="header-subtitle">Your wallet transactions</p>
+            </div>
+
+            <!-- Filter Buttons -->
+            <div class="filter-buttons">
+              <button onclick="filterTransactions('')" class="filter-btn <%= !query.type ? 'active' : '' %>">All</button>
+              <button onclick="filterTransactions('credit')" class="filter-btn <%= query.type === 'credit' ? 'active' : '' %>">Credits</button>
+              <button onclick="filterTransactions('debit')" class="filter-btn <%= query.type === 'debit' ? 'active' : '' %>">Debits</button>
+            </div>
+          </div>
+
+          <!-- Transactions -->
+          <div class="transactions-list">
+
+            <% if (transactions && transactions.length > 0) { %>
+              <% transactions.forEach(t => { 
+                  const tType = t.type?.toLowerCase();
+                  const isCredit = (tType === "credit" || tType === "referral");
+              %>
+
+              <div class="transaction-item">
+                <div class="transaction-content">
+
+                  <!-- Left -->
+                  <div class="transaction-left">
+
+                    <!-- Icon -->
+                    <div class="transaction-icon <%= isCredit ? 'icon-credit' : 'icon-debit' %>">
+                      <i class="bi <%= isCredit ? 'bi-arrow-down-circle' : 'bi-arrow-up-circle' %>"></i>
+                    </div>
+
+                    <!-- Details -->
+                    <div class="transaction-details">
+                      <h3 class="transaction-title">
+                        <%= t.note || (isCredit ? "Money Added" : "Money Deducted") %>
+                      </h3>
+
+                      <p class="transaction-date">
+                        <i class="bi bi-calendar"></i>
+                        <%= new Date(t.createdAt).toLocaleString("en-IN", {
+                              day:"numeric", month:"short", year:"numeric",
+                              hour:"2-digit", minute:"2-digit"
+                        }) %>
+                      </p>
+
+                      <% if (t.razorpayPaymentId || t.referenceId) { %>
+                        <p class="payment-id">ID: <%= t.razorpayPaymentId || t.referenceId %></p>
+                      <% } %>
+                    </div>
+
+                  </div>
+
+                  <!-- Right -->
+                  <div class="transaction-right">
+                    <p class="transaction-amount <%= isCredit ? 'amount-credit' : 'amount-debit' %>">
+                      <%= isCredit ? '+' : '-' %>
+                      ₹<%= Number(t.amount).toLocaleString("en-IN") %>
+                    </p>
+
+                    <p class="balance-after">
+                      Balance: ₹<%= Number(t.balanceAfter).toLocaleString("en-IN") %>
+                    </p>
+                  </div>
+
+                </div>
+              </div>
+
+              <% }) %>
+
+            <% } else { %>
+
+              <!-- Empty State -->
+              <div class="empty-state">
+                <div class="empty-icon"><i class="bi bi-receipt"></i></div>
+                <h3>No Transactions Yet</h3>
+                <p>Your transaction history will appear here.</p>
+
+                <button onclick="openAddMoneyModal()" class="btn-empty-state">
+                  <i class="bi bi-plus-circle"></i> Add Money
+                </button>
+              </div>
+
+            <% } %>
+
+          </div>
+
+          <!-- Pagination -->
+          <% if (transactions && totalPages > 1) { %>
+          <div class="pagination">
+
+            <div class="pagination-info">
+              Showing <%= (currentPage - 1) * limit + 1 %>–
+              <%= (currentPage - 1) * limit + transactions.length %>
+              of <%= totalDocuments %>
+            </div>
+
+            <div class="pagination-controls">
+
+              <!-- Prev -->
+              <button onclick="changeWalletPage(<%= currentPage - 1 %>)"
+                class="pagination-btn"
+                <%= currentPage === 1 ? "disabled" : "" %>>
+                <i class="bi bi-chevron-left"></i>
+              </button>
+
+              <!-- Numbers -->
+              <% for (let i = 1; i <= totalPages; i++) { %>
+                <button onclick="changeWalletPage(<%= i %>)"
+                  class="pagination-btn <%= currentPage === i ? 'pagination-btn-active' : '' %>">
+                  <%= i %>
+                </button>
+              <% } %>
+
+              <!-- Next -->
+              <button onclick="changeWalletPage(<%= currentPage + 1 %>)"
+                class="pagination-btn"
+                <%= currentPage === totalPages ? "disabled" : "" %>>
+                <i class="bi bi-chevron-right"></i>
+              </button>
+
+            </div>
+
+          </div>
+          <% } %>
+
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+<!-- Add Money Modal -->
+<div id="addMoneyModal" class="modal">
+  <div class="modal-content">
+
+    <div class="modal-header">
+      <h3 class="modal-title">Add Money to Wallet</h3>
+      <button onclick="closeAddMoneyModal()" class="modal-close">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    
+    <form id="addMoneyForm" class="modal-form">
+
+      <div class="form-group">
+        <label class="form-label">Enter Amount *</label>
+
+        <div class="input-wrapper">
+          <span class="input-prefix">₹</span>
+          <input 
+            type="number" 
+            name="amount" 
+            id="addAmount"
+            required 
+            class="form-input"
+            placeholder="Enter amount"
+          />
+        </div>
+
+        <p class="form-hint">Minimum: ₹100 | Maximum: ₹50,000</p>
+      </div>
+
+      <!-- Quick Amount Buttons -->
+      <div class="quick-amounts">
+        <p class="quick-amounts-label">Quick Add</p>
+
+        <div class="quick-amounts-grid">
+          <button type="button" onclick="setAmount(500)" class="quick-amount-btn">₹500</button>
+          <button type="button" onclick="setAmount(1000)" class="quick-amount-btn">₹1,000</button>
+          <button type="button" onclick="setAmount(2000)" class="quick-amount-btn">₹2,000</button>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="submit" class="btn-submit">Proceed to Payment</button>
+        <button type="button" onclick="closeAddMoneyModal()" class="btn-cancel">Cancel</button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<%- include("../partials/user/footer") %>
+
+
+<script>
+  window.RAZORPAY_KEY = "<%= key %>";
+</script>
+
+<script src="/js/user/wallet.js"></script>

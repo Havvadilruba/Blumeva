@@ -244,3 +244,31 @@ body {
     max-width: 100%;
   }
 }
+.actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.wishlist-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: #fff;
+  box-shadow: 0 0 6px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.wishlist-btn i {
+  font-size: 20px;
+  color: #007bff;
+}
+
+.wishlist-btn:hover {
+  transform: scale(1.1);
+}

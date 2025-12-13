@@ -53,34 +53,6 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/", userRouter);
 app.use("/admin", adminRouter);
 
-// Error handling middleware (add this after all routes)
-app.use((err, req, res, next) => {
-  console.error("=== GLOBAL ERROR HANDLER ===");
-  console.error("Error name:", err.name);
-  console.error("Error message:", err.message);
-  console.error("Error stack:", err.stack);
-
-  // Handle multer errors
-  if (err instanceof multer.MulterError) {
-    return res.status(400).json({
-      success: false,
-      message: `Upload error: ${err.message}`
-    });
-  }
-
-  // Handle other errors
-  if (err.message) {
-    return res.status(500).json({
-      success: false,
-      message: err.message
-    });
-  }
-
-  res.status(500).json({
-    success: false,
-    message: "An unexpected error occurred"
-  });
-});
 
 // Start server
 const PORT = process.env.PORT || 3000;

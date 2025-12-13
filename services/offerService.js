@@ -12,7 +12,7 @@ import {
   searchProducts
 } from "../repositories/offerRepository.js";
 
-// Get offers page data with filters
+// offer page filters
 export const getOfferPageDataService = async (
   offerType,
   searchQuery,
@@ -22,15 +22,14 @@ export const getOfferPageDataService = async (
   limit = 10
 ) => {
   try {
-    // Build filter query
+   
     const filter = { offerType };
     
-    // Search filter
     if (searchQuery) {
       filter.offerName = { $regex: searchQuery, $options: 'i' };
     }
     
-    // Status filter
+  
     const now = new Date();
     if (statusFilter === 'active') {
       filter.isActive = true;
@@ -85,7 +84,7 @@ export const getOfferPageDataService = async (
 // Add new offer
 export const addOfferService = async (offerData) => {
   try {
-    //  offer name already exists 
+//   name already exists 
     const existing = await findOfferByName(offerData.offerName, offerData.offerType);
     
     if (existing) {
@@ -94,7 +93,7 @@ export const addOfferService = async (offerData) => {
       throw error;
     }
     
-    // Create new offer
+// Create new offer
     const newOffer = await createOffer(offerData);
     return newOffer;
   } catch (error) {
@@ -122,7 +121,7 @@ export const getOfferByIdService = async (id) => {
 // Edit existing offer
 export const editOfferService = async (id, offerData) => {
   try {
-    // Check if offer exists
+// Check if offer exists
     const offer = await findOfferById(id);
     if (!offer) {
       const error = new Error("Offer not found");
@@ -130,7 +129,7 @@ export const editOfferService = async (id, offerData) => {
       throw error;
     }
     
-    //new name conflicts with another offer
+//new name conflicts with another offer
     if (offer.offerName !== offerData.offerName) {
       const existing = await findOfferByName(offerData.offerName, offerData.offerType, id);
       
@@ -141,7 +140,7 @@ export const editOfferService = async (id, offerData) => {
       }
     }
     
-    // Update offer
+// Update offer
     const updatedOffer = await updateOffer(id, offerData);
     return updatedOffer;
   } catch (error) {

@@ -106,6 +106,15 @@
             <span class="summary-value discount-value">-₹<%= order.discount.toLocaleString('en-IN', {minimumFractionDigits: 2}) %></span>
           </div>
         <% } %>
+        <% if (order.couponDiscount > 0) { %>
+          <div class="summary-row discount-row">
+            <span class="summary-label">
+              <i class="bi bi-ticket-detailed"></i> Coupon Discount
+            </span>
+            <span class="summary-value">-₹<%= order.couponDiscount.toLocaleString('en-IN') %></span>
+          </div>
+          <% } %>
+
 
         <% if (order.tax > 0) { %>
           <div class="summary-row">

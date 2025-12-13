@@ -1,4 +1,3 @@
-// Debounce to prevent rapid requests
 let updateTimeout = null;
 
 function showToast(message, type = "success") {
@@ -34,7 +33,7 @@ function changeQty(itemId, type) {
 
   // Get stock from data attribute
   const plusBtn = row.querySelector(".qty-btn:last-child");
-  const stockLimit = parseInt(plusBtn?.dataset.stock || 999);
+  const stockLimit = parseInt(plusBtn?.dataset.stock || "999", 10);
 
   // Frontend validation - ONLY for minimum and maximum
   if (newQty < 1) {
@@ -101,46 +100,55 @@ async function updateQty(itemId, newQty) {
         showToast("Item is now out of stock", "warning");
         disableCheckout("out-of-stock");
       } else {
-      // Update price UI SAME as product card logic
-const regular = updatedItem.regularPrice;
-const sale = updatedItem.salePrice;
-const offerAmount = updatedItem.discountAmount || 0;
-const current = sale - offerAmount;
+        // ===== Update price UI SAME as product card logic =====
+        const regular = updatedItem.regularPrice || 0;
+        const sale = updatedItem.salePrice || 0;
+        const offerAmount = updatedItem.discountAmount || 0;
+        const basePrice = sale > 0 ? sale : regular;
 
-const hasDiscount = regular > current;
-const discountPercent = hasDiscount
-  ? Math.round(((regular - current) / regular) * 100)
-  : 0;
+        let current = basePrice - offerAmount;
+        if (current < 0) current = 0;
 
-priceBox.innerHTML = `
-  <div class="price" style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
+        const hasDiscount = regular > 0 && regular > current;
+        const discountPercent = hasDiscount
+          ? Math.round(((regular - current) / regular) * 100)
+          : 0;
 
-    <div style="display:flex;align-items:center;gap:8px;">
-      <span class="sale" style="font-size:18px;font-weight:700;color:#111;">
-        ₹${(current * updatedItem.quantity).toLocaleString('en-IN')}
-      </span>
+        const savingsPerUnit = current > 0
+          ? (regular > 0 ? (regular - current) : (basePrice - current))
+          : 0;
 
-      ${hasDiscount ? `
-      <del class="regular"
-        style="font-size:14px;color:#888;text-decoration:line-through;">
-        ₹${(regular * updatedItem.quantity).toLocaleString('en-IN')}
-      </del>` : ""}
-    </div>
+        const totalSavings = savingsPerUnit * updatedItem.quantity;
 
-    ${hasDiscount ? `
-    <span class="offer-badge"
-      style="background:#16a34a;color:#fff;font-size:11px;
-      padding:2px 6px;border-radius:4px;font-weight:600;">
-      ${discountPercent}% OFF
-    </span>` : ""}
+        priceBox.innerHTML = `
+          <div class="price" style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
 
-    ${offerAmount > 0 ? `
-    <span style="color:#16a34a;font-size:12px;font-weight:600;">
-      Save ₹${((regular - current) * updatedItem.quantity).toLocaleString('en-IN')} with offers
-    </span>` : ""}
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="sale" style="font-size:18px;font-weight:700;color:#111;">
+                ₹${(current * updatedItem.quantity).toLocaleString('en-IN')}
+              </span>
 
-  </div>
-`;
+              ${hasDiscount ? `
+              <del class="regular"
+                style="font-size:14px;color:#888;text-decoration:line-through;">
+                ₹${(regular * updatedItem.quantity).toLocaleString('en-IN')}
+              </del>` : ""}
+            </div>
+
+            ${hasDiscount ? `
+            <span class="offer-badge"
+              style="background:#16a34a;color:#fff;font-size:11px;
+              padding:2px 6px;border-radius:4px;font-weight:600;">
+              ${discountPercent}% OFF
+            </span>` : ""}
+
+            ${totalSavings > 0 ? `
+            <span style="color:#16a34a;font-size:12px;font-weight:600;">
+              Save ₹${totalSavings.toLocaleString('en-IN')} with offers
+            </span>` : ""}
+
+          </div>
+        `;
 
         // Update button states
         minusBtn.classList.toggle("disabled", updatedItem.quantity <= 1);
@@ -272,8 +280,8 @@ function checkAndUpdateCheckoutButton() {
   let hasInsufficientStock = false;
 
   cartItems.forEach(item => {
-    // Check for out of stock
-    if (item.querySelector(".out-of-stock")) {
+    // Check for main out of stock message in details only
+    if (item.querySelector(".cart-item-details .cart-out-of-stock")) {
       hasOutOfStock = true;
     }
 
@@ -283,7 +291,7 @@ function checkAndUpdateCheckoutButton() {
     
     if (qtyDisplay && plusBtn) {
       const quantity = parseInt(qtyDisplay.innerText);
-      const stock = parseInt(plusBtn.dataset.stock);
+      const stock = parseInt(plusBtn.dataset.stock || "999999", 10);
       
       if (quantity > stock) {
         hasInsufficientStock = true;

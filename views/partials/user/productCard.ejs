@@ -111,56 +111,64 @@
 
 <script>
 async function toggleWishlist(event, variantId) {
-  event.stopPropagation();
+  event.stopPropagation(); // stop bubbling to card
+  event.preventDefault();  // stop default link behavior
 
   const btn = event.currentTarget;
   const icon = btn.querySelector('i');
+  btn.disabled = true;
 
   try {
     const res = await axios.post('/wishlist/toggle', { variantId });
     const data = res.data;
 
-    if (!data.success) {
-      return showToast(data.message || "Wishlist update failed", "error");
-    }
+    showToast(data.message, data.success ? "success" : "error");
+
+    if (!data.success) return;
 
     if (data.action === "added") {
       icon.classList.replace("fa-regular", "fa-solid");
       btn.classList.add("active");
-      showToast("Added to Wishlist ❤️", "success");
     } else {
       icon.classList.replace("fa-solid", "fa-regular");
       btn.classList.remove("active");
-      showToast("Removed from Wishlist 💔", "info");
     }
 
   } catch (error) {
-    console.error(error);
-    showToast("Something went wrong!", "error");
+    const message = error.response?.data?.message || "Something went wrong!";
+    showToast(message, "error");
+
+    if (message === "please login") {
+      setTimeout(() => window.location.href = "/login", 1000);
+    }
+  } finally {
+    btn.disabled = false;
   }
 }
 
 
-
 // Toastify Helper
 function showToast(message, type = "success") {
+  const colors = {
+    success: "linear-gradient(135deg, #00C853, #009624)",
+    info: "linear-gradient(135deg, #2196f3, #1976D2)",
+    error: "linear-gradient(135deg, #E53935, #B71C1C)"
+  };
+
   Toastify({
     text: message,
     duration: 1500,
-    close: false,
     gravity: "top",
     position: "right",
     stopOnFocus: true,
     style: {
-      background: type === "success" ? "#00C853" 
-          : type === "info" ? "#2196f3"
-          : "#E53935",
+      background: colors[type] || colors.success,
       color: "#fff",
       fontWeight: "600",
       borderRadius: "8px",
       padding: "10px 16px",
       fontSize: "14px",
-      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+      boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
     },
     offset: {
       x: 20,

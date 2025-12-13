@@ -9,9 +9,7 @@ import {
 } from "../../services/offerService.js";
 import { offerSchema } from "../../validations/offerValidation.js";
 
-/**
- * Load offers 
- */
+
 const loadOffers = async (req, res) => {
   try {
     const offerType = req.query.type || "product";
@@ -41,9 +39,7 @@ const loadOffers = async (req, res) => {
   }
 };
 
-/**
- * Search products
- */
+
 const searchProducts = async (req, res) => {
   try {
     const query = req.query.q || "";
@@ -71,9 +67,7 @@ const searchProducts = async (req, res) => {
   }
 };
 
-/**
- * Add new offer
- */
+
 const addOffer = async (req, res) => {
   try {
     const { error } = offerSchema.validate(req.body);
@@ -100,9 +94,7 @@ const addOffer = async (req, res) => {
   }
 };
 
-/**
- * Get offer by ID
- */
+
 const getOfferById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -122,9 +114,7 @@ const getOfferById = async (req, res) => {
   }
 };
 
-/**
- * Edit existing offer
- */
+
 const editOffer = async (req, res) => {
   try {
     const { error } = offerSchema.validate(req.body);
@@ -152,9 +142,7 @@ const editOffer = async (req, res) => {
   }
 };
 
-/**
- * Toggle offer status
- */
+
 const toggleOfferStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -174,9 +162,7 @@ const toggleOfferStatus = async (req, res) => {
   }
 };
 
-/**
- * Delete offer
- */
+
 const deleteOffer = async (req, res) => {
   try {
     const { id } = req.params;

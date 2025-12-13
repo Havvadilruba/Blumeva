@@ -8,9 +8,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
     const cpassword = document.getElementById("confirm").value;
+    const referralCode = document.getElementById("referral").value.trim();
+
 
     try {
-      const res = await axios.post("/signup", { name, email, password, cpassword });
+      const res = await axios.post("/signup", { 
+  name, email, password, cpassword, referralCode 
+});
+
 
       if (res.data.success) {
         Toastify({

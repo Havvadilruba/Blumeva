@@ -1,7 +1,6 @@
-
 // Selected values
 let selectedAddressId = null;
-let selectedPaymentMethod = "online";
+let selectedPaymentMethod = "razorpay";
 
 // Address select
 document.querySelectorAll('input[name="selectedAddress"]').forEach(radio => {
@@ -17,81 +16,157 @@ document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
   });
 });
 
-// ---------------- APPLY COUPON ----------------
-function applyCoupon() {
-  const code = document.querySelector(".coupon-input").value.trim().toUpperCase();
-  if (!code) return alert("Enter coupon");
+// Auto-select default address on page load
+window.addEventListener('DOMContentLoaded', function () {
+  const defaultAddress = document.querySelector('input[name="selectedAddress"]:checked');
+  if (defaultAddress) {
+    selectedAddressId = defaultAddress.value;
+  }
+});
 
-  fetch("/api/cart/apply-coupon", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ couponCode: code })
-  })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) location.reload();
-      else alert(data.message);
-    })
-    .catch(() => alert("Coupon apply failed"));
-}
+// ============================================
+// COUPON FUNCTIONS
+// ============================================
 
-// Remove coupon
-function removeCoupon() {
-  fetch("/api/cart/remove-coupon", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" }
-  })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) location.reload();
-    });
-}
+// Apply Coupon
+async function applyCoupon() {
+  const code = document.getElementById('couponCodeInput').value.trim().toUpperCase();
 
-// ---------------- PLACE ORDER ----------------
-async function placeOrder() {
-  const address = document.querySelector('input[name="selectedAddress"]:checked');
-  if (!address) return alert("Please select delivery address");
-
-  const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
-
-  const payload = { addressId: address.value, paymentMethod };
-
-  const placeBtn = document.getElementById("placeOrderBtn");
-  placeBtn.disabled = true;
-  placeBtn.innerHTML = "Processing...";
+  if (!code) {
+    Toastify({
+      text: "Please enter a coupon code",
+      duration: 2000,
+      gravity: "top",
+      position: "right",
+      style: { background: "#ef4444" }
+    }).showToast();
+    return;
+  }
 
   try {
-    const response = await axios.post("/order/place", payload);
+    const response = await axios.post("/checkout/apply-coupon", { code });
+
     if (response.data.success) {
-      window.location.href = "/order/success/" + response.data.orderId;
+      Toastify({
+        text: response.data.message || "Coupon applied successfully!",
+        duration: 2000,
+        gravity: "top",
+        position: "right",
+        style: { background: "#16a34a" }
+      }).showToast();
+
+      setTimeout(() => {
+        window.location.href = "/checkout";
+      }, 1000);
     } else {
-      alert(response.data.message);
-      placeBtn.disabled = false;
-      placeBtn.innerHTML = "Place Order";
+      Toastify({
+        text: response.data.message || "Failed to apply coupon",
+        duration: 2000,
+        gravity: "top",
+        position: "right",
+        style: { background: "#ef4444" }
+      }).showToast();
     }
-  } catch (err) {
-    console.log(err);
-    alert("Order failed");
-    placeBtn.disabled = false;
-    placeBtn.innerHTML = "Place Order";
+  } catch (error) {
+    console.error('Coupon apply error:', error);
+    Toastify({
+      text: error.response?.data?.message || "Failed to apply coupon",
+      duration: 2000,
+      gravity: "top",
+      position: "right",
+      style: { background: "#ef4444" }
+    }).showToast();
   }
 }
 
-// Open Modal
+// Apply coupon from modal
+function applyCouponCode(code) {
+  document.getElementById('couponCodeInput').value = code;
+  closeCouponsModal();
+  applyCoupon();
+}
+
+// Remove Coupon
+async function removeCoupon() {
+  if (!confirm('Remove applied coupon?')) return;
+
+  try {
+    const response = await axios.post("/checkout/remove-coupon");
+
+    if (response.data.success) {
+      Toastify({
+        text: response.data.message || "Coupon removed successfully",
+        duration: 2000,
+        gravity: "top",
+        position: "right",
+        style: { background: "#16a34a" }
+      }).showToast();
+
+      setTimeout(() => {
+        window.location.href = "/checkout";
+      }, 1000);
+    }
+  } catch (error) {
+    console.error('Coupon remove error:', error);
+    Toastify({
+      text: error.response?.data?.message || "Failed to remove coupon",
+      duration: 2000,
+      gravity: "top",
+      position: "right",
+      style: { background: "#ef4444" }
+    }).showToast();
+  }
+}
+
+// ============================================
+// MODAL FUNCTIONS
+// ============================================
+
 function openModal() {
   document.getElementById("addressModal").style.display = "flex";
   document.getElementById("modalTitle").innerText = "Add Address";
   document.getElementById("addressForm").reset();
+  document.body.style.overflow = "hidden";
 }
 
-// Close Modal
 function closeModal() {
   document.getElementById("addressModal").style.display = "none";
+  document.body.style.overflow = "auto";
 }
 
-document.getElementById("saveBtn").addEventListener("click", async () => {
-  console.log("Save button clicked");
+function openCouponsModal() {
+  document.getElementById('couponsModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
 
+function closeCouponsModal() {
+  document.getElementById('couponsModal').style.display = 'none';
+  document.body.style.overflow = 'auto';
+}
+
+document.getElementById('addressModal')?.addEventListener('click', function (e) {
+  if (e.target === this) closeModal();
+});
+
+document.getElementById('couponsModal')?.addEventListener('click', function (e) {
+  if (e.target === this) closeCouponsModal();
+});
+
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') {
+    const addressModal = document.getElementById('addressModal');
+    const couponsModal = document.getElementById('couponsModal');
+
+    if (addressModal && addressModal.style.display === 'flex') closeModal();
+    if (couponsModal && couponsModal.style.display === 'flex') closeCouponsModal();
+  }
+});
+
+// ============================================
+// ADDRESS SAVE
+// ============================================
+
+document.getElementById("saveBtn").addEventListener("click", async () => {
   const payload = {
     addressType: document.getElementById("addressType").value,
     fullName: document.getElementById("fullName").value,
@@ -105,28 +180,102 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
     setDefault: document.getElementById("setDefault").checked,
   };
 
+  if (!payload.fullName || !payload.phone || !payload.address1 || !payload.city || !payload.state || !payload.pincode) {
+    Toastify({
+      text: "Please fill all required fields",
+      duration: 3000,
+      gravity: "top",
+      position: "right",
+      style: { background: "#ef4444" }
+    }).showToast();
+    return;
+  }
+
   try {
     const res = await axios.post("/address", payload);
 
     Toastify({
-      text: res.data.message,
-      duration: 3000,
+      text: res.data.message || "Address saved successfully!",
+      duration: 2000,
       gravity: "top",
       position: "right",
-      style: { background: "#28a745" }
+      style: { background: "#16a34a" }
     }).showToast();
 
     setTimeout(() => location.reload(), 1000);
 
   } catch (err) {
-    console.log(err);
+    console.error('Address save error:', err);
     Toastify({
-      text: err.response?.data?.message || "Failed to save",
+      text: err.response?.data?.message || "Failed to save address",
       duration: 3000,
       gravity: "top",
       position: "right",
-      style: { background: "#ff4d4d" }
+      style: { background: "#ef4444" }
     }).showToast();
   }
 });
 
+// ============================================
+// PLACE ORDER
+// ============================================
+
+async function placeOrder() {
+  const address = document.querySelector('input[name="selectedAddress"]:checked');
+  if (!address) {
+    Toastify({
+      text: "Please select a delivery address",
+      duration: 2000,
+      gravity: "top",
+      position: "right",
+      style: { background: "#ef4444" }
+    }).showToast();
+    return;
+  }
+
+  const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'razorpay';
+
+  const payload = {
+    addressId: address.value,
+    paymentMethod: paymentMethod
+  };
+
+  const placeBtn = document.getElementById("placeOrderBtn");
+  placeBtn.disabled = true;
+  placeBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
+
+  try {
+    const response = await axios.post("/order/place", payload);
+
+    if (response.data.success) {
+      Toastify({
+        text: "Order placed successfully!",
+        duration: 2000,
+        gravity: "top",
+        position: "right",
+        style: { background: "#16a34a" }
+      }).showToast();
+
+      setTimeout(() => {
+        window.location.href = "/order/success/" + response.data.orderId;
+      }, 1000);
+
+    } else {
+      throw new Error(response.data.message || "Failed to place order");
+    }
+
+  } catch (err) {
+    console.error('Order placement error:', err);
+
+    Toastify({
+      text: err.response?.data?.message || err.message || "Failed to place order",
+      duration: 3000,
+      gravity: "top",
+      position: "right",
+      style: { background: "#ef4444" }
+    }).showToast();
+
+    placeBtn.disabled = false;
+    placeBtn.innerHTML = '<i class="bi bi-check-circle"></i> Place Order';
+  }
+}

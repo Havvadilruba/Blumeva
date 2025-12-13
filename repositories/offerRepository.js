@@ -119,3 +119,23 @@ export const searchProducts = async (query) => {
   .limit(20)
   .lean();
 };
+
+// Get active PRODUCT offers
+export const getAvailableProductOffers = async (now) => {
+  return Offer.find({
+    offerType: 'product',
+    startDate: { $lte: now },
+    endDate: { $gte: now },
+    isActive: true,
+  }).lean();
+};
+
+// Get active CATEGORY offers
+export const getAvailableCategoryOffers = async (now) => {
+  return Offer.find({
+    offerType: 'category',
+    startDate: { $lte: now },
+    endDate: { $gte: now },
+    isActive: true,
+  }).lean();
+};

@@ -1,0 +1,214 @@
+/* Page Layout Container */
+.page-layout {
+  display: flex;
+  gap: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Sidebar - Fixed width on left */
+.sidebar {
+  flex: 0 0 250px;
+  min-width: 250px;
+}
+
+/* Main Content - Takes remaining space on right */
+.main-content {
+  flex: 1;
+  min-width: 0; /* Prevents flex item from overflowing */
+}
+
+/* Page Title */
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+}
+
+/* Referral Main Card */
+.referral-main-card {
+  margin-bottom: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.referral-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.ref-code {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0.25rem 0;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #1e40af;
+}
+
+.referral-stats {
+  text-align: right;
+}
+
+.stat-text {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin-bottom: 0.25rem;
+}
+
+.stat-number {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #1f2937;
+}
+
+/* Button Styling */
+.btn-add-money {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: background-color 0.2s;
+}
+
+.btn-add-money:hover {
+  background-color: #2563eb;
+}
+
+/* Transaction History Section */
+.transaction-history {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.history-header {
+  margin-bottom: 1.5rem;
+}
+
+.history-header h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.header-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+/* Table Styling */
+.ref-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ref-table th {
+  background-color: #f9fafb;
+  padding: 12px;
+  text-align: left;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.ref-table td {
+  padding: 12px;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 0.9rem;
+  color: #4b5563;
+}
+
+.ref-table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.ref-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Empty State Styling */
+.empty-state {
+  text-align: center;
+  padding: 3rem 0;
+}
+
+.empty-icon {
+  width: 5rem;
+  height: 5rem;
+  background-color: #f3f4f6;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+
+.empty-icon i {
+  font-size: 2.5rem;
+  color: #9ca3af;
+}
+
+.empty-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #1f2937;
+}
+
+.empty-text {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .page-layout {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    flex: 1;
+    min-width: 100%;
+  }
+
+  .referral-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .referral-stats {
+    text-align: left;
+    width: 100%;
+  }
+
+  .ref-code {
+    font-size: 2rem;
+  }
+
+  .stat-number {
+    font-size: 1.5rem;
+  }
+
+  .ref-table {
+    font-size: 0.8rem;
+  }
+
+  .ref-table th,
+  .ref-table td {
+    padding: 8px;
+  }
+}
+

@@ -9,6 +9,8 @@ import cartController from "../controller/user/cartController.js";
 import checkoutController from "../controller/user/checkoutController.js";
 import orderController from "../controller/user/orderController.js";
 import wishlistController from "../controller/user/wishlistController.js";
+import walletController from "../controller/user/walletController.js";
+import userReferralController from "../controller/user/userReferralController.js";
 import noCache from "../middlewares/noCache.js";
 import upload from "../middlewares/multer.js"; 
 
@@ -68,7 +70,9 @@ router.patch("/cart/update/:id",middle.userAuth, cartController.updateCartItem);
 router.delete("/cart/delete/:id", middle.userAuth, cartController.deleteCartItem);
 
 console.log("Checkout route hit");
-router.get("/checkout", checkoutController.loadCheckout);
+router.get("/checkout", middle.userAuth,checkoutController.loadCheckout);
+router.post('/checkout/apply-coupon',middle.userAuth,checkoutController.applyCoupon);
+router.post('/checkout/remove-coupon',middle.userAuth,checkoutController.removeCoupon);
 
 router.post("/order/place", middle.userAuth, orderController.placeOrder);
 router.get("/order/success/:orderId", middle.userAuth, orderController.loadOrderSuccess);
@@ -85,4 +89,9 @@ router.post("/wishlist/toggle", middle.userAuth, wishlistController.toggleWishli
 router.delete("/wishlist/clear", middle.userAuth, wishlistController.clearWishlist);
 router.get("/wishlist/check/:variantId", middle.userAuth, wishlistController.checkWishlist);
 
+router.get('/wallet', middle.userAuth, walletController.loadMyWallet);
+router.post('/wallet/add-money',middle.userAuth, walletController.addMoney);
+router.post("/wallet/verify-payment", middle.userAuth,walletController.verifyPayment);
+
+router.get("/referral", middle.userAuth, userReferralController.loadReferralPage);
 export default router;
