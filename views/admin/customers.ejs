@@ -62,7 +62,7 @@
           <% customers.forEach((customer) => { %>
             <tr>
               <td class="customer-info">
-                <img src="<%= customer.avatar || 'https://via.placeholder.com/40' %>" alt="Avatar" />
+                <img src="<%= customer.profileImage || 'https://via.placeholder.com/40' %>" alt="Avatar" />
                 <span><%= customer.name %></span>
               </td>
               <td><%= customer.email %></td>

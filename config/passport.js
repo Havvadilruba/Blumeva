@@ -2,6 +2,8 @@ import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import User from "../model/userSchema.js";
 import dotenv from "dotenv";
+import { generateUniqueReferralCode } from "../helpers/referralHelper.js";
+
 
 dotenv.config();
 
@@ -44,6 +46,7 @@ passport.use(
           name: profile.displayName || "Google User",
           email: email,
           googleId: profile.id,
+           referralCode: await generateUniqueReferralCode(),
         });
 
         await newUser.save();

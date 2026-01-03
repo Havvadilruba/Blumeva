@@ -170,6 +170,11 @@ const updateProduct = async (req, res) => {
     }
 
     const variants = formatVariants(req.body);
+       for (const v of variants) {
+      const { error } = variantValidation.validate(v);
+      if (error)
+        return res.status(400).json({ success: false, message: [`Variant: ${error.details[0].message}`] });
+    }
 
     const result = await updateProductService(
       req.params.id,

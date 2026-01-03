@@ -5,12 +5,16 @@ const userAuth = async (req, res, next) => {
   try {
     if (!req.session.user) {
 
-      if (req.xhr || req.headers.accept?.includes("application/json")) {
-        return res.status(401).json({ success: false, message: "Login required" });
-      }
+  // Detect AJAX / JSON requests properly
+  if (req.headers["content-type"]?.includes("application/json") ||
+      req.headers.accept?.includes("application/json") ||
+      req.xhr) {
+    return res.status(401).json({ success: false, message: "Login required" });
+  }
 
-      return res.redirect("/login");
-    }
+  return res.redirect("/login");
+}
+
 
     const userId = req.session.user._id;
 

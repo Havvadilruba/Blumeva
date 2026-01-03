@@ -48,16 +48,19 @@
     <img src="<%= product.images?.[0] %>" alt="<%= product.name %>">
 
     <%
-      const regular = product.regularPrice;
-      const sale = product.salePrice;
-      const offerAmount = product.discountAmount || 0;   // 🔹 from aggregation
-      const current = sale - offerAmount;
+  const regular = product.regularPrice;
+  const sale = product.salePrice;
+  const offerAmount = product.discountAmount || 0;
 
-      const hasDiscount = regular > current;
-      const discountPercent = hasDiscount
-        ? Math.round(((regular - current) / regular) * 100)
-        : 0;
-    %>
+  const current = Math.max(0, sale - offerAmount);
+
+  const discountPercent =
+    regular > current
+      ? Math.round(((regular - current) / regular) * 100)
+      : 0;
+
+  const hasDiscount = discountPercent > 0;
+%>
 
     <% if (hasDiscount) { %>
       <span class="offer-badge"><%= discountPercent %>% OFF</span>

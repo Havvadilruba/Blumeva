@@ -75,11 +75,16 @@ router.post('/checkout/apply-coupon',middle.userAuth,checkoutController.applyCou
 router.post('/checkout/remove-coupon',middle.userAuth,checkoutController.removeCoupon);
 
 router.post("/order/place", middle.userAuth, orderController.placeOrder);
+router.post("/order/razorpay/verify", middle.userAuth, orderController.verifyPayment);
+
 router.get("/order/success/:orderId", middle.userAuth, orderController.loadOrderSuccess);
 router.get("/orders", orderController.loadOrders);
 
 
 router.get("/orders/:id", middle.userAuth,orderController.loadOrderDetail);
+router.get("/order/failure/:id", middle.userAuth, orderController.loadOrderFailure);
+router.post("/order/retry-payment/:id", middle.userAuth, orderController.retryPayment);
+router.delete("/order/delete/temp-order/:id", middle.userAuth, orderController.deleteTempOrderController);
 router.post("/orders/:id/cancel-items", middle.userAuth, orderController.cancelOrderItems);
 router.post("/orders/:id/return-item", middle.userAuth, orderController.requestReturn);
 router.get("/orders/:id/invoice", middle.userAuth, orderController.downloadInvoice);

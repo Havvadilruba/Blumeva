@@ -77,68 +77,63 @@
                   </button>
                 <% } %>
 
-                <div class="price-box" style="text-align:right;">
-                  <% if(item.stock > 0) { %>
+                <!-- PRICE BOX IN CART ITEM -->
+<div class="price-box" style="text-align:right;">
+  <% if(item.stock > 0) { %>
 
-                    <%
-                      const regular = item.regularPrice || 0;
-                      const sale = item.salePrice || 0;
-                      const offerAmount = item.discountAmount || 0;
-                      const basePrice = sale > 0 ? sale : regular;
-                      const currentRaw = basePrice - offerAmount;
-                      const current = currentRaw > 0 ? currentRaw : 0;
+    <%
+      const regular = item.regularPrice || 0;
+      const sale = item.salePrice || 0;
+      const offerAmount = item.discountAmount || 0;
+      
+      // Current price calculation (SAME as product card)
+      const current = sale - offerAmount;
 
-                      const hasDiscount = regular > 0 && regular > current;
-                      const discountPercent = hasDiscount
-                        ? Math.round(((regular - current) / regular) * 100)
-                        : 0;
+      const hasDiscount = regular > current;
+      const discountPercent = hasDiscount
+        ? Math.round(((regular - current) / regular) * 100)
+        : 0;
+    %>
 
-                      const savingsPerUnit = current > 0
-                        ? (regular > 0 ? (regular - current) : (basePrice - current))
-                        : 0;
-                    %>
+    <!-- FINAL PRICE -->
+    <div class="price" style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
 
-                    <!-- FINAL PRICE -->
-                    <div class="price" style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
+      <!-- TOP PRICE LINE -->
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="sale" style="font-size:18px;font-weight:700;color:#111;">
+          ₹<%= (current * item.quantity).toLocaleString('en-IN') %>
+        </span>
 
-                      <!-- TOP PRICE LINE -->
-                      <div style="display:flex;align-items:center;gap:8px;">
-                        <span class="sale" style="font-size:18px;font-weight:700;color:#111;">
-                          ₹<%= (current * item.quantity).toLocaleString('en-IN') %>
-                        </span>
+        <% if(hasDiscount) { %>
+          <del class="regular"
+            style="font-size:14px;color:#888;text-decoration:line-through;">
+            ₹<%= (regular * item.quantity).toLocaleString('en-IN') %>
+          </del>
+        <% } %>
+      </div>
 
-                        <% if(hasDiscount) { %>
-                          <del class="regular"
-                            style="font-size:14px;color:#888;text-decoration:line-through;">
-                            ₹<%= (regular * item.quantity).toLocaleString('en-IN') %>
-                          </del>
-                        <% } %>
-                      </div>
+      <!-- OFFER BADGE -->
+      <% if(hasDiscount) { %>
+        <span class="offer-badge"
+            style="background:#16a34a;color:#fff;font-size:11px;
+            padding:2px 6px;border-radius:4px;font-weight:600;">
+          <%= discountPercent %>% OFF
+        </span>
+      <% } %>
 
-                      <!-- OFFER BADGE -->
-                      <% if(hasDiscount) { %>
-                        <span class="offer-badge"
-                            style="background:#16a34a;color:#fff;font-size:11px;
-                            padding:2px 6px;border-radius:4px;font-weight:600;">
-                          <%= discountPercent %>% OFF
-                        </span>
-                      <% } %>
+      <!-- SAVE MESSAGE (SAME CONDITION AS PRODUCT CARD) -->
+      <% if(offerAmount > 0) { %>
+        <span style="color:#16a34a;font-size:12px;font-weight:600;">
+          Save ₹<%= ((regular - current) * item.quantity).toLocaleString('en-IN') %> with offers
+        </span>
+      <% } %>
 
-                      <!-- SAVE MESSAGE -->
-                      <% if(item.discountAmount > 0) { %>
-  <span style="color:#16a34a;font-size:12px;font-weight:600;">
-    Save ₹<%= (savingsPerUnit * item.quantity).toLocaleString('en-IN') %> with offers
-  </span>
-<% } %>
+    </div>
 
-
-                    </div>
-
-                  <% } else { %>
-                    <!-- This is only inside price box, JS ignores this class now -->
-                    <p class="out-of-stock" style="color:#d9534f;font-weight:600;">Out of Stock</p>
-                  <% } %>
-                </div>
+  <% } else { %>
+    <p class="out-of-stock" style="color:#d9534f;font-weight:600;">Out of Stock</p>
+  <% } %>
+</div>
 
               </div>
 
@@ -150,50 +145,62 @@
         <% } %>
       </div>
 
-      <!-- Summary -->
-      <div class="summary-box">
-        <h2 class="summary-title">Order Summary</h2>
+     <!-- Summary -->
+<div class="summary-box">
+  <h2 class="summary-title">Order Summary</h2>
 
-        <div class="summary-row">
-          <span>Subtotal</span>
-          <span id="summary-subtotal">₹<%= cart.subtotal.toLocaleString('en-IN') %></span>
-        </div>
+  <div class="summary-row">
+    <span>Subtotal</span>
+    <span id="summary-subtotal">
+      ₹<%= cart.subtotal.toLocaleString('en-IN') %>
+    </span>
+  </div>
 
-        <div class="summary-row saving">
-          <span>Savings</span>
-          <span id="summary-discount">-₹<%= cart.discount.toLocaleString('en-IN') %></span>
-        </div>
+  <div class="summary-row saving">
+    <span>Savings</span>
+    <span id="summary-discount">
+      -₹<%= cart.discount.toLocaleString('en-IN') %>
+    </span>
+  </div>
 
-        <div class="summary-row">
-          <span>Tax</span>
-          <span id="summary-tax">₹<%= cart.tax.toLocaleString('en-IN') %></span>
-        </div>
+  <% if(cart.deliveryCharge > 0) { %>
+    <div class="summary-row">
+      <span>Delivery</span>
+      <span>
+        ₹<%= cart.deliveryCharge.toLocaleString('en-IN') %>
+      </span>
+    </div>
+  <% } %>
 
-        <hr class="summary-divider"/>
+  <hr class="summary-divider"/>
 
-        <div class="summary-total">
-          <span>Total</span>
-          <span id="summary-total">₹<%= cart.total.toLocaleString('en-IN') %></span>
-        </div>
+  <div class="summary-total">
+    <span>Total</span>
+    <span id="summary-total">
+      ₹<%= cart.total.toLocaleString('en-IN') %>
+    </span>
+  </div>
 
-        <% 
-          const canCheckout = cart.items.length > 0 && 
-                            !cart.items.some(i => i.stock <= 0) && 
-                            !cart.items.some(i => i.quantity > i.stock);
-        %>
+  <% 
+    const canCheckout = cart.items.length > 0 && 
+                        !cart.items.some(i => i.stock <= 0) && 
+                        !cart.items.some(i => i.quantity > i.stock);
+  %>
 
-        <% if(canCheckout) { %>
-          <a href="/checkout" class="checkout-btn">Proceed to Checkout</a>
-        <% } else { %>
-          <div class="remove-message" style="color:#d9534f;text-align:center;margin-top:15px;font-weight:600;">
-            <% if(cart.items.some(i => i.stock <= 0)) { %>
-              Remove out of stock items to checkout
-            <% } else if(cart.items.some(i => i.quantity > i.stock)) { %>
-              Adjust quantities to available stock to checkout
-            <% } %>
-          </div>
-        <% } %>
-      </div>
+  <% if(canCheckout) { %>
+    <a href="/checkout" class="checkout-btn">Proceed to Checkout</a>
+  <% } else { %>
+    <div class="remove-message"
+         style="color:#d9534f;text-align:center;margin-top:15px;font-weight:600;">
+      <% if(cart.items.some(i => i.stock <= 0)) { %>
+        Remove out of stock items to checkout
+      <% } else if(cart.items.some(i => i.quantity > i.stock)) { %>
+        Adjust quantities to available stock to checkout
+      <% } %>
+    </div>
+  <% } %>
+</div>
+
 
     </div>
   </div>

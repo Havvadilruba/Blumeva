@@ -41,19 +41,10 @@ export const getWishlistData = async (userId, queryParams) => {
   const productOffer = productOffers.filter((offer) =>
     offer.productID.map((id) => id.toString()).includes(item.product._id.toString())
   );
-
-  const offer = getAppliedOffer(
-    { categoryOffer, productOffer },
-    item.variant.salePrice
-  );
-
   return {
     ...item,
-    offer: offer || null,
-    discountAmount: offer?.discountAmount || 0
   };
 });
-
   }
 
   const user = await findUserById(userId);
@@ -107,11 +98,7 @@ export const toggleWishlistItem = async (userId, variantId) => {
     };
   }
 
-  // Check if already in cart
-  const inCart = await findCartItemRepo(userId, variantId);
-  if (inCart) {
-    return { success: false, message: "Product is already in cart" };
-  }
+
 
   // Add to wishlist
   await createWishlistItem(userId, variant.productId._id, variantId);

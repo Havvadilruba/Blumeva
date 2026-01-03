@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sales Report</title>
+
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12px;
+      color: #111;
+      margin: 24px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .muted {
+      color: #666;
+      font-size: 11px;
+    }
+
+    .header {
+      border-bottom: 2px solid #000;
+      padding-bottom: 12px;
+      margin-bottom: 20px;
+    }
+
+    .summary {
+      width: 100%;
+      margin-bottom: 20px;
+      border-collapse: collapse;
+    }
+
+    .summary td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+
+    .summary .label {
+      font-size: 11px;
+      color: #555;
+    }
+
+    .summary .value {
+      font-size: 14px;
+      font-weight: bold;
+      margin-top: 4px;
+    }
+
+    table.report {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    table.report th,
+    table.report td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      vertical-align: top;
+    }
+
+    table.report th {
+      background: #f3f3f3;
+      font-size: 11px;
+      text-transform: uppercase;
+      text-align: left;
+    }
+
+    table.report td {
+      font-size: 12px;
+    }
+
+    .right {
+      text-align: right;
+    }
+
+    .center {
+      text-align: center;
+    }
+
+    .total-row td {
+      font-weight: bold;
+      background: #f3f3f3;
+    }
+
+    .footer {
+      margin-top: 24px;
+      font-size: 11px;
+      color: #666;
+      text-align: center;
+    }
+
+    @media print {
+      button {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <div class="header text-center">
+    <h1>Sales Report</h1>
+    <div class="muted">
+      Generated on <%= new Date().toLocaleDateString('en-IN') %>
+    </div>
+  </div>
+
+  <!-- SUMMARY -->
+  <table class="summary">
+    <tr>
+      <td>
+        <div class="label">Total Sales</div>
+        <div class="value">
+          ₹<%= salesData.totalSales.toLocaleString('en-IN') %>
+        </div>
+      </td>
+      <td>
+        <div class="label">Total Orders</div>
+        <div class="value"><%= salesData.totalOrders %></div>
+      </td>
+      <td>
+        <div class="label">Total Discounts</div>
+        <div class="value">
+          - ₹<%= salesData.totalDiscounts.toLocaleString('en-IN') %>
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <!-- TABLE -->
+  <table class="report">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Order ID</th>
+        <th>Customer Email</th>
+        <th class="center">Items</th>
+        <th class="right">Amount</th>
+        <th class="right">Discount</th>
+        <th>Payment</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <% salesData.transactions.forEach(t => { %>
+        <tr>
+          <td><%= new Date(t.createdAt).toLocaleDateString('en-IN') %></td>
+          <td>#<%= t.orderId %></td>
+          <td><%= t.customerEmail || '-' %></td>
+          <td class="center"><%= t.itemCount %></td>
+          <td class="right">
+            ₹<%= t.totalAmount.toLocaleString('en-IN') %>
+          </td>
+          <td class="right">
+            - ₹<%= t.discount.toLocaleString('en-IN') %>
+          </td>
+          <td><%= t.paymentMethod %></td>
+        </tr>
+      <% }) %>
+
+      <!-- TOTAL -->
+      <tr class="total-row">
+        <td colspan="4" class="right">TOTAL</td>
+        <td class="right">
+          ₹<%= salesData.totalSales.toLocaleString('en-IN') %>
+        </td>
+        <td class="right">
+          - ₹<%= salesData.totalDiscounts.toLocaleString('en-IN') %>
+        </td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    This report includes only successfully delivered orders.
+  </div>
+
+</body>
+</html>
+

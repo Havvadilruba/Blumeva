@@ -1,12 +1,12 @@
-// services/productListUserService.js
 import Category from "../model/categorySchema.js";
 import Brand from "../model/brandSchema.js";
 import Product from "../model/productSchema.js";
 import Wishlist from "../model/wishlistSchema.js";
 import mongoose from "mongoose";
 
+import { getAppliedOffer } from "../helpers/offerHelper.js";
 
-export const getFilteredProducts = async (query,userId ) => {
+export const getFilteredProducts = async (query, userId) => {
   const categoryName = query.category || "";
   const brandName = query.brand || "";
   const minPrice = query.priceMin;
@@ -16,14 +16,27 @@ export const getFilteredProducts = async (query,userId ) => {
   const searchQuery = query.q ? query.q.trim() : "";
   const currentPage = parseInt(query.page) || 1;
 
-  const limit = 2;                     // 🔹 back to your value
+  const limit = 2;
   const skip = (currentPage - 1) * limit;
 
-  // ----------- MATCH STAGE (same as yours) -----------
+  // Get wishlist variant IDs
+  let wishlistVariantIds = [];
+  if (userId) {
+    const wishlist = await Wishlist.findOne({
+      userId: new mongoose.Types.ObjectId(userId)
+    });
+
+    if (wishlist) {
+      wishlistVariantIds = wishlist.items.map(item =>
+        item.variantId.toString()
+      );
+    }
+  }
+
+  // Build match stage
   const matchStage = { isBlocked: false };
 
   if (searchQuery) {
-    // your original: starts with
     matchStage.name = { $regex: new RegExp("^" + searchQuery, "i") };
   }
 
@@ -41,40 +54,37 @@ export const getFilteredProducts = async (query,userId ) => {
     matchStage.avgRating = { $gte: rating };
   }
 
-  // ----------- SORT STAGE (same keys as your code) -----------
+  // Build sort stage
   const sortStage = {};
-  if (sort === "low") sortStage["variants.salePrice"] = 1;
-  else if (sort === "high") sortStage["variants.salePrice"] = -1;
+  if (sort === "low") sortStage["variant.salePrice"] = 1;
+  else if (sort === "high") sortStage["variant.salePrice"] = -1;
   else if (sort === "a-z") sortStage.name = 1;
   else if (sort === "z-a") sortStage.name = -1;
   else if (sort === "rating") sortStage.avgRating = -1;
   else sortStage.createdAt = -1;
 
-  // ----------- PRICE FILTER (same style) -----------
+  // Build price filter
   const priceStage = {};
   if (minPrice) priceStage["$gte"] = Number(minPrice);
   if (maxPrice) priceStage["$lte"] = Number(maxPrice);
 
-  let wishlistVariantIds = [];
-
-if (userId) {
-  const wishlist = await Wishlist.findOne({
-    userId: new mongoose.Types.ObjectId(userId)
-  });
-
-  if (wishlist) {
-    wishlistVariantIds = wishlist.items.map(item =>
-      item.variantId.toString()
-    );
-  }
-}
-
-
-  // ============= BASE PIPELINE (your logic + in-stock + min variant) =============
+  // Base pipeline
   const basePipeline = [
     { $match: matchStage },
 
-    // Category
+    // Brand filter
+    {
+      $lookup: {
+        from: "brands",
+        foreignField: "_id",
+        localField: "brand",
+        as: "brand",
+      },
+    },
+    { $unwind: "$brand" },
+    { $match: { "brand.status": true } },
+
+    // Category filter
     {
       $lookup: {
         from: "categories",
@@ -86,19 +96,7 @@ if (userId) {
     { $unwind: "$category" },
     { $match: { "category.isListed": true } },
 
-    // Brand
-    {
-      $lookup: {
-        from: "brands",
-        localField: "brand",
-        foreignField: "_id",
-        as: "brand",
-      },
-    },
-    { $unwind: "$brand" },
-    { $match: { "brand.status": true } },
-
-    // Variant: same as yours but ✅ now only in-stock & isAvailable (like latestProducts)
+    // Variant lookup - only in-stock variants
     {
       $lookup: {
         from: "variants",
@@ -115,49 +113,33 @@ if (userId) {
               }
             }
           },
-          { $sort: { salePrice: 1 } },   // min salePrice
+          { $sort: { salePrice: 1 } },
           { $limit: 1 }
         ],
-        as: "variants",
+        as: "variant",
       },
     },
-    { $unwind: "$variants" },
+    { $unwind: "$variant" },
 
-    // inStock flag (kept from your service)
-    {
-  $addFields: {
-    isInWishlist: {
-      $in: [
-        { $toString: "$variants._id" },
-        wishlistVariantIds
-      ]
-    }
-  }
-},
-
+    // Add wishlist flag
     {
       $addFields: {
-        inStock: { $gt: ["$variants.stock", 0] }
+        isInWishlist: {
+          $in: [
+            { $toString: "$variant._id" },
+            wishlistVariantIds
+          ]
+        }
       }
-    }
-  ];
+    },
 
-  // Price filter on variants.salePrice (same field as you had)
-  if (Object.keys(priceStage).length > 0) {
-    basePipeline.push({ $match: { "variants.salePrice": priceStage } });
-  }
-
-  // ============= OFFER LOGIC (copied from latestProducts, adapted to "variants") =============
-
-  // Product Offer
-  basePipeline.push(
+    // Product Offer - Just fetch raw data
     {
       $lookup: {
         from: "offers",
         let: {
           productId: "$_id",
           today: new Date(),
-          salePrice: "$variants.salePrice",
         },
         pipeline: [
           {
@@ -173,34 +155,18 @@ if (userId) {
               }
             }
           },
-          {
-            $project: {
-              _id: 0,
-              offer: {
-                $cond: {
-                  if: { $eq: ["$discountType", "percentage"] },
-                  then: { $multiply: ["$$salePrice", "$discountValue", 0.01] },
-                  else: "$discountValue"
-                }
-              }
-            }
-          },
-          { $sort: { offer: -1 } },
-          { $limit: 1 }
         ],
         as: "productOffer"
       }
     },
-    { $unwind: { path: "$productOffer", preserveNullAndEmptyArrays: true } },
 
-    // Category Offer
+    // Category Offer - Just fetch raw data
     {
       $lookup: {
         from: "offers",
         let: {
           categoryId: "$category._id",
           today: new Date(),
-          salePrice: "$variants.salePrice",
         },
         pipeline: [
           {
@@ -216,43 +182,18 @@ if (userId) {
               }
             }
           },
-          {
-            $project: {
-              _id: 0,
-              offer: {
-                $cond: {
-                  if: { $eq: ["$discountType", "percentage"] },
-                  then: { $multiply: ["$$salePrice", "$discountValue", 0.01] },
-                  else: "$discountValue"
-                }
-              }
-            }
-          },
-          { $sort: { offer: -1 } },
-          { $limit: 1 }
         ],
         as: "categoryOffer"
       }
     },
-    { $unwind: { path: "$categoryOffer", preserveNullAndEmptyArrays: true } },
+  ];
 
-    // Final discountAmount EXACT like latestProducts
-    {
-      $addFields: {
-        discountAmount: {
-          $ceil: {
-            $cond: {
-              if: { $gte: ["$categoryOffer.offer", "$productOffer.offer"] },
-              then: "$categoryOffer.offer",
-              else: "$productOffer.offer"
-            }
-          }
-        }
-      }
-    }
-  );
+  // Apply price filter
+  if (Object.keys(priceStage).length > 0) {
+    basePipeline.push({ $match: { "variant.salePrice": priceStage } });
+  }
 
-  // ============= COUNT PIPELINE (same style as your original) =============
+  // Count pipeline
   const countPipeline = [
     ...basePipeline,
     { $count: "totalDocuments" },
@@ -261,7 +202,7 @@ if (userId) {
   const totalDocuments = countResult.length ? countResult[0].totalDocuments : 0;
   const totalPages = Math.ceil(totalDocuments / limit);
 
-  // ============= DATA PIPELINE WITH SORT + PAGINATION + PROJECT =============
+  // Data pipeline
   const dataPipeline = [...basePipeline];
 
   if (Object.keys(sortStage).length > 0) {
@@ -275,33 +216,37 @@ if (userId) {
       $project: {
         _id: 1,
         name: 1,
-        images: 1,
-        avgRating: 1,
         "brand.name": 1,
         "category.name": 1,
-
-        variantId: "$variants._id",
-        regularPrice: "$variants.regularPrice",
-        salePrice: "$variants.salePrice",
-        inStock: 1,
-
-        discountAmount: 1, // 🔹 for your EJS (same as latestProducts)
-        isInWishlist: 1 
-      },
+        avgRating: 1,
+        images: 1,
+        variantId: "$variant._id",
+        salePrice: "$variant.salePrice",
+        regularPrice: "$variant.regularPrice",
+        stock: "$variant.stock",
+        isInWishlist: 1,
+        productOffer: 1,   // 🔥 Include raw offer data
+        categoryOffer: 1   // 🔥 Include raw offer data
+      }
     }
   );
 
   const products = await Product.aggregate(dataPipeline);
 
+  // 🔥 Calculate discount for each product using helper function
+  const productsWithOffers = products.map(product => ({
+    ...product,
+    discountAmount: getAppliedOffer(product, product.salePrice)
+  }));
+
   const categories = await Category.find({ isListed: true });
   const brands = await Brand.find({ status: true });
 
   return {
-    products,
+    products: productsWithOffers,  // 🔥 Return products with calculated offers
     categories,
     brands,
     currentPage,
     totalPages,
   };
 };
-

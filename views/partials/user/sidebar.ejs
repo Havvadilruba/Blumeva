@@ -36,9 +36,11 @@
   <li class="<%= activePage === 'wishlist' ? 'active' : '' %>">
     <a href="/wishlist">My Wishlist</a>
   </li>
+<li class="logout">
+  <form action="/logout" method="POST">
+    <button type="submit" class="logout-btn">Logout</button>
+  </form>
+</li>
 
-  <li class="logout">
-    <a href="/logout">Logout</a>
-  </li>
 </ul>
 </div>

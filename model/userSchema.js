@@ -18,7 +18,7 @@ const userSchema=new Schema({
     },
     profileImage: {
     type: String,
-    default: ""   
+     default: "https://res.cloudinary.com/dtazbbayi/image/upload/v1766385959/user-profile-icon-avatar-person-sign-profile-picture-portrait-symbol-easily-editable-line_fpdimj.jpg"   
     },
     googleId: {
   type: String,

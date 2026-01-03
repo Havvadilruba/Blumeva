@@ -61,23 +61,49 @@
         </div>
         <div class="card-body">
           <!-- Status Update Section -->
-          <% if (order.orderStatus !== 'Cancelled' && order.orderStatus !== 'Returned' && !order.orderStatus.includes('Partially')) { %>
-            <div class="status-update-section">
-              <label for="statusSelect">Update Order Status</label>
-              <div class="status-update-controls">
-                <select id="statusSelect" class="form-select">
-                  <option value="Pending" <%= order.orderStatus === 'Pending' ? 'selected' : '' %>>Pending</option>
-                  <option value="Confirmed" <%= order.orderStatus === 'Confirmed' ? 'selected' : '' %>>Confirmed</option>
-                  <option value="Processing" <%= order.orderStatus === 'Processing' ? 'selected' : '' %>>Processing</option>
-                  <option value="Shipped" <%= order.orderStatus === 'Shipped' ? 'selected' : '' %>>Shipped</option>
-                  <option value="Out for Delivery" <%= order.orderStatus === 'Out for Delivery' ? 'selected' : '' %>>Out for Delivery</option>
-                  <option value="Delivered" <%= order.orderStatus === 'Delivered' ? 'selected' : '' %>>Delivered</option>
-                </select>
-                <button class="btn-primary" onclick="updateOrderStatus()">Update</button>
-              </div>
-              <p class="status-note"><i class="bi bi-info-circle"></i> Cancel and Return are user-initiated actions</p>
-            </div>
-          <% } %>
+         <%
+  // Check if there are any active items that can be updated
+  const hasActiveItems = order.orderedItems.some(item => 
+    item.itemStatus !== 'Cancelled' && 
+    item.itemStatus !== 'Returned' &&
+    item.itemStatus !== 'ReturnRequested' &&
+    item.itemStatus !== 'ReturnApproved' &&
+    item.itemStatus !== 'ReturnRejected'
+  );
+  
+  // Get the base status (remove "Partially" prefix if present)
+  const baseStatus = order.orderStatus.replace(/^Partially\s+/, '');
+  
+  // Allow status updates if there are active items
+  const canUpdateStatus = hasActiveItems && 
+    order.orderStatus !== 'Cancelled' && 
+    order.orderStatus !== 'Returned';
+%>
+
+<% if (canUpdateStatus) { %>
+  <div class="status-update-section">
+    <label for="statusSelect">Update Order Status</label>
+    <div class="status-update-controls">
+      <select id="statusSelect" class="form-select">
+        <option value="Pending" <%= baseStatus === 'Pending' ? 'selected' : '' %>>Pending</option>
+        <option value="Confirmed" <%= baseStatus === 'Confirmed' ? 'selected' : '' %>>Confirmed</option>
+        <option value="Processing" <%= baseStatus === 'Processing' ? 'selected' : '' %>>Processing</option>
+        <option value="Shipped" <%= baseStatus === 'Shipped' ? 'selected' : '' %>>Shipped</option>
+        <option value="Out for Delivery" <%= baseStatus === 'Out for Delivery' ? 'selected' : '' %>>Out for Delivery</option>
+        <option value="Delivered" <%= baseStatus === 'Delivered' ? 'selected' : '' %>>Delivered</option>
+      </select>
+      <button class="btn-primary" onclick="updateOrderStatus()">Update</button>
+    </div>
+    <p class="status-note">
+      <i class="bi bi-info-circle"></i> 
+      <% if (order.orderStatus.includes('Partially')) { %>
+        Status will be updated for active items only (cancelled/returned items excluded)
+      <% } else { %>
+        Cancel and Return are user-initiated actions
+      <% } %>
+    </p>
+  </div>
+<% } %>
 
           <!-- Timeline -->
           <div class="timeline">
@@ -424,62 +450,53 @@
           </div>
 
           <!-- Payment Status Update -->
-          <div class="payment-status-update">
-            <label for="paymentStatusSelect">Update Payment Status</label>
-            <div class="status-update-controls">
-              <select id="paymentStatusSelect" class="form-select">
-                <option value="Pending" <%= order.paymentStatus === 'Pending' ? 'selected' : '' %>>Pending</option>
-                <option value="Paid" <%= order.paymentStatus === 'Paid' ? 'selected' : '' %>>Paid</option>
-                <option value="Failed" <%= order.paymentStatus === 'Failed' ? 'selected' : '' %>>Failed</option>
-                <option value="Refunded" <%= order.paymentStatus === 'Refunded' ? 'selected' : '' %>>Refunded</option>
-              </select>
-              <button class="btn-primary btn-update-payment" onclick="updatePaymentStatus(event)">
-                <i class="bi bi-check-circle"></i> Update
-              </button>
-            </div>
-          </div>
+         
         </div>
       </div>
 
       <!-- Order Summary -->
-      <div class="card">
-        <div class="card-header">
-          <h3>Order Summary</h3>
-        </div>
-        <div class="card-body">
-          <div class="summary-row">
-            <span>Subtotal</span>
-            <span>₹<%= order.subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2}) %></span>
-          </div>
-          <% if (order.discount > 0) { %>
-            <div class="summary-row discount">
-              <span>Discount</span>
-              <span>-₹<%= order.discount.toLocaleString('en-IN', {minimumFractionDigits: 2}) %></span>
-            </div>
-          <% } %>
-          <% if (order.tax > 0) { %>
-            <div class="summary-row">
-              <span>Tax</span>
-              <span>₹<%= order.tax.toLocaleString('en-IN', {minimumFractionDigits: 2}) %></span>
-            </div>
-          <% } %>
-          <div class="summary-row">
-            <span>Delivery</span>
-            <span>
-              <% if (order.deliveryCharge === 0) { %>
-                <span class="free-delivery">FREE</span>
-              <% } else { %>
-                ₹<%= order.deliveryCharge.toLocaleString('en-IN', {minimumFractionDigits: 2}) %>
-              <% } %>
-            </span>
-          </div>
-          <div class="summary-divider"></div>
-          <div class="summary-row total">
-            <span>Total Amount</span>
-            <span>₹<%= order.finalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2}) %></span>
-          </div>
-        </div>
-      </div>
+      <div class="summary-row">
+  <span>Subtotal</span>
+  <span>₹<%= order.subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 }) %></span>
+</div>
+
+<% if (order.discount > 0) { %>
+  <div class="summary-row discount">
+    <span>Product Discount</span>
+    <span>-₹<%= order.discount.toLocaleString('en-IN', { minimumFractionDigits: 2 }) %></span>
+  </div>
+<% } %>
+
+<% if (order.couponDiscount > 0) { %>
+  <div class="summary-row discount">
+    <span>Coupon Discount</span>
+    <span>-₹<%= order.couponDiscount.toLocaleString('en-IN', { minimumFractionDigits: 2 }) %></span>
+  </div>
+<% } %>
+
+<% if (order.tax > 0) { %>
+  <div class="summary-row">
+    <span>Tax</span>
+    <span>₹<%= order.tax.toLocaleString('en-IN', { minimumFractionDigits: 2 }) %></span>
+  </div>
+<% } %>
+
+<div class="summary-row">
+  <span>Delivery</span>
+  <span>
+    <%= order.deliveryCharge === 0
+      ? 'FREE'
+      : '₹' + order.deliveryCharge.toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+  </span>
+</div>
+
+<div class="summary-divider"></div>
+
+<div class="summary-row total">
+  <span>Total Amount</span>
+  <span>₹<%= order.finalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 }) %></span>
+</div>
+
     </div>
   </div>
 </div>

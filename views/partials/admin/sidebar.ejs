@@ -7,6 +7,10 @@
   <i class="ri-dashboard-line"></i><span>Dashboard</span>
 </a></li>
 
+      <li><a href="/admin/salesReport" class="<%= activePage === 'salesReport' ? 'active' : '' %>">
+  <i class="ri-line-chart-line"></i><span>Sales Report</span>
+</a></li>
+
 <li class="dropdown">
   <a href="#" class="toggle-submenu">
     <i class="ri-folder-line"></i><span>Category</span>
@@ -60,7 +64,13 @@
 
   <div>
     <div class="profile">
-      <img src="https://via.placeholder.com/45" alt="Admin Profile">
+     <img
+  src="<%= admin?.profileImage && admin.profileImage.trim() !== '' 
+        ? admin.profileImage 
+        : 'https://res.cloudinary.com/dtazbbayi/image/upload/v1766385959/user-profile-icon-avatar-person-sign-profile-picture-portrait-symbol-easily-editable-line_fpdimj.jpg' %>"
+  alt="Admin Profile"
+/>
+
       <div class="profile-info">
         <h4><%= admin?.name %></h4>
        <p><%= admin?.email %></p>

@@ -1,11 +1,10 @@
-
 // services/productDetailService.js
 import Product from "../model/productSchema.js";
 import { ObjectId } from "mongodb";
+import { getAppliedOffer } from "../helpers/offerHelper.js";
 
-export const getProductDetail = async (productId) => {
+export const getProductDetail = async (productId, userId = null) => {
   const [product] = await Product.aggregate([
-    // Your original match
     { $match: { _id: new ObjectId(productId), isBlocked: false } },
 
     // Category
@@ -30,7 +29,7 @@ export const getProductDetail = async (productId) => {
     },
     { $unwind: "$brand" },
 
-    // Variants (same as you had, all variants sorted by salePrice)
+    // Variants
     {
       $lookup: {
         from: "variants",
@@ -47,8 +46,7 @@ export const getProductDetail = async (productId) => {
       },
     },
 
-    // 👇 Select default variant SAME LOGIC as your JS:
-    // const variant = product.variants.find(v => v.stock > 0) || product.variants[0];
+    // Select default variant
     {
       $addFields: {
         selectedVariant: {
@@ -74,7 +72,7 @@ export const getProductDetail = async (productId) => {
       }
     },
 
-    // 🔥 PRODUCT OFFER (same pattern as landing/list but uses selectedVariant.salePrice)
+    // Product Offer
     {
       $lookup: {
         from: "offers",
@@ -97,27 +95,12 @@ export const getProductDetail = async (productId) => {
               }
             }
           },
-          {
-            $project: {
-              _id: 0,
-              offer: {
-                $cond: {
-                  if: { $eq: ["$discountType", "percentage"] },
-                  then: { $multiply: ["$$salePrice", "$discountValue", 0.01] },
-                  else: "$discountValue"
-                }
-              }
-            }
-          },
-          { $sort: { offer: -1 } },
-          { $limit: 1 }
         ],
         as: "productOffer"
       }
     },
-    { $unwind: { path: "$productOffer", preserveNullAndEmptyArrays: true } },
 
-    // CATEGORY OFFER
+    // Category Offer
     {
       $lookup: {
         from: "offers",
@@ -140,50 +123,73 @@ export const getProductDetail = async (productId) => {
               }
             }
           },
-          {
-            $project: {
-              _id: 0,
-              offer: {
-                $cond: {
-                  if: { $eq: ["$discountType", "percentage"] },
-                  then: { $multiply: ["$$salePrice", "$discountValue", 0.01] },
-                  else: "$discountValue"
-                }
-              }
-            }
-          },
-          { $sort: { offer: -1 } },
-          { $limit: 1 }
         ],
         as: "categoryOffer"
       }
     },
-    { $unwind: { path: "$categoryOffer", preserveNullAndEmptyArrays: true } },
 
-    // FINAL discountAmount like landing/list
-    {
-      $addFields: {
-        discountAmount: {
-          $ceil: {
-            $cond: {
-              if: { $gte: ["$categoryOffer.offer", "$productOffer.offer"] },
-              then: "$categoryOffer.offer",
-              else: "$productOffer.offer"
+    // 🔥 FIXED: Correct wishlist lookup
+    ...(userId ? [{
+      $lookup: {
+        from: "wishlists",
+        let: { productId: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: { $eq: ["$userId", new ObjectId(userId)] }
             }
+          },
+          // Unwind the items array to check each item
+          { $unwind: "$items" },
+          {
+            $match: {
+              $expr: { $eq: ["$items.productId", "$$productId"] }
+            }
+          },
+          // Project only the variantId we need
+          {
+            $project: {
+              variantId: "$items.variantId"
+            }
+          }
+        ],
+        as: "wishlistEntries"
+      }
+    }] : []),
+
+    // 🔥 FIXED: Map variant IDs correctly
+    ...(userId ? [{
+      $addFields: {
+        wishlistedVariants: {
+          $map: {
+            input: "$wishlistEntries",
+            as: "entry",
+            in: "$$entry.variantId"
           }
         }
       }
-    }
+    }] : [])
   ]);
 
-  // same checks as your original
   if (!product || !product.category.isListed || !product.brand.status) {
-    return res.redirect("/products");
+    return null;
   }
 
-  // same variant-choosing logic you wrote
-  const variant =
-    product.variants.find((v) => v.stock > 0) || product.variants[0];
+  const variant = product.variants.find((v) => v.stock > 0) || product.variants[0];
+  const offer = getAppliedOffer(product, variant.salePrice);
 
-  return { product, variant };
+  // 🔥 FIXED: Check if the selected variant is in wishlist
+  const isInWishlist = userId && product.wishlistedVariants 
+    ? product.wishlistedVariants.some(wv => wv.toString() === variant._id.toString())
+    : false;
+
+  // 🔥 BONUS: Add wishlist status to product object for EJS
+  product.isInWishlist = isInWishlist;
+
+  return { 
+    product, 
+    variant, 
+    offer,
+    isInWishlist 
+  };
 };

@@ -1,13 +1,14 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import Address from "../../model/addressSchema.js";
 import { getCartItems, calculateCartTotals } from "../../services/cartServices.js";
 import { applyCouponService } from "../../services/checkoutService.js";
-import {
-  getAvailableCoupon,
-} from "../../repositories/couponRepository.js";
+import { getAvailableCoupon } from "../../repositories/couponRepository.js";
+import { findWalletByUserId } from "../../repositories/walletRepository.js";
 
 const loadCheckout = async (req, res) => {
   try {
-
     const userId = req.session.user?._id;
     if (!userId) return res.redirect("/login");
 
@@ -18,43 +19,77 @@ const loadCheckout = async (req, res) => {
     const cartItems = await getCartItems(userId);
     if (!cartItems?.length) return res.redirect("/cart");
 
-    const hasOutOfStock = cartItems.some(item => item.stock <= 0);
-    if (hasOutOfStock) return res.redirect("/cart");
+    const hasStockIssue = cartItems.some(
+      item => item.stock <= 0 || item.quantity > item.stock
+    );
 
+    if (hasStockIssue) {
+      req.session.checkoutError =
+        "Some items have insufficient stock. Please update your cart.";
+      return res.redirect("/cart");
+    }
+
+    // ✅ Calculate base totals
     const totals = calculateCartTotals(cartItems);
 
-    let hasAdjustedItem = cartItems.some((item) => item.adjusted);
+    // ✅ Calculate final payable amount
+    let couponDiscount = 0;
+    let payableAmount = totals.total;
+
+    if (req.session.appliedCoupon) {
+      couponDiscount = req.session.appliedCoupon.discount;
+      payableAmount = req.session.appliedCoupon.finalAmount;
+    }
+
+    const hasAdjustedItem = cartItems.some(item => item.adjusted);
     const now = new Date();
+
     const availableCoupons = await getAvailableCoupon(userId, now);
+    const walletData = await findWalletByUserId(userId);
+
+const wallet = walletData || {
+  balance: 0,
+};
+
 
     return res.render("user/checkout", {
       layout: "layouts/user",
       title: "Checkout | Blumeva",
       pageCSS: "/style/user/checkout.css",
       addresses,
-      cart: { items: cartItems, ...totals },
+      cart: {
+        items: cartItems,
+        subtotal: totals.subtotal,
+        discount: totals.discount,
+        deliveryCharge: totals.deliveryCharge,
+        couponDiscount: couponDiscount, // ✅ Add this
+        total: totals.total,
+        payableAmount: payableAmount
+      },
       hasAdjustedItem,
       availableCoupons,
       appliedCoupon: req.session.appliedCoupon || null,
+      wallet,
+      RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID
     });
 
   } catch (error) {
     console.error("Checkout Page Load Failed:", error);
-    return res.redirect("/cart"); 
+    return res.redirect("/cart");
   }
 };
 
 export const applyCoupon = async (req, res) => {
   try {
-    if (req.session.appliedCoupon) req.session.appliedCoupon = null;
+    req.session.appliedCoupon = null;
 
     const userId = req.session.user?._id;
 
     const cartItems = await getCartItems(userId);
-    const totals = calculateCartTotals(cartItems); 
+    const totals = calculateCartTotals(cartItems); // tax-free
 
     const result = await applyCouponService(
-      { code: req.body.code }, 
+      { code: req.body.code },
       userId,
       totals
     );
@@ -75,7 +110,6 @@ export const applyCoupon = async (req, res) => {
       couponValue: result.data.couponValue,
     };
 
-    // 🔥 IMPORTANT: Save session BEFORE sending response
     req.session.save(() => {
       return res.status(200).json({ success: true });
     });
@@ -97,7 +131,8 @@ export const removeCoupon = (req, res) => {
   });
 };
 
-export default { loadCheckout, applyCoupon ,removeCoupon};
+export default { loadCheckout, applyCoupon, removeCoupon };
+
 
 
 

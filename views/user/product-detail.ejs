@@ -40,14 +40,27 @@
 
     <% if (variant) { %>
 
-      <% 
-        const discount = product.discountAmount || 0;
-        const currentPrice = variant.salePrice - discount;
-        const hasDiscount = currentPrice < variant.regularPrice;
-        const discountPercent = hasDiscount
-          ? Math.round(((variant.regularPrice - currentPrice) / variant.regularPrice) * 100)
-          : 0;
-      %>
+    <%
+  const offerAmount = offer || 0;
+
+  const currentPrice = Math.max(
+    0,
+    variant.salePrice - offerAmount
+  );
+
+  const regular = variant.regularPrice || variant.salePrice;
+
+  const totalDiscount = regular - currentPrice;
+
+  const hasDiscount = totalDiscount > 0;
+
+  const discountPercent = hasDiscount
+    ? Math.round((totalDiscount / regular) * 100)
+    : 0;
+%>
+
+
+
 
       <!-- PRICE -->
       <div id="priceSection" class="price">
@@ -82,38 +95,40 @@
       <div class="variant-badges">
         <% product.variants.forEach((v, i) => { %>
           <span 
-            class="variant-badge <%= v._id.toString() === variant._id.toString() ? 'active' : '' %>"
-            data-variantid="<%= v._id %>"
-            data-saleprice="<%= v.salePrice %>"
-            data-regularprice="<%= v.regularPrice %>"
-            data-stock="<%= v.stock %>"
-            data-discount="<%= product.discountAmount || 0 %>"
-          >
-            <%= v.quantityValue %> <%= v.quantityType %>
-          </span>
+  class="variant-badge <%= v._id.toString() === variant._id.toString() ? 'active' : '' %>"
+  data-variantid="<%= v._id %>"
+  data-saleprice="<%= v.salePrice %>"
+  data-regularprice="<%= v.regularPrice %>"
+  data-stock="<%= v.stock %>"
+  data-inwishlist="<%= product.wishlistedVariants?.some(w => w.toString() === v._id.toString()) %>"
+>
+  <%= v.quantityValue %> <%= v.quantityType %>
+</span>
+
         <% }) %>
       </div>
 
       <div class="spacer"></div>
       <div class="actions">
 
-  <% const isInWishlist = product.isInWishlist || false; %>
+
 
   <!-- WISHLIST ICON -->
-  <button class="wishlist-btn"
-    onclick="toggleWishlist(event, document.querySelector('.variant-badge.active').dataset.variantid)">
-    <i class="<%= isInWishlist ? 'fas' : 'far' %> fa-heart"></i>
-  </button>
+<button 
+  class="wishlist-btn <%= isInWishlist ? 'active' : '' %>"
+  onclick="toggleWishlist(event)">
+  <i class="<%= isInWishlist ? 'fa-solid' : 'fa-regular' %> fa-heart"></i>
+</button>
+
 
   <% if (variant.stock <= 0) { %>
     <button class="add-cart" disabled>
       Out of Stock
     </button>
   <% } else { %>
-    <button class="add-cart"
-      onclick="addToCart(event, document.querySelector('.variant-badge.active').dataset.variantid)">
-      Add to Cart
-    </button>
+   <button class="add-cart" onclick="addToCart(event)">
+  Add to Cart
+</button>
   <% } %>
 
 </div>
@@ -132,4 +147,10 @@
 </section>
 
 <%- include("../partials/user/footer") %>
+<script>
+  window.productId = '<%= product._id %>';
+  window.productOffers = <%- JSON.stringify(product.productOffer || []) %>;
+  window.categoryOffers = <%- JSON.stringify(product.categoryOffer || []) %>;
+</script>
+
 <script src="/js/user/product-detail.js"></script>

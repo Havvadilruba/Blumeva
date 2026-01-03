@@ -1,30 +1,33 @@
+import TempOrder from "../../model/tempOrderSchema.js";
+import crypto from "crypto";
+
+import mongoose from "mongoose";
+
 import Order from "../../model/orderSchema.js";
 import Address from "../../model/addressSchema.js";
 import Cart from "../../model/cartSchema.js";
+import Wallet from "../../model/walletSchema.js";
 import Variant from "../../model/variantSchema.js";
+
 import { getCartItems, calculateCartTotals } from "../../services/cartServices.js";
 import { orderValidation } from "../../validations/placeOrderValidation.js";
-import Product from "../../model/productSchema.js";
-import { couponUsageCreate } from "../../repositories/couponUsageRepository.js";
-import Coupon from "../../model/couponSchema.js";
 import {
   findWalletByUserId,
   updateWalletBalance,
   updateWalletHoldBalance,
   updateWalletTotalDebits,
-  saveWallet,
 } from "../../repositories/walletRepository.js";
-import mongoose from "mongoose";
-import {
-  createLedgerEntry,
-} from "../../repositories/walletLedgerRepository.js";
 import {
   createHoldRecord,
   updateHoldStatus,
 } from "../../repositories/walletHoldRepository.js";
-import Wallet from "../../model/walletSchema.js";
+import { createLedgerEntry } from "../../repositories/walletLedgerRepository.js";
 import { updateUserWalletBalance } from "../../repositories/userRepository.js";
+import { couponUsageCreate } from "../../repositories/couponUsageRepository.js";
+import Coupon from "../../model/couponSchema.js";
+import { razorpay } from "../../config/razorpay.js";
 
+// utility functions
 const decrementVariantStock = (variantId, qty, session) => {
   return Variant.updateOne(
     { _id: variantId, stock: { $gte: qty } },
@@ -33,261 +36,491 @@ const decrementVariantStock = (variantId, qty, session) => {
   );
 };
 
-const incrementVariantStock = (variantId, qty, session) => {
-  return Variant.updateOne(
-    { _id: variantId },
-    { $inc: { stock: qty } },
-    { session }
-  );
-};
+function distributeCoupon(orderedItems, couponDiscount) {
+  if (!couponDiscount || couponDiscount <= 0) return orderedItems;
 
-const placeOrder = async (req, res) => {
+  // Calculate base value for each item
+  let totalBase = 0;
+  orderedItems.forEach(item => {
+    const base = (item.salePrice - item.discountAmount) * item.quantity;
+    item._base = base;
+    totalBase += base;
+  });
+
+  if (totalBase === 0) return orderedItems;
+
+  // Distribute proportionally
+  orderedItems.forEach(item => {
+    const share = (item._base / totalBase) * couponDiscount;
+    item.couponShare = parseFloat(share.toFixed(2)); // accurate refund
+  });
+
+  return orderedItems;
+}
+
+
+export const placeOrder = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
     const userId = req.session.user?._id;
     if (!userId) {
-      await session.abortTransaction();
-      session.endSession();
       return res.status(401).json({ success: false, message: "Login required" });
     }
 
     const { error } = orderValidation.validate(req.body);
     if (error) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ success: false, message: error.message });
+      throw { status: 400, message: error.details[0].message };
     }
 
     const { addressId, paymentMethod } = req.body;
 
-    // fetch items & totals
+    // ======================================================
+    // GET CART ITEMS
+    // ======================================================
     const items = await getCartItems(userId);
-    if (!items || !items.length) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ success: false, message: "Cart is empty" });
+    if (!items.length) {
+      throw { status: 400, message: "Cart is empty" };
     }
 
+    // ======================================================
+    // STOCK VALIDATION 
+    // ======================================================
+    const hasStockIssue = items.some(
+      item => item.stock <= 0 || item.quantity > item.stock
+    );
+
+    if (hasStockIssue) {
+     
+      req.session.appliedCoupon = null;
+
+      await session.abortTransaction();
+      session.endSession();
+
+      return res.status(400).json({
+        success: false,
+        redirect: "/cart",
+        message:
+          "Some items in your cart have insufficient stock. Please update quantities to continue."
+      });
+    }
+
+    // ======================================================
+    // CALCULATE TOTALS
+    // ======================================================
     const totals = calculateCartTotals(items);
     const appliedCoupon = req.session.appliedCoupon || null;
 
-    //  final amount
+    let finalSubtotal = totals.subtotal;
+    let couponDiscount = 0;
     let finalAmount = totals.total;
-    if (appliedCoupon) finalAmount = finalAmount - (appliedCoupon.discount || 0);
 
-    // address
+    if (appliedCoupon) {
+  couponDiscount = appliedCoupon.discount;
+
+  // Final amount = cart total - coupon
+  finalAmount = Math.max(totals.total - couponDiscount, 0);
+}
+    // ======================================================
+    // ADDRESS VALIDATION
+    // ======================================================
     const address = await Address.findById(addressId).session(session);
     if (!address) {
       throw { status: 400, message: "Invalid address" };
     }
 
-    // Expected delivery
-    const expectedDelivery = new Date();
-    expectedDelivery.setDate(expectedDelivery.getDate() + 5);
+    const expectedDelivery = new Date(Date.now() + 5 * 86400000);
 
-    // 1) reduce stock 
-    for (const item of items) {
-      const result = await decrementVariantStock(item.variant._id, item.quantity, session);
-      if (!result || result.modifiedCount === 0) {
-        throw { status: 400, message: `Insufficient stock for product ${item.product.name}` };
-      }
-    }
-
-    // Prepare ordered items
-    const orderedItems = items.map((item) => ({
+    // ======================================================
+    // ORDERED ITEMS SNAPSHOT
+    // ======================================================
+    let orderedItems = items.map(item => ({
       productId: item.product._id,
       variantId: item.variant._id,
       quantity: item.quantity,
       regularPrice: item.regularPrice,
       salePrice: item.salePrice,
       discountAmount: item.discountAmount || 0,
-      price: item.salePrice || item.regularPrice || 0,
+      couponShare: 0,
     }));
 
-    // 2) create order (inside txn)
-    const orderPayload = {
-      userId,
-      addressId,
-      orderedItems,
-      shippingAddress: {
-        fullName: address.fullName,
-        phone: address.phone,
-        address1: address.address1,
-        address2: address.address2,
-        city: address.city,
-        state: address.state,
-        pincode: address.pincode,
-        country: address.country,
-        addressType: address.addressType,
-      },
-      subtotal: totals.subtotal,
-      discount: totals.discount,
-      tax: totals.tax,
-      deliveryCharge: totals.deliveryCharge,
-      couponDiscount: appliedCoupon?.discount || 0,
-      couponId: appliedCoupon?.couponId || null,
-      finalAmount,
-      paymentMethod,
-      paymentStatus: paymentMethod === "wallet" ? "Pending" : (paymentMethod === "cod" ? "Pending" : "Paid"),
-      expectedDelivery,
+    if (appliedCoupon) {
+      orderedItems = distributeCoupon(orderedItems, couponDiscount);
+    }
+
+    const shippingAddress = {
+      fullName: address.fullName,
+      phone: address.phone,
+      address1: address.address1,
+      address2: address.address2,
+      city: address.city,
+      state: address.state,
+      pincode: address.pincode,
+      country: address.country,
+      addressType: address.addressType
     };
 
-    const createdOrders = await Order.create([orderPayload], { session });
-    const savedOrder = createdOrders[0];
+    // ======================================================
+    // RAZORPAY
+    // ======================================================
+    if (paymentMethod === "razorpay") {
+      await TempOrder.deleteMany({
+        userId,
+        razorpayStatus: { $in: ["INITIATED", "FAILED"] },
+        createdAt: { $lt: new Date(Date.now() - 30 * 60 * 1000) }
+      }).session(session);
 
-    // 3) create coupon usage & increment 
-    if (appliedCoupon) {
-      try {
-        // try to call repo with session if it accepts it
+      const [tempOrder] = await TempOrder.create([{
+        userId,
+        addressId,
+        orderedItems,
+        shippingAddress,
+        subtotal: totals.subtotal,
+        discount: totals.discount,
+        deliveryCharge: totals.deliveryCharge,
+        couponDiscount,
+        couponId: appliedCoupon?.couponId || null,
+        finalAmount,
+        paymentMethod: "razorpay",
+        paymentStatus: "Pending",
+        razorpayStatus: "INITIATED"
+      }], { session });
+
+      const rpOrder = await razorpay.orders.create({
+        amount: finalAmount * 100,
+        currency: "INR",
+        receipt: `tmp_${tempOrder._id}`
+      });
+
+      tempOrder.razorpayOrderId = rpOrder.id;
+      await tempOrder.save({ session });
+
+      await session.commitTransaction();
+      session.endSession();
+
+      return res.json({
+        success: true,
+        tempOrderId: tempOrder._id,
+        razorpayOrderId: rpOrder.id,
+        amount: rpOrder.amount
+      });
+    }
+
+    // ======================================================
+    // COD
+    // ======================================================
+    if (paymentMethod === "cod") {
+      for (const item of items) {
+        const r = await decrementVariantStock(
+          item.variant._id,
+          item.quantity,
+          session
+        );
+        if (!r.modifiedCount) {
+          throw { status: 400, message: "Insufficient stock" };
+        }
+      }
+
+      const [order] = await Order.create([{
+        userId,
+        addressId,
+        orderedItems,
+        shippingAddress,
+        subtotal: totals.subtotal,
+        discount: totals.discount,
+        deliveryCharge: totals.deliveryCharge,
+        couponDiscount,
+        couponId: appliedCoupon?.couponId || null,
+        finalAmount,
+        paymentMethod: "cod",
+        paymentStatus: "Pending",
+        expectedDelivery
+      }], { session });
+
+      if (appliedCoupon) {
         await couponUsageCreate(
           appliedCoupon.couponId,
           userId,
-          savedOrder._id, 
-          appliedCoupon.discount,
-          session);
-      } catch (e) {
-        try {
-          await couponUsageCreate(
-            appliedCoupon.couponId, 
-            userId, 
-            savedOrder._id, 
-            appliedCoupon.discount);
-        } catch (err) {
-          console.warn('couponUsageCreate failed', err);
-        }
+          order._id,
+          couponDiscount,
+          session
+        );
+        await Coupon.findByIdAndUpdate(
+          appliedCoupon.couponId,
+          { $inc: { currentUsageCount: 1 } },
+          { session }
+        );
       }
 
-      await Coupon.findByIdAndUpdate(
-        appliedCoupon.couponId,
-         { 
-          $inc:
-           { 
-            currentUsageCount: 1 
-          } 
-        },
-         {
-           session 
-          });
+      await Cart.deleteMany({ userId }).session(session);
+      req.session.appliedCoupon = null;
+
+      await session.commitTransaction();
+      session.endSession();
+
+      return res.json({ success: true, orderId: order.orderId });
     }
 
-    //  WALLET: HOLD
-    let holdRecord = null;
+    // ======================================================
+    // WALLET
+    // ======================================================
     if (paymentMethod === "wallet") {
       const wallet = await findWalletByUserId(userId, session);
-      if (!wallet || (wallet.balance - wallet.holdBalance) < finalAmount) {
+      if (!wallet || wallet.balance - wallet.holdBalance < finalAmount) {
         throw { status: 400, message: "Insufficient wallet balance" };
       }
 
-      // increase hold balance
-      await updateWalletHoldBalance(userId,finalAmount, session);
-
-      // create hold
-      const [hold] = await createHoldRecord({ 
-        userId, 
-        walletId: wallet._id, 
-        orderId: savedOrder._id, 
-        amount: finalAmount, 
-        status: "HELD" }, 
-        session);
-
-      holdRecord = hold;
-
-      // ledger: HOLD
-      await createLedgerEntry({ 
-        walletId: wallet._id, 
-        userId, amount: finalAmount, 
-        type: "HOLD", 
-        referenceId: savedOrder._id, 
-        note: "Wallet amount reserved for order", 
-        balanceAfter: wallet.balance }, 
-        session);
-    }
-
-    // Clear cart 
-    await Cart.deleteMany({ userId }).session(session);
-
-    //  CAPTURE wallet
-    if (paymentMethod === "wallet") {
-      try {
-        const wallet = await findWalletByUserId(userId, session);
-
-        // reduce holdBalance and reduce actual balance
-        await updateWalletHoldBalance(userId, -finalAmount, session);
-        await updateWalletBalance(userId, -finalAmount, session);
-
-        const newBalance = wallet.balance - finalAmount;
-
-        // update total debits
-        await updateWalletTotalDebits(userId, finalAmount, session);
-
-        // update hold status
-        await updateHoldStatus(holdRecord._id, "CAPTURED", session);
-
-        // ledger: DEBIT entry (positive amount)
-        await createLedgerEntry({ 
-          walletId: wallet._id, 
-          userId, 
-          amount: finalAmount, 
-          type: "DEBIT", 
-          referenceId: savedOrder._id, 
-          note: `Wallet payment captured for order: ${savedOrder._id}`, 
-          balanceAfter: newBalance }, 
-          session);
-
-        // update user snapshot
-        await updateUserWalletBalance(userId, newBalance, session);
-
-        // mark order paid
-        await Order.findByIdAndUpdate(savedOrder._id, { paymentStatus: "Paid" }, { session });
-
-      } catch (err) {
-        // capture failed — release hold, restore stock and abort
-        try {
-          await updateWalletHoldBalance(userId, -finalAmount, session);
-          if (holdRecord && holdRecord._id) await updateHoldStatus(holdRecord._id, "RELEASED", session);
-
-          // ledger: RELEASE entry
-          if (holdRecord) {
-            await createLedgerEntry({ walletId: holdRecord.walletId, userId, amount: finalAmount, type: "RELEASE", referenceId: savedOrder._id, note: "Wallet capture failed → Hold released" }, session);
-          }
-
-          // restore stock
-          for (const item of orderedItems) {
-            await incrementVariantStock(item.variantId, item.quantity, session);
-          }
-
-        } catch (innerErr) {
-          console.error('Error during wallet capture rollback:', innerErr);
+      for (const item of items) {
+        const r = await decrementVariantStock(
+          item.variant._id,
+          item.quantity,
+          session
+        );
+        if (!r.modifiedCount) {
+          throw { status: 400, message: "Insufficient stock" };
         }
-
-        throw { status: 400, message: "Wallet payment failed" };
       }
+
+      const [order] = await Order.create([{
+        userId,
+        addressId,
+        orderedItems,
+        shippingAddress,
+        subtotal: totals.subtotal,
+        discount: totals.discount,
+        deliveryCharge: totals.deliveryCharge,
+        couponDiscount,
+        couponId: appliedCoupon?.couponId || null,
+        finalAmount,
+        paymentMethod: "wallet",
+        paymentStatus: "Pending",
+        expectedDelivery
+      }], { session });
+
+      await updateWalletHoldBalance(userId, finalAmount, session);
+      const [hold] = await createHoldRecord({
+        userId,
+        walletId: wallet._id,
+        orderId: order._id,
+        amount: finalAmount,
+        status: "HELD"
+      }, session);
+
+      await createLedgerEntry({
+        walletId: wallet._id,
+        userId,
+        amount: finalAmount,
+        type: "HOLD",
+        referenceId: order._id,
+        note: "Wallet amount reserved for order",
+        balanceAfter: wallet.balance
+      }, session);
+
+      await updateWalletHoldBalance(userId, -finalAmount, session);
+      await updateWalletBalance(userId, -finalAmount, session);
+
+      const newBalance = wallet.balance - finalAmount;
+
+      await updateWalletTotalDebits(userId, finalAmount, session);
+      await updateHoldStatus(hold._id, "CAPTURED", session);
+
+      await createLedgerEntry({
+        walletId: wallet._id,
+        userId,
+        amount: finalAmount,
+        type: "DEBIT",
+        referenceId: order._id,
+        note: "Wallet payment captured",
+        balanceAfter: newBalance
+      }, session);
+
+      await updateUserWalletBalance(userId, newBalance, session);
+      await Order.findByIdAndUpdate(order._id, { paymentStatus: "Paid" }, { session });
+
+      if (appliedCoupon) {
+        await couponUsageCreate(
+          appliedCoupon.couponId,
+          userId,
+          order._id,
+          couponDiscount,
+          session
+        );
+        await Coupon.findByIdAndUpdate(
+          appliedCoupon.couponId,
+          { $inc: { currentUsageCount: 1 } },
+          { session }
+        );
+      }
+
+      await Cart.deleteMany({ userId }).session(session);
+      req.session.appliedCoupon = null;
+
+      await session.commitTransaction();
+      session.endSession();
+
+      return res.json({
+        success: true,
+        orderId: order.orderId,
+        message: "Wallet order placed"
+      });
     }
 
-    // 7) commit txn
-    await session.commitTransaction();
-    session.endSession();
-
-    // clear applied coupon in session
-    req.session.appliedCoupon = null;
-
-    return res.status(200).json({ success: true, orderId: savedOrder.orderId, message: "Order placed successfully" });
+    throw { status: 400, message: "Invalid payment method" };
 
   } catch (err) {
-    try {
-      await session.abortTransaction();
-    } catch (e) {
-      // ignore
-    }
+    await session.abortTransaction();
     session.endSession();
 
-    console.error('placeOrder error:', err);
-    return res.status(err.status || 500).json({ success: false, message: err.message || 'Order creation failed' });
+    return res.status(err.status || 500).json({
+      success: false,
+      message: err.message || "Something went wrong"
+    });
   }
 };
 
+
+
+export const verifyPayment = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, tempOrderId } = req.body;
+
+    const userId = req.session.user?._id;
+    if (!userId) {
+      await session.abortTransaction();
+      return res.status(401).json({ success: false, message: "Login required" });
+    }
+
+    const tempOrder = await TempOrder.findById(tempOrderId).session(session);
+    if (!tempOrder) {
+      await session.abortTransaction();
+      return res.status(400).json({ success: false, message: "Temp order not found" });
+    }
+
+    // Check razorpayStatus 
+    if (tempOrder.razorpayStatus === "PAID") {
+      await session.abortTransaction();
+      return res.json({
+        success: false,
+        message: "Payment already processed"
+      });
+    }
+
+    // Verify signature
+    const expectedSig = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest("hex");
+
+    // Signature mismatch = payment failed
+    if (expectedSig !== razorpay_signature) {
+      tempOrder.paymentStatus = "Failed";
+      tempOrder.razorpayStatus = "FAILED";
+      await tempOrder.save({ session });
+      await session.commitTransaction();
+
+      return res.json({
+        success: false,
+        message: "Payment signature verification failed"
+      });
+    }
+
+    // Reduce stock
+    for (const item of tempOrder.orderedItems) {
+      const result = await Variant.updateOne(
+        { _id: item.variantId, stock: { $gte: item.quantity } },
+        { $inc: { stock: -item.quantity } },
+        { session }
+      );
+
+      if (!result.modifiedCount) {
+        await session.abortTransaction();
+        return res.status(400).json({ 
+          success: false, 
+          message: "Insufficient stock for one or more items" 
+        });
+      }
+    }
+
+    // Create final order
+    const [orderDoc] = await Order.create([{
+      userId,
+      addressId: tempOrder.addressId,
+      orderedItems: tempOrder.orderedItems,
+      shippingAddress: tempOrder.shippingAddress,
+      subtotal: tempOrder.subtotal,
+      discount: tempOrder.discount,
+      deliveryCharge: tempOrder.deliveryCharge,
+      couponDiscount: tempOrder.couponDiscount,
+      couponId: tempOrder.couponId,
+      finalAmount: tempOrder.finalAmount,
+      paymentMethod: "razorpay",
+      paymentStatus: "Paid",
+      razorpayOrderId: razorpay_order_id,
+      razorpayPaymentId: razorpay_payment_id,
+      razorpaySignature: razorpay_signature,
+      expectedDelivery: new Date(Date.now() + 5 * 86400000)
+    }], { session });
+
+    // Reload to get auto-generated orderId
+    const order = await Order.findById(orderDoc._id).session(session);
+
+    // Create coupon usage record
+    if (tempOrder.couponId) {
+      await couponUsageCreate(
+        tempOrder.couponId, 
+        userId, 
+        order._id, 
+        tempOrder.couponDiscount, 
+        session
+      );
+      
+      await Coupon.findByIdAndUpdate(
+        tempOrder.couponId, 
+        { $inc: { currentUsageCount: 1 } }, 
+        { session }
+      );
+    }
+
+    // ✅ FIX 3: Clear cart
+    await Cart.deleteMany({ userId }).session(session);
+
+    // ✅ FIX 4: Clear session coupon
+    req.session.appliedCoupon = null;
+
+    // Update temp order
+    tempOrder.paymentStatus = "Success";
+    tempOrder.razorpayStatus = "PAID";
+    tempOrder.finalOrderId = order.orderId;
+    tempOrder.razorpayPaymentId = razorpay_payment_id;
+    tempOrder.razorpaySignature = razorpay_signature;
+    await tempOrder.save({ session });
+
+    // Clean up temp order
+    await TempOrder.deleteOne({ _id: tempOrderId }).session(session);
+
+    await session.commitTransaction();
+
+    return res.json({
+      success: true,
+      orderId: order.orderId,
+      message: "Payment verified successfully"
+    });
+
+  } catch (err) {
+    console.error("Payment verification error:", err);
+    await session.abortTransaction();
+    return res.status(err.status || 500).json({ 
+      success: false, 
+      message: err.message || "Payment verification failed"
+    });
+  } finally {
+    session.endSession();
+  }
+};
 
 const loadOrderSuccess = async (req, res) => {
   try {
@@ -318,6 +551,174 @@ const loadOrderSuccess = async (req, res) => {
   }
 };
 
+const loadOrderFailure = async (req, res) => {
+  try {
+    const userId = req.session.user?._id;
+    const { id } = req.params;
+
+    if (!userId) {
+      return res.redirect("/login");
+    }
+
+    const order = await TempOrder.findById(id);
+
+    if (!order) {
+      return res.redirect("/pageNotFound");
+    }
+
+    // Security check: ensure order belongs to user
+    if (order.userId.toString() !== userId.toString()) {
+      return res.redirect("/pageNotFound");
+    }
+
+    res.render("user/payment-failed", {
+      layout: "layouts/user",
+      title: "Payment Failed | Blumeva",
+      pageCSS: "/style/user/payment-failed.css",
+      order,
+    });
+  } catch (err) {
+    console.error("Load order failure error:", err);
+    res.redirect("/pageNotFound");
+  }
+};
+
+const retryPayment = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const tempOrderId = req.params.id;
+    const userId = req.session.user?._id;
+
+    if (!userId) {
+      await session.abortTransaction();
+      return res.status(401).json({
+        success: false,
+        message: "Login required",
+      });
+    }
+
+    // Find existing temp order
+    const tempOrder = await TempOrder.findById(tempOrderId).session(session);
+
+    if (!tempOrder) {
+      await session.abortTransaction();
+      return res.json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    // Security check
+    if (tempOrder.userId.toString() !== userId.toString()) {
+      await session.abortTransaction();
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    // Check if order is in retryable state
+    if (tempOrder.razorpayStatus === "PAID") {
+      await session.abortTransaction();
+      return res.json({
+        success: false,
+        message: "Order already paid",
+      });
+    }
+
+    // Create new Razorpay order
+    const razorpayOrder = await razorpay.orders.create({
+  amount: tempOrder.finalAmount * 100,
+  currency: "INR",
+  receipt: `retry_${tempOrder._id.toString().slice(-8)}`,
+});
+
+
+    // Update temp order with new Razorpay order ID
+    tempOrder.razorpayOrderId = razorpayOrder.id;
+    tempOrder.razorpayStatus = "INITIATED";
+    tempOrder.paymentStatus = "Pending";
+    await tempOrder.save({ session });
+
+    await session.commitTransaction();
+
+    return res.json({
+      success: true,
+      razorpayOrderId: razorpayOrder.id,
+      amount: razorpayOrder.amount,
+      tempOrderId: tempOrder._id,
+    });
+  } catch (err) {
+    await session.abortTransaction();
+    console.error("Retry payment error:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Payment retry failed",
+    });
+  } finally {
+    session.endSession();
+  }
+};
+
+/**
+ * Delete Temp Order
+ * DELETE /order/delete/temp-order/:id
+ */
+const deleteTempOrderController = async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const userId = req.session.user?._id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Login required",
+      });
+    }
+
+    const tempOrder = await TempOrder.findById(orderId);
+
+    if (!tempOrder) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    // Security check
+    if (tempOrder.userId.toString() !== userId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    // Only allow deletion of non-paid orders
+    if (tempOrder.razorpayStatus === "PAID") {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot delete paid orders",
+      });
+    }
+
+    await TempOrder.deleteOne({ _id: orderId });
+
+    return res.json({
+      success: true,
+      message: "Temp order deleted successfully",
+    });
+  } catch (err) {
+    console.error("Delete temp order error:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Failed to delete temp order",
+    });
+  }
+};
 
 const loadOrders = async (req, res) => {
   try {
@@ -461,7 +862,7 @@ const cancelOrderItems = async (req, res) => {
       item.itemTimeline = item.itemTimeline || {};
       item.itemTimeline.cancelledAt = now;
 
-      // Restore stock (session-safe)
+      // Restore stock 
       await Variant.updateOne(
         { _id: item.variantId._id },
         { $inc: { stock: item.quantity } },
@@ -470,14 +871,23 @@ const cancelOrderItems = async (req, res) => {
 
       cancelledCount++;
 
-      // Wallet refund calculation
-      if (order.paymentMethod === "wallet" && order.paymentStatus === "Paid") {
-        const itemRefund = item.salePrice * item.quantity;
+      // refund
+      if (order.paymentStatus === "Paid") {
+        const salePrice = item.salePrice || 0;
+        const discountAmount = item.discountAmount || 0;
+        const couponShare = item.couponShare || 0;
+        
+        // Calculate final price per unit (what user paid)
+        const finalPricePerUnit = salePrice - discountAmount - couponShare;
+        
+        // Total refund for this item
+        const itemRefund = finalPricePerUnit * item.quantity;
+        
         refundAmount += itemRefund;
       }
     }
 
-    // NO CANCELLATION?
+    // NO CANCELLATION
     if (cancelledCount === 0) {
       await session.abortTransaction();
       return res.json({
@@ -494,10 +904,16 @@ const cancelOrderItems = async (req, res) => {
       order.statusTimeline.cancelledAt = now;
     }
 
-    // Process wallet refund (inside transaction)
-    if (refundAmount > 0) {
+    //  Process refund for ANY paid payment method (wallet, razorpay)
+    if (refundAmount > 0 && order.paymentStatus === "Paid") {
       const wallet = await Wallet.findOne({ userId }).session(session);
+      
+      if (!wallet) {
+        await session.abortTransaction();
+        return res.json({ success: false, message: "Wallet not found" });
+      }
 
+      // Credit wallet
       await Wallet.updateOne(
         { userId },
         { 
@@ -509,6 +925,7 @@ const cancelOrderItems = async (req, res) => {
 
       const newBal = wallet.balance + refundAmount;
 
+      // Create ledger entry
       await createLedgerEntry(
         {
           walletId: wallet._id,
@@ -522,6 +939,7 @@ const cancelOrderItems = async (req, res) => {
         session
       );
 
+      // Update user's wallet balance
       await updateUserWalletBalance(userId, newBal, session);
     }
 
@@ -878,6 +1296,10 @@ export default {
   requestReturn,
   downloadInvoice,
   placeOrder,
-    loadOrderSuccess,
+  verifyPayment,
+  loadOrderSuccess,
+  loadOrderFailure,
+  retryPayment,
+  deleteTempOrderController,
 };
 

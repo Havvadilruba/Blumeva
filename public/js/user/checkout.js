@@ -144,6 +144,7 @@ function closeCouponsModal() {
   document.body.style.overflow = 'auto';
 }
 
+// Click outside modal to close
 document.getElementById('addressModal')?.addEventListener('click', function (e) {
   if (e.target === this) closeModal();
 });
@@ -152,6 +153,7 @@ document.getElementById('couponsModal')?.addEventListener('click', function (e) 
   if (e.target === this) closeCouponsModal();
 });
 
+// Press ESC to close modals
 document.addEventListener('keydown', function (e) {
   if (e.key === 'Escape') {
     const addressModal = document.getElementById('addressModal');
@@ -217,7 +219,7 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
 });
 
 // ============================================
-// PLACE ORDER
+// PLACE ORDER (WITH RAZORPAY SUPPORT)
 // ============================================
 
 async function placeOrder() {
@@ -244,7 +246,107 @@ async function placeOrder() {
   placeBtn.disabled = true;
   placeBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
 
+  // ============================================
+  // WALLET VALIDATION
+  // ============================================
+  if (paymentMethod === "wallet") {
+    const walletBalance = window.USER_WALLET_BALANCE || 0;
+    const totalAmount = window.CART_TOTAL || 0;
+
+    if (walletBalance < totalAmount) {
+      Toastify({
+        text: "Insufficient wallet balance",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        style: { background: "#ef4444" }
+      }).showToast();
+      placeBtn.disabled = false;
+      placeBtn.innerHTML = '<i class="bi bi-check-circle"></i> Place Order';
+      return;
+    }
+  }
+
   try {
+    // ============================================
+    // RAZORPAY PAYMENT FLOW
+    // ============================================
+    if (paymentMethod === "razorpay") {
+      const res = await axios.post("/order/place", payload);
+      if (!res.data.success) throw new Error("Failed to initiate payment");
+
+      const { razorpayOrderId, amount, tempOrderId } = res.data;
+
+      const options = {
+        key: window.RAZORPAY_KEY, // From inline script
+        amount,
+        currency: "INR",
+        order_id: razorpayOrderId,
+
+        handler: async function (payment) {
+  try {
+    const verifyRes = await axios.post("/order/razorpay/verify", {
+      ...payment,
+      tempOrderId
+    });
+
+    console.log("🔍 VERIFY RESPONSE =", verifyRes.data); // ✅ Correct place
+
+    if (verifyRes.data.success) {
+      const orderId = verifyRes.data.orderId;
+
+      if (!orderId) {
+        console.error("⚠ No orderId returned:", verifyRes.data);
+        return;
+      }
+
+      window.location.href = "/order/success/" + orderId;
+      return;
+    } else {
+      window.location.href = `/order/failure/${tempOrderId}`;
+    }
+
+  } catch (err) {
+    console.error("Payment verify error:", err);
+    window.location.href = `/order/failure/${tempOrderId}`;
+  }
+}
+,
+
+        modal: {
+          ondismiss: function () {
+            Toastify({
+              text: "Payment cancelled",
+              duration: 2000,
+              gravity: "top",
+              position: "right",
+              style: { background: "#ef4444" }
+            }).showToast();
+          }
+        },
+
+        theme: {
+          color: "#2563eb"
+        }
+      };
+
+      const rzp = new Razorpay(options);
+
+      rzp.on("payment.failed", function (response) {
+        console.error('Payment failed:', response.error);
+        window.location.href = `/order/failure/${tempOrderId}`;
+      });
+
+      rzp.open();
+
+      placeBtn.disabled = false;
+      placeBtn.innerHTML = '<i class="bi bi-check-circle"></i> Place Order';
+      return;
+    }
+
+    // ============================================
+    // COD & WALLET PAYMENT FLOW
+    // ============================================
     const response = await axios.post("/order/place", payload);
 
     if (response.data.success) {

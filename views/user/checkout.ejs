@@ -103,21 +103,24 @@
             </label>
 
             <!-- Wallet -->
-            <label class="payment-item">
-              <input type="radio" name="paymentMethod" value="wallet" />
-              <div class="payment-card">
-                <div class="payment-icon-wrap payment-wallet">
-                  <i class="bi bi-wallet-fill"></i>
-                </div>
-                <div class="payment-content">
-                  <h4>Wallet</h4>
-                  <p>Available Balance: ₹<%= user.walletBalance?.toLocaleString('en-IN') || 0 %></p>
-                </div>
-                <% if (user.walletBalance < cart.total) { %>
-                  <span class="badge-insufficient">Insufficient</span>
-                <% } %>
-              </div>
-            </label>
+            <!-- Wallet Payment Option -->
+<label class="payment-item">
+  <input type="radio" name="paymentMethod" value="wallet" />
+  <div class="payment-card">
+    <div class="payment-icon-wrap payment-wallet">
+      <i class="bi bi-wallet-fill"></i>
+    </div>
+    <div class="payment-content">
+      <h4>Wallet</h4>
+      <p>Available Balance: ₹<%= wallet.balance.toLocaleString('en-IN') %></p>
+    </div>
+
+    <% if (wallet.balance < cart.payableAmount) { %>
+  <span class="badge-insufficient">Insufficient</span>
+<% } %>
+
+  </div>
+</label>
 
             <!-- Cash on Delivery -->
             <label class="payment-item">
@@ -245,72 +248,79 @@
       </div>
 
       <!-- RIGHT SIDE (1/3) - Order Summary -->
-      <div class="summary-box">
-        <h2 class="summary-title">Order Summary</h2>
+<div class="summary-box">
+  <h2 class="summary-title">Order Summary</h2>
 
-        <div class="summary-row">
-          <span>Subtotal (<%= cart.items.length %> items)</span>
-          <span id="summary-subtotal">₹<%= cart.subtotal.toLocaleString('en-IN') %></span>
-        </div>
+  <div class="summary-row">
+    <span>Subtotal (<%= cart.items.length %> items)</span>
+    <span id="summary-subtotal">
+      ₹<%= cart.subtotal.toLocaleString('en-IN') %>
+    </span>
+  </div>
 
-        <% if (cart.discount > 0) { %>
-          <div class="summary-row saving">
-            <span>Discount</span>
-            <span id="summary-discount">-₹<%= cart.discount.toLocaleString('en-IN') %></span>
-          </div>
-        <% } %>
+  <% if (cart.discount > 0) { %>
+    <div class="summary-row saving">
+      <span>Discount</span>
+      <span id="summary-discount">
+        -₹<%= cart.discount.toLocaleString('en-IN') %>
+      </span>
+    </div>
+  <% } %>
 
-        <!-- Coupon Discount Row -->
-        <% if (appliedCoupon && appliedCoupon.discount > 0) { %>
-          <div class="summary-row saving">
-            <span>Coupon (<%= appliedCoupon.code %>)</span>
-            <span>-₹<%= appliedCoupon.discount.toLocaleString('en-IN') %></span>
-          </div>
-        <% } %>
+  <!-- Coupon Discount -->
+  <% if (appliedCoupon && appliedCoupon.discount > 0) { %>
+    <div class="summary-row saving">
+      <span>Coupon (<%= appliedCoupon.code %>)</span>
+      <span>
+        -₹<%= appliedCoupon.discount.toLocaleString('en-IN') %>
+      </span>
+    </div>
+  <% } %>
 
-        <div class="summary-row">
-          <span>Delivery Charges</span>
-          <% if (cart.deliveryCharge === 0) { %>
-            <span style="color:#16a34a;font-weight:600;">FREE</span>
-          <% } else { %>
-            <span id="summary-delivery">₹<%= cart.deliveryCharge.toLocaleString('en-IN') %></span>
-          <% } %>
-        </div>
+  <!-- Delivery -->
+  <div class="summary-row">
+    <span>Delivery Charges</span>
+    <% if (cart.deliveryCharge === 0) { %>
+      <span style="color:#16a34a;font-weight:600;">FREE</span>
+    <% } else { %>
+      <span id="summary-delivery">
+        ₹<%= cart.deliveryCharge.toLocaleString('en-IN') %>
+      </span>
+    <% } %>
+  </div>
 
-        <div class="summary-row">
-          <span>Tax</span>
-          <span id="summary-tax">₹<%= cart.tax.toLocaleString('en-IN') %></span>
-        </div>
+  <hr class="summary-divider"/>
 
-        <hr class="summary-divider"/>
+  <div class="summary-total">
+    <span>Total Amount</span>
+    <% 
+      const totalAmount = appliedCoupon
+        ? appliedCoupon.finalAmount
+        : cart.total;
+    %>
+    <span id="summary-total">
+      ₹<%= totalAmount.toLocaleString('en-IN') %>
+    </span>
+  </div>
 
-        <div class="summary-total">
-          <span>Total Amount</span>
-          <% 
-            const totalAmount = appliedCoupon 
-              ? appliedCoupon.finalAmount 
-              : cart.total;
-          %>
-          <span id="summary-total">₹<%= totalAmount.toLocaleString('en-IN') %></span>
-        </div>
+  <!-- Savings message -->
+  <% if (appliedCoupon && appliedCoupon.discount > 0) { %>
+    <% const totalSavings = appliedCoupon.discount + cart.discount; %>
+    <div class="savings-badge">
+      <i class="bi bi-tag-fill"></i>
+      You're saving ₹<%= totalSavings.toLocaleString('en-IN') %> on this order!
+    </div>
+  <% } %>
 
-        <!-- Savings Message -->
-        <% if (appliedCoupon && appliedCoupon.discount > 0) { %>
-          <% const totalSavings = appliedCoupon.discount + cart.discount; %>
-          <div class="savings-badge">
-            <i class="bi bi-tag-fill"></i>
-            You're saving ₹<%= totalSavings.toLocaleString('en-IN') %> on this order!
-          </div>
-        <% } %>
+  <button id="placeOrderBtn" onclick="placeOrder()" class="place-order-btn">
+    <i class="bi bi-check-circle"></i> Place Order
+  </button>
 
-        <button id="placeOrderBtn" onclick="placeOrder()" class="place-order-btn">
-          <i class="bi bi-check-circle"></i> Place Order
-        </button>
+  <a href="/cart" class="back-cart-btn">
+    <i class="bi bi-arrow-left"></i> Back to Cart
+  </a>
+</div>
 
-        <a href="/cart" class="back-cart-btn">
-          <i class="bi bi-arrow-left"></i> Back to Cart
-        </a>
-      </div>
 
     </div>
   </div>
@@ -459,6 +469,12 @@
     </div>
   </div>
 </div>
-
-<script src="/js/user/checkout.js"></script>
 <%- include("../partials/user/footer") %>
+<!-- Add this RIGHT BEFORE the checkout.js script tag -->
+<script>
+  window.RAZORPAY_KEY = "<%= RAZORPAY_KEY_ID %>";
+    window.USER_WALLET_BALANCE = <%= wallet.balance %>;
+  window.CART_TOTAL = <%= appliedCoupon ? appliedCoupon.finalAmount : cart.total %>;
+</script>
+<script src="/js/user/checkout.js"></script>
+

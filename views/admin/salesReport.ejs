@@ -1,0 +1,322 @@
+<div class="page-container">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1>Delivered Sales Report</h1>
+      <p class="subtitle">
+        Sales analytics based only on successfully delivered orders.
+      </p>
+    </div>
+    <div style="display: flex; gap: 12px;">
+      <button class="btn-primary" onclick="downloadPDF()">
+        <i class="bi bi-file-pdf"></i>
+        Download PDF
+      </button>
+      <button class="btn-primary" onclick="downloadExcel()">
+        <i class="bi bi-file-excel"></i>
+        Download Excel
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-container">
+    <div class="filter-group">
+      <label>Report Type:</label>
+      <select id="reportType" class="filter-select" onchange="applyFilters()">
+        <option value="daily" <%= reportType === 'daily' ? 'selected' : '' %>>Daily</option>
+        <option value="weekly" <%= reportType === 'weekly' ? 'selected' : '' %>>Weekly</option>
+        <option value="monthly" <%= reportType === 'monthly' ? 'selected' : '' %>>Monthly</option>
+        <option value="yearly" <%= reportType === 'yearly' ? 'selected' : '' %>>Yearly</option>
+        <option value="custom" <%= reportType === 'custom' ? 'selected' : '' %>>Custom Range</option>
+      </select>
+    </div>
+
+    <div class="filter-group" id="customDateRange" style="<%= reportType === 'custom' ? '' : 'display:none;' %>">
+      <label>From:</label>
+      <input
+        type="date"
+        id="startDate"
+        class="filter-select"
+        value="<%= startDate || '' %>"
+        onchange="applyFilters()"
+      />
+    </div>
+
+    <div class="filter-group" id="customDateRange2" style="<%= reportType === 'custom' ? '' : 'display:none;' %>">
+      <label>To:</label>
+      <input
+        type="date"
+        id="endDate"
+        class="filter-select"
+        value="<%= endDate || '' %>"
+        onchange="applyFilters()"
+      />
+    </div>
+
+    <% if (reportType !== 'daily') { %>
+      <button class="btn-clear-filters" onclick="clearFilters()">
+        <i class="bi bi-x-circle"></i>
+        Clear Filters
+      </button>
+    <% } %>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card stat-blue">
+      <div class="stat-icon"><i class="bi bi-cart-check"></i></div>
+      <div class="stat-content">
+        <div class="stat-label">Total Sales</div>
+        <div class="stat-value">
+          ₹<%= (salesData.totalSales || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-card stat-green">
+      <div class="stat-icon"><i class="bi bi-receipt"></i></div>
+      <div class="stat-content">
+        <div class="stat-label">Delivered Orders</div>
+        <div class="stat-value"><%= salesData.totalOrders || 0 %></div>
+      </div>
+    </div>
+
+    <div class="stat-card stat-purple">
+      <div class="stat-icon"><i class="bi bi-graph-up"></i></div>
+      <div class="stat-content">
+        <div class="stat-label">Average Order Value</div>
+        <div class="stat-value">
+          ₹<%= (salesData.averageOrderValue || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-card stat-orange">
+      <div class="stat-icon"><i class="bi bi-percent"></i></div>
+      <div class="stat-content">
+        <div class="stat-label">Total Discounts</div>
+        <div class="stat-value">
+          ₹<%= (salesData.totalDiscounts || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-card stat-blue">
+      <div class="stat-icon"><i class="bi bi-box-seam"></i></div>
+      <div class="stat-content">
+        <div class="stat-label">Products Sold</div>
+        <div class="stat-value"><%= salesData.productsSold || 0 %></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Transactions Table -->
+  <div class="summary-section">
+    <h2 class="section-title">Delivered Sales Transactions</h2>
+
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Placed Date</th>
+            <th>Order ID</th>
+            <th>Customer</th>
+            <th>Items</th>
+            <th>Amount</th>
+            <th>Discount</th>
+            <th>Payment</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (salesData.transactions.length > 0) { %>
+            <% salesData.transactions.forEach(t => { %>
+              <tr>
+                <td><%= new Date(t.createdAt).toLocaleDateString('en-IN') %></td>
+                <td><strong class="order-id">#<%= t.orderId %></strong></td>
+                <td>
+                  <div class="customer-info">
+                    <div class="customer-name"><%= t.customerName %></div>
+                    <div class="customer-email"><%= t.customerEmail %></div>
+                  </div>
+                </td>
+                <td><%= t.itemCount %></td>
+                <td>
+                  <strong class="amount">
+                    ₹<%= t.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+                  </strong>
+                </td>
+                <td class="text-green">
+                  -₹<%= t.discount.toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+                </td>
+                <td><%= t.paymentMethod || 'N/A' %></td>
+                <td>
+                  <span class="status-badge status-active">Delivered</span>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="8" class="no-data">
+                <div class="empty-state">
+                  <i class="bi bi-inbox"></i>
+                  <p>No delivered sales found for this period</p>
+                </div>
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <% if (totalPages > 1) { %>
+    <div class="pagination-container">
+      <div class="pagination-info">
+        Showing
+        <%= (currentPage - 1) * limit + 1 %>
+        to
+        <%= Math.min(currentPage * limit, totalTransactions) %>
+        of
+        <%= totalTransactions %>
+        results
+      </div>
+
+      <div class="pagination-controls">
+        <% if (currentPage > 1) { %>
+          <button class="page-btn" onclick="changePage(<%= currentPage - 1 %>)">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+        <% } %>
+
+        <% for (let i = 1; i <= totalPages; i++) { %>
+          <button
+            class="page-btn <%= currentPage === i ? 'active' : '' %>"
+            onclick="changePage(<%= i %>)"
+          >
+            <%= i %>
+          </button>
+        <% } %>
+
+        <% if (currentPage < totalPages) { %>
+          <button class="page-btn" onclick="changePage(<%= currentPage + 1 %>)">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        <% } %>
+      </div>
+    </div>
+  <% } %>
+
+</div>
+
+<!-- PDF DOWNLOAD MODAL -->
+<div id="pdfModal" class="hidden" style="
+  display: none;
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+">
+  <div style="
+    background: white;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 500px;
+    padding: 24px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  ">
+    <h2 style="
+      font-size: 18px;
+      font-weight: 600;
+      color: #111;
+      margin: 0 0 8px 0;
+    ">
+      Download PDF Report
+    </h2>
+
+    <p style="
+      font-size: 14px;
+      color: #666;
+      margin: 0 0 16px 0;
+    ">
+      Large downloads may take time and impact server performance.
+    </p>
+
+    <!-- Order Limit -->
+    <label style="
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #374151;
+      margin-bottom: 8px;
+    ">
+      Number of orders to download
+    </label>
+
+    <select id="pdfLimit" style="
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 16px;
+    ">
+    </select>
+
+    <!-- Warning -->
+    <div id="pdfWarning" class="hidden" style="
+      display: none;
+      font-size: 14px;
+      color: #dc2626;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+    ">
+      ⚠️ Downloading large reports may take several minutes and can slow down the system.
+    </div>
+
+    <!-- Actions -->
+    <div style="
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    ">
+      <button onclick="closePdfModal()" style="
+        padding: 10px 16px;
+        border-radius: 8px;
+        border: 1px solid #d1d5db;
+        background: white;
+        color: #374151;
+        font-weight: 500;
+        cursor: pointer;
+      ">
+        Cancel
+      </button>
+
+      <button onclick="confirmPdfDownload()" style="
+        padding: 10px 20px;
+        border-radius: 8px;
+        border: none;
+        background: #2563eb;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+      ">
+        Download PDF
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Pass total transactions to JavaScript
+  window.TOTAL_ORDERS = <%= totalTransactions %>;
+</script>
+<script src="/js/admin/salesReport.js"></script>

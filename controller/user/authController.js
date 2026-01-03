@@ -8,16 +8,6 @@ import { processReferral } from "../../services/referralService.js";
 import Joi from "joi";
 
 
-
-// load Sign Up
-// const loadSignup=async(req,res)=>{
-//     try{
-//         return res.render("user/signup",{message:null,layout:false})
-//     }catch(error){
-//         console.log("homepage not found",error)
-//         res.status(500).send("Server Error")
-//     }
-// }
 const loadSignup=async(req,res)=>{
   try{
     if (req.session.user) {

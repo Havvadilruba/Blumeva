@@ -1,11 +1,15 @@
 import Joi from "joi";
 
 const variantValidation = Joi.object({
-  quantityValue: Joi.number().positive().required().empty("").messages({
+  quantityValue: Joi.number()
+  .positive()
+  .required()
+  .messages({
     "any.required": "Variant value is required",
     "number.base": "Variant value must be a number",
     "number.positive": "Variant value must be greater than 0",
   }),
+
 
   quantityType: Joi.string().valid("ml", "g").required().empty("").messages({
     "any.required": "Variant type is required",

@@ -100,56 +100,50 @@ async function updateQty(itemId, newQty) {
         showToast("Item is now out of stock", "warning");
         disableCheckout("out-of-stock");
       } else {
-        // ===== Update price UI SAME as product card logic =====
-        const regular = updatedItem.regularPrice || 0;
-        const sale = updatedItem.salePrice || 0;
-        const offerAmount = updatedItem.discountAmount || 0;
-        const basePrice = sale > 0 ? sale : regular;
+      
 
-        let current = basePrice - offerAmount;
-        if (current < 0) current = 0;
+// ===== Update price UI SAME as product card logic =====
+const regular = updatedItem.regularPrice || 0;
+const sale = updatedItem.salePrice || 0;
+const offerAmount = updatedItem.discountAmount || 0;
 
-        const hasDiscount = regular > 0 && regular > current;
-        const discountPercent = hasDiscount
-          ? Math.round(((regular - current) / regular) * 100)
-          : 0;
+// Current price calculation (SAME as product card)
+const current = sale - offerAmount;
 
-        const savingsPerUnit = current > 0
-          ? (regular > 0 ? (regular - current) : (basePrice - current))
-          : 0;
+const hasDiscount = regular > current;
+const discountPercent = hasDiscount
+  ? Math.round(((regular - current) / regular) * 100)
+  : 0;
 
-        const totalSavings = savingsPerUnit * updatedItem.quantity;
+priceBox.innerHTML = `
+  <div class="price" style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
 
-        priceBox.innerHTML = `
-          <div class="price" style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span class="sale" style="font-size:18px;font-weight:700;color:#111;">
+        ₹${(current * updatedItem.quantity).toLocaleString('en-IN')}
+      </span>
 
-            <div style="display:flex;align-items:center;gap:8px;">
-              <span class="sale" style="font-size:18px;font-weight:700;color:#111;">
-                ₹${(current * updatedItem.quantity).toLocaleString('en-IN')}
-              </span>
+      ${hasDiscount ? `
+      <del class="regular"
+        style="font-size:14px;color:#888;text-decoration:line-through;">
+        ₹${(regular * updatedItem.quantity).toLocaleString('en-IN')}
+      </del>` : ""}
+    </div>
 
-              ${hasDiscount ? `
-              <del class="regular"
-                style="font-size:14px;color:#888;text-decoration:line-through;">
-                ₹${(regular * updatedItem.quantity).toLocaleString('en-IN')}
-              </del>` : ""}
-            </div>
+    ${hasDiscount ? `
+    <span class="offer-badge"
+      style="background:#16a34a;color:#fff;font-size:11px;
+      padding:2px 6px;border-radius:4px;font-weight:600;">
+      ${discountPercent}% OFF
+    </span>` : ""}
 
-            ${hasDiscount ? `
-            <span class="offer-badge"
-              style="background:#16a34a;color:#fff;font-size:11px;
-              padding:2px 6px;border-radius:4px;font-weight:600;">
-              ${discountPercent}% OFF
-            </span>` : ""}
+    ${offerAmount > 0 ? `
+    <span style="color:#16a34a;font-size:12px;font-weight:600;">
+      Save ₹${((regular - current) * updatedItem.quantity).toLocaleString('en-IN')} with offers
+    </span>` : ""}
 
-            ${totalSavings > 0 ? `
-            <span style="color:#16a34a;font-size:12px;font-weight:600;">
-              Save ₹${totalSavings.toLocaleString('en-IN')} with offers
-            </span>` : ""}
-
-          </div>
-        `;
-
+  </div>
+`;
         // Update button states
         minusBtn.classList.toggle("disabled", updatedItem.quantity <= 1);
         minusBtn.disabled = updatedItem.quantity <= 1;

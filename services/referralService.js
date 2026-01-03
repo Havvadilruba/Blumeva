@@ -4,10 +4,6 @@ import { findWalletByUserId, createWallet, saveWallet } from "../repositories/wa
 import { createLedgerEntry } from "../repositories/walletLedgerRepository.js";
 import { createReferralRecord } from "../repositories/referralRepository.js";
 
-/**
- * processReferral(referrerId, referredId, codeUsed)
- * Credits referrer ₹100 and referred ₹50, creates ledger entries and saves referral record.
- */
 export const processReferral = async (referrerId, referredId, codeUsed) => {
   const session = await mongoose.startSession();
   try {
@@ -16,7 +12,7 @@ export const processReferral = async (referrerId, referredId, codeUsed) => {
     const REFERRER_AMOUNT = 100;
     const REFERRED_AMOUNT = 50;
 
-    // Ensure wallets exist (create if missing)
+    // wallets exist
     let referrerWallet = await findWalletByUserId(referrerId, session);
     if (!referrerWallet) referrerWallet = (await createWallet(referrerId, session))[0];
 
@@ -42,14 +38,14 @@ export const processReferral = async (referrerId, referredId, codeUsed) => {
       session
     );
 
-    // Also increment referrer's referralRewards in User document
+    // increment referrer's referralRewards 
     await User.updateOne(
       { _id: referrerId },
       { $inc: { referralRewards: REFERRER_AMOUNT } },
       { session }
     );
 
-    // Credit referred (new user)
+    // Credit referred 
     referredWallet.balance += REFERRED_AMOUNT;
     referredWallet.totalCredits += REFERRED_AMOUNT;
     referredWallet.lastTransactionAt = new Date();

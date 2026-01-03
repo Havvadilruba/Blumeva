@@ -75,10 +75,12 @@ export const applyCouponService = async (body, userId, cartTotals) => {
     }
   }
 
-  // 💥 Use server-values only
-  const subtotal = cartTotals.subtotal;
+  // ✅ SERVER-SIDE VALUES ONLY
+  
+const subtotal = cartTotals.total; // after product discounts
 
-  // Min purchase based on subtotal before discount
+
+  // Min purchase check
   if (subtotal < coupon.minPurchaseAmount) {
     return {
       status: 400,
@@ -87,7 +89,7 @@ export const applyCouponService = async (body, userId, cartTotals) => {
     };
   }
 
-  // Discount calculation
+  // Coupon discount
   let discount =
     coupon.type === "percentage"
       ? (coupon.discountValue / 100) * subtotal
@@ -97,10 +99,9 @@ export const applyCouponService = async (body, userId, cartTotals) => {
     discount = Math.min(discount, coupon.maxDiscount);
   }
 
-  // New totals AFTER coupon
+  // ✅ FINAL AMOUNT (NO TAX)
   const newSubtotal = Math.max(subtotal - discount, 0);
-  const newTax = Math.round(newSubtotal * 0.05);
-  const finalAmount = newSubtotal + cartTotals.deliveryCharge + newTax;
+  const finalAmount = newSubtotal + cartTotals.deliveryCharge;
 
   return {
     status: 200,

@@ -5,6 +5,8 @@ import { generateOtp } from "../../helpers/otpHelper.js";
 import Joi from "joi";
 import changePassValidation from "../../validations/changePassValidation.js";
 import bcrypt from "bcrypt";
+const DEFAULT_AVATAR =
+  "https://res.cloudinary.com/dtazbbayi/image/upload/v1766385959/user-profile-icon-avatar-person-sign-profile-picture-portrait-symbol-easily-editable-line_fpdimj.jpg";
 
 const loadProfile = async (req, res) => {
   try {
@@ -70,7 +72,7 @@ const updateProfile = async (req, res) => {
     }
 
     if (removePhoto === "true" && !req.file) {
-      user.profileImage = "";
+      user.profileImage = DEFAULT_AVATAR;
     }
 
     if (req.file) {

@@ -3,6 +3,7 @@ import crypto from "crypto";
 
 import {
   findTempOrderById,
+  updateTempOrder,
   deleteTempOrder,
 } from "../../repositories/tempOrderRepository.js";
 
@@ -12,9 +13,6 @@ import Cart from "../../model/cartSchema.js";
 import Coupon from "../../model/couponSchema.js";
 import { couponUsageCreate } from "../../repositories/couponUsageRepository.js";
 
-// ------------------------------
-//   VERIFY PAYMENT CONTROLLER
-// ------------------------------
 const verifyRazorpayPayment = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -39,7 +37,21 @@ const verifyRazorpayPayment = async (req, res) => {
       throw { status: 400, message: "Temporary order not found" };
 
     // -------------------------------------------
-    // 2. Verify Razorpay Signature (Mandatory)
+    // 2. PREVENT DUPLICATE ORDER CREATION
+    // -------------------------------------------
+    const existingOrder = await Order.findOne({
+      "paymentInfo.razorpayPaymentId": razorpay_payment_id,
+    });
+
+    if (existingOrder) {
+      return res.json({
+        success: true,
+        orderId: existingOrder.orderId,
+      });
+    }
+
+    // -------------------------------------------
+    // 3. Verify Razorpay Signature
     // -------------------------------------------
     const expectedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
@@ -51,7 +63,20 @@ const verifyRazorpayPayment = async (req, res) => {
     }
 
     // -------------------------------------------
-    // 3. Reduce Stock
+    // 4. Update Temp Order Payment Info
+    // -------------------------------------------
+    await updateTempOrder(
+      tempOrderId,
+      {
+        razorpayPaymentId: razorpay_payment_id,
+        razorpaySignature: razorpay_signature,
+        paymentStatus: "Success",
+      },
+      session
+    );
+
+    // -------------------------------------------
+    // 5. Reduce Stock (session safe)
     // -------------------------------------------
     for (let item of tempOrder.orderedItems) {
       const updated = await Variant.updateOne(
@@ -61,12 +86,12 @@ const verifyRazorpayPayment = async (req, res) => {
       );
 
       if (!updated.modifiedCount) {
-        throw { status: 400, message: "Insufficient stock for items" };
+        throw { status: 400, message: "Insufficient stock" };
       }
     }
 
     // -------------------------------------------
-    // 4. Create FINAL ORDER
+    // 6. Create Final Order
     // -------------------------------------------
     const [finalOrder] = await Order.create(
       [
@@ -88,7 +113,7 @@ const verifyRazorpayPayment = async (req, res) => {
 
           paymentMethod: "razorpay",
           paymentStatus: "Paid",
-          orderStatus: "Confirmed", // OPTIONAL BUT GOOD
+          orderStatus: "Confirmed",
 
           paymentInfo: {
             razorpayOrderId: razorpay_order_id,
@@ -96,14 +121,14 @@ const verifyRazorpayPayment = async (req, res) => {
             razorpaySignature: razorpay_signature,
           },
 
-          expectedDelivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+          expectedDelivery: new Date(Date.now() + 5 * 86400000),
         },
       ],
       { session }
     );
 
     // -------------------------------------------
-    // 5. Handle Coupon Usage
+    // 7. Handle Coupon Usage
     // -------------------------------------------
     if (tempOrder.couponId) {
       await couponUsageCreate(
@@ -121,12 +146,12 @@ const verifyRazorpayPayment = async (req, res) => {
     }
 
     // -------------------------------------------
-    // 6. Clear Cart
+    // 8. Clear Cart
     // -------------------------------------------
     await Cart.deleteMany({ userId }, { session });
 
     // -------------------------------------------
-    // 7. Delete Temp Order
+    // 9. Delete Temp Order
     // -------------------------------------------
     await deleteTempOrder(tempOrderId, session);
 
@@ -153,4 +178,5 @@ const verifyRazorpayPayment = async (req, res) => {
 };
 
 export default { verifyRazorpayPayment };
+
 

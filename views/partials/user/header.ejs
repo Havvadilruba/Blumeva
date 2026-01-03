@@ -30,23 +30,38 @@
 
 
     <div class="icon-links">
-  <a href="/wishlist"><i class="fa-regular fa-heart"></i></a>
-  <a href="/cart"><i class="fa-solid fa-cart-shopping"></i></a>
 
+  <!-- Wishlist -->
+  <a href="/wishlist" class="icon-wrapper">
+    <i class="fa-regular fa-heart"></i>
+    <% if (wishlistCount > 0) { %>
+      <span class="icon-badge"><%= wishlistCount %></span>
+    <% } %>
+  </a>
+
+  <!-- Cart -->
+  <a href="/cart" class="icon-wrapper">
+    <i class="fa-solid fa-cart-shopping"></i>
+    <% if (cartCount > 0) { %>
+      <span class="icon-badge"><%= cartCount %></span>
+    <% } %>
+  </a>
+
+  <!-- Profile -->
   <% if (user) { %>
-   
     <a href="/profile">
       <% if (user.avatar) { %>
-        <img src="<%= user.avatar %>" alt="Profile" class="profile-img" />
+        <img src="<%= user.avatar %>" class="profile-img" />
       <% } else { %>
         <i class="fa-regular fa-user"></i>
       <% } %>
     </a>
   <% } else { %>
-    
     <a href="/login"><i class="fa-regular fa-user"></i></a>
   <% } %>
+
 </div>
+
   </div>
 </div>
 

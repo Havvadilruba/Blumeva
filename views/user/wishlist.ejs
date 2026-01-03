@@ -1,239 +1,250 @@
 <%- include("../partials/user/header") %>
 
-<div class="wishlist-container">
-  <div class="wishlist-header">
-    <div class="header-content">
-      <h1 class="page-title">
-        <i class="bi bi-heart-fill"></i>
-        My Wishlist
-      </h1>
-      <p class="wishlist-count">
-        <span id="wishlist-count"><%= wishlist?.items?.length || 0 %></span>
-        <%= (wishlist?.items?.length || 0) === 1 ? 'item' : 'items' %> saved
-      </p>
-    </div>
+<div class="wishlist-page">
+  <div class="page-layout">
 
-    <% if (wishlist && wishlist.items && wishlist.items.length > 0) { %>
-      <button onclick="clearWishlist()" class="btn-clear">
-        <i class="bi bi-trash3"></i>
-        <span>Clear All</span>
-      </button>
-    <% } %>
-  </div>
+    <!-- Sidebar -->
+    <%- include("../partials/user/sidebar", { activePage }) %>
 
-  <div class="wishlist-content">
-    <% if (wishlist && wishlist.items && wishlist.items.length > 0) { %>
-      <div class="wishlist-grid">
-        <% wishlist.items.forEach(function(item) { 
-          const variant = item.variant;
-          const product = item.product;
-          const outOfStock = variant?.stock <= 0;
-          const regular = variant?.regularPrice || 0;
-          const sale = variant?.salePrice || 0;
-          const offerAmount = item.discountAmount || 0;
-          const current = sale - offerAmount;
-          const hasDiscount = regular > current;
-          const discountPercent = hasDiscount
-            ? Math.round(((regular - current) / regular) * 100)
-            : 0;
-        %>
+    <!-- Main Content -->
+    <div class="main-content">
 
-        <div class="wishlist-card <%= outOfStock ? 'out-of-stock' : '' %>">
-
-          <!-- Remove Button -->
-          <button
-            class="btn-remove"
-            onclick="removeFromWishlist('<%= variant?._id %>')"
-            title="Remove from wishlist"
-          >
-            <i class="bi bi-x-lg"></i>
-          </button>
-
-          <!-- Product Image -->
-          <div class="card-image">
-            <a href="/product/<%= variant?._id %>">
-              <img
-                src="<%= product?.images?.[0] || '/images/no-image.png' %>"
-                alt="<%= product?.name %>"
-                loading="lazy"
-              />
-            </a>
-
-            <!-- Stock Badge -->
-            <% if (outOfStock) { %>
-              <span class="badge badge-out">
-                <i class="bi bi-x-circle-fill"></i>
-                Out of Stock
-              </span>
-            <% } else if (variant.stock <= 5) { %>
-              <span class="badge badge-low">
-                <i class="bi bi-exclamation-circle-fill"></i>
-                Only <%= variant.stock %> left
-              </span>
-            <% } %>
-
-            <!-- Discount Badge -->
-            <% if (discountPercent > 0) { %>
-              <span class="discount-badge">
-                <%= discountPercent %>% OFF
-              </span>
-            <% } %>
-          </div>
-
-          <!-- Card Content -->
-          <div class="card-content">
-            <a href="/product/<%= variant?._id %>" class="product-name">
-              <%= product?.name %>
-            </a>
-
-            <!-- Variant Info -->
-            <div class="variant-badge">
-              <i class="bi bi-box"></i>
-              <%= variant?.quantityValue %><%= variant?.quantityType %>
-            </div>
-
-            <!-- Rating -->
-            <div class="rating">
-              <div class="stars">
-                <% const rating = product?.avgRating || 0; %>
-                <% for (let i = 1; i <= 5; i++) { %>
-                  <i class="<%= i <= Math.round(rating) ? 'bi bi-star-fill' : 'bi bi-star' %>"></i>
-                <% } %>
-              </div>
-              <span class="rating-value">(<%= rating.toFixed(1) %>)</span>
-            </div>
-
-            <!-- Price Section -->
-            <div class="price-section">
-              <div class="price-main">
-                <span class="current-price">₹<%= current.toLocaleString('en-IN') %></span>
-                <% if (hasDiscount) { %>
-                  <span class="original-price">₹<%= regular.toLocaleString('en-IN') %></span>
-                <% } %>
-              </div>
-
-              <% if (item.offer && item.discountAmount > 0) { %>
-                <div class="savings">
-                  <i class="bi bi-tag-fill"></i>
-                  Save ₹<%= (regular - current).toLocaleString('en-IN') %>
-                </div>
-              <% } %>
-            </div>
-
-            <!-- Added Date -->
-            <div class="added-date">
-              <i class="bi bi-calendar3"></i>
-              Added <%= new Date(item.addedAt || item.createdAt).toLocaleDateString('en-IN', { 
-                day: 'numeric', 
-                month: 'short', 
-                year: 'numeric' 
-              }) %>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="card-actions">
-              <% if (!outOfStock) { %>
-                <button 
-                  onclick="moveToCart('<%= variant?._id %>')" 
-                  class="btn-action btn-cart"
-                >
-                  <i class="bi bi-cart-plus-fill"></i>
-                  <span>Add to Cart</span>
-                </button>
-              <% } else { %>
-                <button disabled class="btn-action btn-disabled">
-                  <i class="bi bi-x-circle"></i>
-                  <span>Out of Stock</span>
-                </button>
-              <% } %>
-
-              <a 
-                href="/product/<%= variant?._id %>" 
-                class="btn-action btn-view"
-              >
-                <i class="bi bi-eye-fill"></i>
-                <span>View</span>
-              </a>
-            </div>
-          </div>
+      <div class="wishlist-header">
+        <div class="header-content">
+          <h1 class="page-title">
+            <i class="bi bi-heart-fill"></i>
+            My Wishlist
+          </h1>
+          <p class="wishlist-count">
+            <span id="wishlist-count"><%= wishlist?.items?.length || 0 %></span>
+            <%= (wishlist?.items?.length || 0) === 1 ? 'item' : 'items' %> saved
+          </p>
         </div>
 
-        <% }); %>
+        <% if (wishlist && wishlist.items && wishlist.items.length > 0) { %>
+          <button onclick="clearWishlist()" class="btn-clear">
+            <i class="bi bi-trash3"></i>
+            <span>Clear All</span>
+          </button>
+        <% } %>
       </div>
 
-      <!-- Pagination -->
-      <% if (totalPages > 1) { %>
-        <div class="pagination">
-          <div class="pagination-info">
-            Showing <%= (currentPage - 1) * limit + 1 %>-<%= Math.min(currentPage * limit, totalDocuments) %> 
-            of <%= totalDocuments %> items
-          </div>
-
-          <div class="pagination-controls">
-            <% if (currentPage > 1) { %>
-              <button onclick="changePage(<%= currentPage - 1 %>)" class="page-btn">
-                <i class="bi bi-chevron-left"></i>
-              </button>
-            <% } %>
-
-            <% 
-              const maxVisible = 5;
-              let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-              let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-              
-              if (endPage - startPage < maxVisible - 1) {
-                startPage = Math.max(1, endPage - maxVisible + 1);
-              }
+      <div class="wishlist-content">
+        <% if (wishlist && wishlist.items && wishlist.items.length > 0) { %>
+          <div class="wishlist-grid">
+            <% wishlist.items.forEach(function(item) { 
+              const variant = item.variant;
+              const product = item.product;
+              const outOfStock = variant?.stock <= 0;
+              const regular = variant?.regularPrice || 0;
+              const sale = variant?.salePrice || 0;
+              const offerAmount = item.discountAmount || 0;
+              const current = sale - offerAmount;
+              const hasDiscount = regular > current;
+              const discountPercent = hasDiscount
+                ? Math.round(((regular - current) / regular) * 100)
+                : 0;
             %>
 
-            <% if (startPage > 1) { %>
-              <button onclick="changePage(1)" class="page-btn">1</button>
-              <% if (startPage > 2) { %>
-                <span class="page-ellipsis">...</span>
-              <% } %>
-            <% } %>
+            <div class="wishlist-card <%= outOfStock ? 'out-of-stock' : '' %>">
 
-            <% for (let i = startPage; i <= endPage; i++) { %>
-              <button 
-                onclick="changePage(<%= i %>)" 
-                class="page-btn <%= currentPage === i ? 'active' : '' %>"
+              <!-- Remove Button -->
+              <button
+                class="btn-remove"
+                onclick="removeFromWishlist('<%= variant?._id %>')"
+                title="Remove from wishlist"
               >
-                <%= i %>
+                <i class="bi bi-x-lg"></i>
               </button>
-            <% } %>
 
-            <% if (endPage < totalPages) { %>
-              <% if (endPage < totalPages - 1) { %>
-                <span class="page-ellipsis">...</span>
-              <% } %>
-              <button onclick="changePage(<%= totalPages %>)" class="page-btn">
-                <%= totalPages %>
-              </button>
-            <% } %>
+              <!-- Product Image -->
+              <div class="card-image">
+                <a href="/product/<%= variant?._id %>">
+                  <img
+                    src="<%= product?.images?.[0] || '/images/no-image.png' %>"
+                    alt="<%= product?.name %>"
+                    loading="lazy"
+                  />
+                </a>
 
-            <% if (currentPage < totalPages) { %>
-              <button onclick="changePage(<%= currentPage + 1 %>)" class="page-btn">
-                <i class="bi bi-chevron-right"></i>
-              </button>
-            <% } %>
+                <!-- Stock Badge -->
+                <% if (outOfStock) { %>
+                  <span class="badge badge-out">
+                    <i class="bi bi-x-circle-fill"></i>
+                    Out of Stock
+                  </span>
+                <% } else if (variant.stock <= 5) { %>
+                  <span class="badge badge-low">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                    Only <%= variant.stock %> left
+                  </span>
+                <% } %>
+
+                <!-- Discount Badge -->
+                <% if (discountPercent > 0) { %>
+                  <span class="discount-badge">
+                    <%= discountPercent %>% OFF
+                  </span>
+                <% } %>
+              </div>
+
+              <!-- Card Content -->
+              <div class="card-content">
+                <a href="/product/<%= variant?._id %>" class="product-name">
+                  <%= product?.name %>
+                </a>
+
+                <!-- Variant Info -->
+                <div class="variant-badge">
+                  <i class="bi bi-box"></i>
+                  <%= variant?.quantityValue %><%= variant?.quantityType %>
+                </div>
+
+                <!-- Rating -->
+                <div class="rating">
+                  <div class="stars">
+                    <% const rating = product?.avgRating || 0; %>
+                    <% for (let i = 1; i <= 5; i++) { %>
+                      <i class="<%= i <= Math.round(rating) ? 'bi bi-star-fill' : 'bi bi-star' %>"></i>
+                    <% } %>
+                  </div>
+                  <span class="rating-value">(<%= rating.toFixed(1) %>)</span>
+                </div>
+
+                <!-- Price Section -->
+                <div class="price-section">
+                  <div class="price-main">
+                    <span class="current-price">₹<%= current.toLocaleString('en-IN') %></span>
+                    <% if (hasDiscount) { %>
+                      <span class="original-price">₹<%= regular.toLocaleString('en-IN') %></span>
+                    <% } %>
+                  </div>
+
+                  <% if (item.offer && item.discountAmount > 0) { %>
+                    <div class="savings">
+                      <i class="bi bi-tag-fill"></i>
+                      Save ₹<%= (regular - current).toLocaleString('en-IN') %>
+                    </div>
+                  <% } %>
+                </div>
+
+                <!-- Added Date -->
+                <div class="added-date">
+                  <i class="bi bi-calendar3"></i>
+                  Added <%= new Date(item.addedAt || item.createdAt).toLocaleDateString('en-IN', { 
+                    day: 'numeric', 
+                    month: 'short', 
+                    year: 'numeric' 
+                  }) %>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="card-actions">
+                  <% if (!outOfStock) { %>
+                    <button 
+                      onclick="moveToCart('<%= variant?._id %>')" 
+                      class="btn-action btn-cart"
+                    >
+                      <i class="bi bi-cart-plus-fill"></i>
+                      <span>Add to Cart</span>
+                    </button>
+                  <% } else { %>
+                    <button disabled class="btn-action btn-disabled">
+                      <i class="bi bi-x-circle"></i>
+                      <span>Out of Stock</span>
+                    </button>
+                  <% } %>
+
+                  <a 
+                    href="/product/<%= variant?._id %>" 
+                    class="btn-action btn-view"
+                  >
+                    <i class="bi bi-eye-fill"></i>
+                    <span>View</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <% }); %>
           </div>
-        </div>
-      <% } %>
 
-    <% } else { %>
-      <!-- Empty State -->
-      <div class="empty-wishlist">
-        <div class="empty-icon">
-          <i class="bi bi-heart"></i>
-        </div>
-        <h3>Your Wishlist is Empty</h3>
-        <p>Start adding items you love to your wishlist</p>
-        <a href="/products" class="btn-shop">
-          <i class="bi bi-bag-heart"></i>
-          <span>Explore Products</span>
-        </a>
+          <!-- Pagination -->
+          <% if (totalPages > 1) { %>
+            <div class="pagination">
+              <div class="pagination-info">
+                Showing <%= (currentPage - 1) * limit + 1 %>-<%= Math.min(currentPage * limit, totalDocuments) %> 
+                of <%= totalDocuments %> items
+              </div>
+
+              <div class="pagination-controls">
+                <% if (currentPage > 1) { %>
+                  <button onclick="changePage(<%= currentPage - 1 %>)" class="page-btn">
+                    <i class="bi bi-chevron-left"></i>
+                  </button>
+                <% } %>
+
+                <% 
+                  const maxVisible = 5;
+                  let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+                  let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+                  
+                  if (endPage - startPage < maxVisible - 1) {
+                    startPage = Math.max(1, endPage - maxVisible + 1);
+                  }
+                %>
+
+                <% if (startPage > 1) { %>
+                  <button onclick="changePage(1)" class="page-btn">1</button>
+                  <% if (startPage > 2) { %>
+                    <span class="page-ellipsis">...</span>
+                  <% } %>
+                <% } %>
+
+                <% for (let i = startPage; i <= endPage; i++) { %>
+                  <button 
+                    onclick="changePage(<%= i %>)" 
+                    class="page-btn <%= currentPage === i ? 'active' : '' %>"
+                  >
+                    <%= i %>
+                  </button>
+                <% } %>
+
+                <% if (endPage < totalPages) { %>
+                  <% if (endPage < totalPages - 1) { %>
+                    <span class="page-ellipsis">...</span>
+                  <% } %>
+                  <button onclick="changePage(<%= totalPages %>)" class="page-btn">
+                    <%= totalPages %>
+                  </button>
+                <% } %>
+
+                <% if (currentPage < totalPages) { %>
+                  <button onclick="changePage(<%= currentPage + 1 %>)" class="page-btn">
+                    <i class="bi bi-chevron-right"></i>
+                  </button>
+                <% } %>
+              </div>
+            </div>
+          <% } %>
+
+        <% } else { %>
+          <!-- Empty State -->
+          <div class="empty-wishlist">
+            <div class="empty-icon">
+              <i class="bi bi-heart"></i>
+            </div>
+            <h3>Your Wishlist is Empty</h3>
+            <p>Start adding items you love to your wishlist</p>
+            <a href="/products" class="btn-shop">
+              <i class="bi bi-bag-heart"></i>
+              <span>Explore Products</span>
+            </a>
+          </div>
+        <% } %>
       </div>
-    <% } %>
+
+    </div>
   </div>
 </div>
 
@@ -259,49 +270,47 @@
   }
 
   async function removeFromWishlist(variantId) {
-  try {
-    const { data } = await axios.post('/wishlist/toggle', { variantId });
+    try {
+      const { data } = await axios.post('/wishlist/toggle', { variantId });
 
-    if (data.success) {
-      showToast(data.message, "success");   // ⬅ use backend message
-      setTimeout(() => window.location.reload(), 600);
-    } else {
-      showToast(data.message, "error");
+      if (data.success) {
+        showToast(data.message, "success");
+        setTimeout(() => window.location.reload(), 600);
+      } else {
+        showToast(data.message, "error");
+      }
+
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Failed to remove item', "error");
     }
-
-  } catch (error) {
-    showToast(error.response?.data?.message || 'Failed to remove item', "error");
   }
-}
-
 
   async function clearWishlist() {
-  if (!confirm('Are you sure you want to clear your entire wishlist?')) return;
+    if (!confirm('Are you sure you want to clear your entire wishlist?')) return;
 
-  try {
-    const { data } = await axios.delete('/wishlist/clear');
-    showToast(data.message, data.success ? "success" : "error");
-    setTimeout(() => window.location.reload(), 600);
-  } catch (error) {
-    showToast(error.response?.data?.message || 'Failed to clear wishlist', "error");
+    try {
+      const { data } = await axios.delete('/wishlist/clear');
+      showToast(data.message, data.success ? "success" : "error");
+      setTimeout(() => window.location.reload(), 600);
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Failed to clear wishlist', "error");
+    }
   }
-}
 
   async function moveToCart(variantId) {
-  try {
-    const { data } = await axios.post('/cart/add', { variantId, quantity: 1 });
+    try {
+      const { data } = await axios.post('/cart/add', { variantId, quantity: 1 });
 
-    showToast(data.message, data.success ? "success" : "error");
+      showToast(data.message, data.success ? "success" : "error");
 
-    if (data.success) {
-      setTimeout(() => window.location.reload(), 600);
+      if (data.success) {
+        setTimeout(() => window.location.reload(), 600);
+      }
+
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Failed to add to cart', "error");
     }
-
-  } catch (error) {
-    showToast(error.response?.data?.message || 'Failed to add to cart', "error");
   }
-}
-
 
   function changePage(page) {
     const url = new URL(window.location.href);
@@ -309,6 +318,3 @@
     window.location.href = url.toString();
   }
 </script>
-
-
-

@@ -133,8 +133,6 @@ button,
   font-weight: 600;
 }
 
-
-
 /* Inputs */
 .form-select {
   width: 200px;
@@ -142,7 +140,6 @@ button,
   border-radius: 8px;
   border: 1px solid #d4d4d8;
 }
-
 
 /* ==============================
    PAGE LAYOUT
@@ -287,6 +284,10 @@ button,
 .status-warning { background:#fbbf24; color:#000; }
 .status-info { background:#3b82f6; }
 .status-blocked { background:#444; }
+.status-delivered { background: #28a745; color: white; }
+.status-refunded { background: #20c997; color: white; }
+.status-paid { background: #28a745; color: white; }
+.status-failed { background: #dc2626; color: white; }
 
 /* ==============================
    TIMELINE
@@ -357,8 +358,6 @@ button,
   font-weight: 600;
 }
 
-
-
 /* Global spacing between texts */
 .card-body p,
 .card-body div,
@@ -366,7 +365,7 @@ button,
 .card-body span,
 .item-details p,
 .item-details div {
-  margin-bottom: 8px;   /* adjust as needed (8–12px looks good) */
+  margin-bottom: 8px;
 }
 
 /* Remove last unnecessary gap */
@@ -375,6 +374,7 @@ button,
 .card-body div:last-child {
   margin-bottom: 0;
 }
+
 /* Card */
 .card {
   background: #fff;
@@ -482,37 +482,9 @@ button,
   color: #444;
 }
 
-
-/* Status Badge */
-.status-badge {
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-  display: inline-block;
-  margin-left: 5px;
-}
-
-/* Badge Colors */
-.status-delivered { background: #28a745; color: white; }
-.status-processing { background: #007bff; color: white; }
-.status-shipping { background: #0dcaf0; color: #003b49; }
-.status-pending { background: #ffc107; color: #4a3a00; }
-.status-cancelled { background: #dc3545; color: white; }
-.status-returned { background: #6f42c1; color: white; }
-.status-refunded { background: #20c997; color: white; }
-
-/* Responsive */
-@media (max-width: 768px) {
-  .item-main-content {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
 /* ==============================
    ITEM LIST + PRICE UI (CLEAN + FINAL)
 ============================== */
-
 .items-list .item-card {
   display: flex;
   padding: 12px;
@@ -567,7 +539,7 @@ button,
 .item-price {
   display: flex;
   flex-direction: column;
-  align-items: flex-end; /* 👈 Everything RIGHT SIDE */
+  align-items: flex-end;
   justify-content: flex-end;
   min-width: 140px;
   text-align: right;
@@ -617,15 +589,437 @@ button,
   margin-top: -2px;
 }
 
+/* ==============================
+   CUSTOM CONFIRMATION MODAL
+============================== */
+.confirm-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.confirm-modal-overlay.show {
+  opacity: 1;
+}
+
+.confirm-modal {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 450px;
+  overflow: hidden;
+  transform: scale(0.9);
+  transition: transform 0.3s ease;
+}
+
+.confirm-modal-overlay.show .confirm-modal {
+  transform: scale(1);
+}
+
+.confirm-modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.confirm-modal-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.confirm-modal-body {
+  padding: 24px;
+}
+
+.confirm-modal-body p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #374151;
+}
+
+.confirm-modal-footer {
+  padding: 16px 24px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.btn-cancel,
+.btn-confirm {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.btn-cancel {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.btn-cancel:hover {
+  background: #d1d5db;
+}
+
+.btn-confirm {
+  background: #0066ff;
+  color: white;
+}
+
+.btn-confirm:hover {
+  background: #0052cc;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 102, 255, 0.3);
+}
+
+/* Animation for modal appearance */
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Alert boxes */
+.alert {
+  padding: 14px 18px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.alert-warning {
+  background: #fff7da;
+  border: 1px solid #ffcc00;
+  color: #856404;
+}
+
+.alert-info {
+  background: #e8f4ff;
+  border: 1px solid #3b82f6;
+  color: #1e40af;
+}
+
+.alert i {
+  font-size: 20px;
+}
+
+.alert-content strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.alert-content p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* Return/Approved sections */
+.return-request-section,
+.approved-return-section,
+.cancelled-section,
+.returned-section {
+  margin-top: 12px;
+  padding: 14px;
+  border-top: 2px solid #e5e7eb;
+  background: #f9fafb;
+  border-radius: 0 0 10px 10px;
+}
+
+.return-header,
+.approved-header,
+.cancelled-header,
+.returned-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  margin-bottom: 10px;
+  color: #111;
+}
+
+.return-reason,
+.approved-reason,
+.cancelled-reason,
+.returned-reason {
+  margin-bottom: 10px;
+}
+
+.return-reason label,
+.approved-reason label,
+.cancelled-reason label,
+.returned-reason label {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+  color: #666;
+}
+
+.return-reason p,
+.approved-reason p,
+.cancelled-reason p,
+.returned-reason p {
+  margin: 0;
+  color: #111;
+  font-size: 14px;
+}
+
+.return-date {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 12px;
+}
+
+.admin-note-input {
+  margin-bottom: 12px;
+}
+
+.admin-note-input label {
+  display: block;
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 6px;
+  color: #666;
+}
+
+.form-textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d4dbe5;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 14px;
+  resize: vertical;
+}
+
+.return-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-reject,
+.btn-approve,
+.btn-mark-returned {
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-reject {
+  background: #dc2626;
+  color: white;
+}
+
+.btn-reject:hover {
+  background: #b91c1c;
+}
+
+.btn-approve {
+  background: #16a34a;
+  color: white;
+}
+
+.btn-approve:hover {
+  background: #15803d;
+}
+
+.btn-mark-returned {
+  background: #0066ff;
+  color: white;
+  width: 100%;
+  justify-content: center;
+}
+
+.btn-mark-returned:hover {
+  background: #0052cc;
+}
+
+/* Info rows */
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-weight: 600;
+  color: #666;
+  font-size: 14px;
+}
+
+.info-value {
+  color: #111;
+  font-size: 14px;
+}
+
+.payment-method {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.address-type-badge {
+  background: #e5e7eb;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #111;
+}
+
+.address-content {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.address-name {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.address-phone {
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.address-line {
+  color: #444;
+}
+
+.payment-status-update,
+.status-update-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.status-update-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.status-note {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Order Summary */
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  font-size: 15px;
+}
+
+.summary-row.discount {
+  color: #16a34a;
+}
+
+.summary-row.total {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111;
+  padding-top: 12px;
+}
+
+.summary-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 12px 0;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+  
   .item-main-content {
     flex-direction: column;
     align-items: flex-start;
   }
+  
   .item-price {
     align-items: flex-start;
     text-align: left;
   }
-  .unit-prices { justify-content: flex-start; }
+  
+  .unit-prices { 
+    justify-content: flex-start; 
+  }
+  
+  .confirm-modal {
+    width: 95%;
+    max-width: none;
+  }
+  
+  .confirm-modal-header h3 {
+    font-size: 18px;
+  }
+  
+  .confirm-modal-body p {
+    font-size: 14px;
+  }
+  
+  .confirm-modal-footer {
+    flex-direction: column-reverse;
+  }
+  
+  .btn-cancel,
+  .btn-confirm {
+    width: 100%;
+  }
+  
+  .return-buttons {
+    flex-direction: column;
+  }
+  
+  .btn-reject,
+  .btn-approve {
+    width: 100%;
+    justify-content: center;
+  }
 }

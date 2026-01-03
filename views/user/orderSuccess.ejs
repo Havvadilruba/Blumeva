@@ -85,62 +85,63 @@
     </div>
 
     <!-- Order Summary Card -->
-    <div class="summary-card">
-      <div class="summary-header">
-        <i class="bi bi-calculator"></i>
-        <h2>Order Summary</h2>
-      </div>
+<div class="summary-card">
+  <div class="summary-header">
+    <i class="bi bi-calculator"></i>
+    <h2>Order Summary</h2>
+  </div>
 
-      <div class="summary-content">
-        <div class="summary-row">
-          <span class="summary-label">Subtotal</span>
-          <span class="summary-value">₹<%= order.subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2}) %></span>
-        </div>
-
-        <% if (order.discount > 0) { %>
-          <div class="summary-row discount-row">
-            <span class="summary-label">
-              <i class="bi bi-tag-fill"></i>
-              Discount
-            </span>
-            <span class="summary-value discount-value">-₹<%= order.discount.toLocaleString('en-IN', {minimumFractionDigits: 2}) %></span>
-          </div>
-        <% } %>
-        <% if (order.couponDiscount > 0) { %>
-          <div class="summary-row discount-row">
-            <span class="summary-label">
-              <i class="bi bi-ticket-detailed"></i> Coupon Discount
-            </span>
-            <span class="summary-value">-₹<%= order.couponDiscount.toLocaleString('en-IN') %></span>
-          </div>
-          <% } %>
-
-
-        <% if (order.tax > 0) { %>
-          <div class="summary-row">
-            <span class="summary-label">Tax (GST)</span>
-            <span class="summary-value">₹<%= order.tax.toLocaleString('en-IN', {minimumFractionDigits: 2}) %></span>
-          </div>
-        <% } %>
-
-        <div class="summary-row">
-          <span class="summary-label">Delivery Charges</span>
-          <span class="summary-value delivery-charge">
-            <%= order.deliveryCharge === 0 ? 
-              'FREE' : 
-              '₹' + order.deliveryCharge.toLocaleString('en-IN', {minimumFractionDigits: 2}) 
-            %>
-          </span>
-        </div>
-
-        <div class="summary-divider"></div>
-
-        <div class="summary-row summary-total">
-          <span class="summary-label">Total Amount</span>
-          <span class="summary-value total-amount">₹<%= order.finalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2}) %></span>
-        </div>
-      </div>
+  <div class="summary-content">
+    <div class="summary-row">
+      <span class="summary-label">Subtotal</span>
+      <span class="summary-value">
+        ₹<%= order.subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+      </span>
     </div>
+
+    <% if (order.discount > 0) { %>
+      <div class="summary-row discount-row">
+        <span class="summary-label">
+          <i class="bi bi-tag-fill"></i>
+          Discount
+        </span>
+        <span class="summary-value discount-value">
+          -₹<%= order.discount.toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+        </span>
+      </div>
+    <% } %>
+
+    <% if (order.couponDiscount > 0) { %>
+      <div class="summary-row discount-row">
+        <span class="summary-label">
+          <i class="bi bi-ticket-detailed"></i> Coupon Discount
+        </span>
+        <span class="summary-value">
+          -₹<%= order.couponDiscount.toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+        </span>
+      </div>
+    <% } %>
+
+    <div class="summary-row">
+      <span class="summary-label">Delivery Charges</span>
+      <span class="summary-value delivery-charge">
+        <%= order.deliveryCharge === 0
+          ? 'FREE'
+          : '₹' + order.deliveryCharge.toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+      </span>
+    </div>
+
+    <div class="summary-divider"></div>
+
+    <div class="summary-row summary-total">
+      <span class="summary-label">Total Amount</span>
+      <span class="summary-value total-amount">
+        ₹<%= order.finalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+      </span>
+    </div>
+  </div>
+</div>
+
 
     <!-- Payment & Shipping Info -->
     <div class="details-grid">

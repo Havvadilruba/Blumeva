@@ -5,6 +5,8 @@ import Product from "../model/productSchema.js";
 import Wishlist from "../model/wishlistSchema.js";
 import mongoose from "mongoose";
 
+import { getAppliedOffer } from "../helpers/offerHelper.js";
+
 export const getLandingPageData = async (userId) => {
 
   let wishlistVariantIds = [];
@@ -19,6 +21,7 @@ export const getLandingPageData = async (userId) => {
       );
     }
   }
+  
   const categories = await Category.find({ isListed: true })
     .sort({ createdAt: -1 })
     .limit(6);
@@ -27,61 +30,62 @@ export const getLandingPageData = async (userId) => {
     .sort({ createdAt: -1 })
     .limit(6);
 
- const latestProducts = await Product.aggregate([
-  // Product + Brand filter
-  {
-    $lookup: {
-      from: "brands",
-      foreignField: "_id",
-      localField: "brand",
-      as: "brand",
+  const latestProducts = await Product.aggregate([
+    // Brand filter
+    {
+      $lookup: {
+        from: "brands",
+        foreignField: "_id",
+        localField: "brand",
+        as: "brand",
+      },
     },
-  },
-  { $unwind: "$brand" },
-  {
-    $match: {
-      isBlocked: false,
-      "brand.status": true,
+    { $unwind: "$brand" },
+    {
+      $match: {
+        isBlocked: false,
+        "brand.status": true,
+      },
     },
-  },
 
-  // Category filter
-  {
-    $lookup: {
-      from: "categories",
-      localField: "category",
-      foreignField: "_id",
-      as: "category",
+    // Category filter
+    {
+      $lookup: {
+        from: "categories",
+        localField: "category",
+        foreignField: "_id",
+        as: "category",
+      },
     },
-  },
-  { $unwind: "$category" },
-  { $match: { "category.isListed": true } },
-
-  // Variant filter (min sale price in-stock)
-  {
-    $lookup: {
-      from: "variants",
-      let: { productId: "$_id" },
-      pipeline: [
-        {
-          $match: {
-            $expr: {
-              $and: [
-                { $eq: ["$productId", "$$productId"] },
-                { $eq: ["$isAvailable", true] },
-                { $gte: ["$stock", 1] }
-              ]
+    { $unwind: "$category" },
+    { $match: { "category.isListed": true } },
+    
+    // Get cheapest in-stock variant
+    {
+      $lookup: {
+        from: "variants",
+        let: { productId: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$productId", "$$productId"] },
+                  { $gte: ["$stock", 1] }
+                ]
+              }
             }
-          }
-        },
-        { $sort: { salePrice: 1 } },
-        { $limit: 1 }
-      ],
-      as: "variant",
+          },
+          { $sort: { salePrice: 1 } },
+          { $limit: 1 }
+        ],
+        as: "variant",
+      },
     },
-  },
-  { $unwind: "$variant" },
-   {
+    { $unwind: "$variant" },
+    
+    // Add wishlist status
+    {
       $addFields: {
         isInWishlist: {
           $in: [
@@ -92,131 +96,87 @@ export const getLandingPageData = async (userId) => {
       }
     },
 
-  // Product Offer
-  {
-    $lookup: {
-      from: "offers",
-      let: {
-        productId: "$_id",
-        today: new Date(),
-        salePrice: "$variant.salePrice",
-      },
-      pipeline: [
-        {
-          $match: {
-            $expr: {
-              $and: [
-                { $eq: ["$offerType", "product"] },
-                { $in: ["$$productId", "$productID"] },
-                { $lte: ["$startDate", "$$today"] },
-                { $gte: ["$endDate", "$$today"] },
-                { $eq: ["$isActive", true] }
-              ]
-            }
-          }
+    // Product Offer - Just fetch raw data
+    {
+      $lookup: {
+        from: "offers",
+        let: {
+          productId: "$_id",
+          today: new Date(),
         },
-        {
-          $project: {
-            _id: 0,
-            offer: {
-              $cond: {
-                if: { $eq: ["$discountType", "percentage"] },
-                then: { $multiply: ["$$salePrice", "$discountValue", 0.01] },
-                else: "$discountValue"
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$offerType", "product"] },
+                  { $in: ["$$productId", "$productID"] },
+                  { $lte: ["$startDate", "$$today"] },
+                  { $gte: ["$endDate", "$$today"] },
+                  { $eq: ["$isActive", true] }
+                ]
               }
             }
           }
-        },
-        { $sort: { offer: -1 } },
-        { $limit: 1 }
-      ],
-      as: "productOffer"
-    }
-  },
-  { $unwind: { path: "$productOffer", preserveNullAndEmptyArrays: true } },
+        ],
+        as: "productOffer"
+      }
+    },
 
-  // Category Offer
-  {
-    $lookup: {
-      from: "offers",
-      let: {
-        categoryId: "$category._id",
-        today: new Date(),
-        salePrice: "$variant.salePrice",
-      },
-      pipeline: [
-        {
-          $match: {
-            $expr: {
-              $and: [
-                { $eq: ["$offerType", "category"] },
-                { $eq: ["$$categoryId", "$categoryID"] },
-                { $lte: ["$startDate", "$$today"] },
-                { $gte: ["$endDate", "$$today"] },
-                { $eq: ["$isActive", true] }
-              ]
-            }
-          }
+    // Category Offer - Just fetch raw data
+    {
+      $lookup: {
+        from: "offers",
+        let: {
+          categoryId: "$category._id",
+          today: new Date(),
         },
-        {
-          $project: {
-            _id: 0,
-            offer: {
-              $cond: {
-                if: { $eq: ["$discountType", "percentage"] },
-                then: { $multiply: ["$$salePrice", "$discountValue", 0.01] },
-                else: "$discountValue"
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$offerType", "category"] },
+                  { $eq: ["$$categoryId", "$categoryID"] },
+                  { $lte: ["$startDate", "$$today"] },
+                  { $gte: ["$endDate", "$$today"] },
+                  { $eq: ["$isActive", true] }
+                ]
               }
             }
           }
-        },
-        { $sort: { offer: -1 } },
-        { $limit: 1 }
-      ],
-      as: "categoryOffer"
-    }
-  },
-  { $unwind: { path: "$categoryOffer", preserveNullAndEmptyArrays: true } },
-
-  // Final Offer (EXACT reference style)
-  {
-    $addFields: {
-      offer: {
-        $ceil: {
-          $cond: {
-            if: { $gte: ["$categoryOffer.offer", "$productOffer.offer"] },
-            then: "$categoryOffer.offer",
-            else: "$productOffer.offer"
-          }
-        }
+        ],
+        as: "categoryOffer"
+      }
+    },
+    
+    { $sort: { createdAt: -1 } },
+    { $limit: 5 },
+    
+    {
+      $project: {
+        _id: 1,
+        name: 1,
+        "brand.name": 1,
+        "category.name": 1,
+        avgRating: 1,
+        images: 1,
+        variantId: "$variant._id",
+        salePrice: "$variant.salePrice",
+        regularPrice: "$variant.regularPrice",
+        stock: "$variant.stock",
+        isInWishlist: 1,
+        productOffer: 1,
+        categoryOffer: 1
       }
     }
-  },
+  ]);
 
-  // Sort newest
-  { $sort: { createdAt: -1 } },
-  { $limit: 5 },
+  // 🔥 Calculate discount for each product using helper function
+  const productsWithOffers = latestProducts.map(product => ({
+    ...product,
+    discountAmount: getAppliedOffer(product, product.salePrice)
+  }));
 
-  // Final response (exact UI fields)
-  {
-    $project: {
-      _id: 1,
-      name: 1,
-      "brand.name": 1,
-      "category.name": 1,
-      avgRating: 1,
-
-      images: 1,
-      variantId: "$variant._id",
-      salePrice: "$variant.salePrice",
-      regularPrice: "$variant.regularPrice",
-      stock: "$variant.stock",
-
-      discountAmount: "$offer",
-      isInWishlist: 1
-    }
-  }
-]);
-
-  return { categories, brands, latestProducts };
+  return { categories, brands, latestProducts: productsWithOffers };
 };

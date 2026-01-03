@@ -10,187 +10,210 @@ document.addEventListener("DOMContentLoaded", function () {
   const priceSection = document.getElementById("priceSection");
   const stockInfo = document.getElementById("stockInfo");
   const addCartBtn = document.querySelector(".add-cart");
-  const wishlistBtnIcon = document.querySelector(".wishlist-btn i");
-  const productId = window.productId; // Set in EJS
+  const wishlistBtn = document.querySelector(".wishlist-btn");
+  const productId = window.productId;
 
-  // Convert dataset values into number safely
   const num = (el, key) => Number(el.dataset[key]) || 0;
 
+  /* -----------------------------------------------------
+     OFFER CALCULATION
+  ------------------------------------------------------ */
+  function calculateOffer(salePrice) {
+    let maxOffer = 0;
+
+    const applyOffers = (offers) => {
+      for (let offer of offers || []) {
+        let amount = 0;
+        if (offer.discountType === "percentage") {
+          amount = salePrice * offer.discountValue * 0.01;
+        } else if (offer.discountValue < salePrice * 0.9) {
+          amount = offer.discountValue;
+        }
+        maxOffer = Math.max(maxOffer, amount);
+      }
+    };
+
+    applyOffers(window.productOffers);
+    applyOffers(window.categoryOffers);
+
+    return Math.ceil(maxOffer);
+  }
 
   /* -----------------------------------------------------
-     WISHLIST HANDLERS
+     UPDATE WISHLIST ICON
   ------------------------------------------------------ */
 
-  // Toggle wishlist item
-  window.toggleWishlist = async function (event, variantId) {
+  /* -----------------------------------------------------
+     TOGGLE WISHLIST
+  ------------------------------------------------------ */
+  window.toggleWishlist = async function (event) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  const btn = event.currentTarget;
+  const icon = btn.querySelector("i");
+
+  const activeVariant = document.querySelector(".variant-badge.active");
+  if (!activeVariant) {
+    showToast("Please select a variant", "error");
+    return;
+  }
+
+  const variantId = activeVariant.dataset.variantid;
+  btn.disabled = true;
+
+  try {
+    const res = await axios.post("/wishlist/toggle", { variantId });
+    const data = res.data;
+
+    if (!data.success) {
+      showToast(data.message || "Login required", "error");
+      return;
+    }
+
+    if (data.action === "added") {
+      icon.classList.replace("fa-regular", "fa-solid");
+      btn.classList.add("active");
+      showToast("Added to Wishlist ❤️", "success");
+    } else {
+      icon.classList.replace("fa-solid", "fa-regular");
+      btn.classList.remove("active");
+      showToast("Removed from Wishlist", "success");
+    }
+
+  } catch (error) {
+    if (error.response?.status === 401) {
+      showToast("Please login first", "error");
+    } else {
+      showToast("Wishlist failed", "error");
+    }
+  } finally {
+    btn.disabled = false;
+  }
+};
+
+  /* -----------------------------------------------------
+     ADD TO CART
+  ------------------------------------------------------ */
+  window.addToCart = async function (event) {
     event.stopPropagation();
+    event.preventDefault();
+
+    const activeVariant = document.querySelector(".variant-badge.active");
+    if (!activeVariant) {
+      showToast("Please select a variant", "error");
+      return;
+    }
+
+    const variantId = activeVariant.dataset.variantid;
 
     try {
-      const res = await axios.post("/wishlist/toggle", { variantId });
+      const res = await axios.post("/cart/add", { variantId, quantity: 1 });
       const data = res.data;
 
-      if (!data.success) {
-        showToast(data.message || "Login required", "error");
-        return;
-      }
-
-      if (data.action === "added") {
-        wishlistBtnIcon.classList.remove("far");
-        wishlistBtnIcon.classList.add("fas");
-        showToast("Added to Wishlist ❤️", "success");
+      if (data.success) {
+        showToast("Added to Cart 🛒", "success");
+        if (typeof updateCartCount === "function") updateCartCount();
       } else {
-        wishlistBtnIcon.classList.remove("fas");
-        wishlistBtnIcon.classList.add("far");
-        showToast("Removed from Wishlist", "info");
+        showToast(data.message || "Failed to add to cart", "error");
       }
 
     } catch (error) {
       if (error.response?.status === 401) {
         showToast("Please login first", "error");
-        return;
+      } else {
+        showToast("Something went wrong", "error");
       }
-      showToast("Something went wrong", "error");
     }
   };
 
-
-  // Check wishlist status when switching variant
-  async function updateWishlistIcon(variantId) {
-    if (!wishlistBtnIcon) return;
-
-    try {
-      const res = await axios.get(`/wishlist/check/${productId}/${variantId}`);
-      const { inWishlist } = res.data;
-
-      wishlistBtnIcon.classList.toggle("fas", inWishlist);
-      wishlistBtnIcon.classList.toggle("far", !inWishlist);
-
-    } catch {
-      // Logged out or error -> default outline
-      wishlistBtnIcon.classList.remove("fas");
-      wishlistBtnIcon.classList.add("far");
-    }
-  }
-
-
   /* -----------------------------------------------------
-     PRICE & STOCK UPDATE
+     PRICE & STOCK
   ------------------------------------------------------ */
-
   function updatePrice() {
     const active = document.querySelector(".variant-badge.active");
     if (!active) return;
 
     const sale = num(active, "saleprice");
     const reg = num(active, "regularprice");
-    const discount = num(active, "discount");
+    const offer = calculateOffer(sale);
 
-    const current = sale - discount;
-    const hasDiscount = current < reg;
-    const percent = hasDiscount
-      ? Math.round(((reg - current) / reg) * 100)
-      : 0;
+    const finalPrice = Math.max(0, sale - offer);
+    const discount = reg - finalPrice;
+    const percent = discount > 0 ? Math.round((discount / reg) * 100) : 0;
 
     priceSection.innerHTML = `
-      <span class="sale">₹${current.toLocaleString("en-IN")}</span>
+      <span class="sale">₹${finalPrice.toLocaleString("en-IN")}</span>
       ${
-        hasDiscount
+        discount > 0
           ? `<span class="regular">₹${reg.toLocaleString("en-IN")}</span>
              <span class="discount">${percent}% OFF</span>
-             <p class="save-msg">Save ₹${(reg - current).toLocaleString("en-IN")}</p>`
+             <p class="save-msg">Save ₹${discount.toLocaleString("en-IN")}</p>`
           : ""
       }
     `;
   }
 
   function updateStock(stock) {
+    if (!addCartBtn) return;
+
     if (stock <= 0) {
       stockInfo.innerHTML = `<div class="stock out-stock-msg"><i class="fa-solid fa-circle-exclamation"></i> Out of Stock</div>`;
       addCartBtn.disabled = true;
-    } else if (stock < 20) {
-      stockInfo.innerHTML = `<div class="stock low-stock-msg"><i class="fa-solid fa-clock"></i> Only ${stock} left!</div>`;
-      addCartBtn.disabled = false;
+      addCartBtn.textContent = "Out of Stock";
     } else {
-      stockInfo.innerHTML = `<div class="stock in-stock-msg"><i class="fa-solid fa-check-circle"></i> In Stock</div>`;
+      stockInfo.innerHTML =
+        stock < 20
+          ? `<div class="stock low-stock-msg"><i class="fa-solid fa-clock"></i> Only ${stock} left!</div>`
+          : `<div class="stock in-stock-msg"><i class="fa-solid fa-check-circle"></i> In Stock</div>`;
       addCartBtn.disabled = false;
+      addCartBtn.textContent = "Add to Cart";
     }
   }
 
-
   /* -----------------------------------------------------
-     VARIANT CHANGE HANDLER
+     VARIANT CHANGE
   ------------------------------------------------------ */
+variantBadges.forEach(badge => {
+  badge.addEventListener("click", () => {
+    variantBadges.forEach(b => b.classList.remove("active"));
+    badge.classList.add("active");
 
-  variantBadges.forEach(badge => {
-    badge.addEventListener("click", () => {
-      variantBadges.forEach(b => b.classList.remove("active"));
-      badge.classList.add("active");
+    updatePrice();
+    updateStock(num(badge, "stock"));
 
-      const variantId = badge.dataset.variantid;
-      const stock = num(badge, "stock");
+    // 🔥 Sync wishlist icon like product card
+    const isInWishlist = badge.dataset.inwishlist === "true";
+    const icon = document.querySelector(".wishlist-btn i");
+    const btn = document.querySelector(".wishlist-btn");
 
-      addCartBtn.dataset.variantid = variantId;
-
-      updatePrice();
-      updateStock(stock);
-      updateWishlistIcon(variantId);
-    });
+    if (isInWishlist) {
+      icon.classList.replace("fa-regular", "fa-solid");
+      btn.classList.add("active");
+    } else {
+      icon.classList.replace("fa-solid", "fa-regular");
+      btn.classList.remove("active");
+    }
   });
+});
 
 
   /* -----------------------------------------------------
-     INITIAL LOAD SETUP
+     INITIAL LOAD
   ------------------------------------------------------ */
-
   const firstActive =
     document.querySelector(".variant-badge.active") ||
     document.querySelector(".variant-badge");
 
   if (firstActive) {
     firstActive.classList.add("active");
-    addCartBtn.dataset.variantid = firstActive.dataset.variantid;
     updatePrice();
     updateStock(num(firstActive, "stock"));
-    updateWishlistIcon(firstActive.dataset.variantid);
+    
+    // Get variant ID and check wishlist status
+    const variantId = firstActive.dataset.variantid;
+    if (variantId) {
+      updateWishlistIcon(variantId);
+    }
   }
-
-
-  /* -----------------------------------------------------
-     IMAGE ZOOM FEATURE
-  ------------------------------------------------------ */
-
-  const container = document.getElementById("imageContainer");
-  const img = document.getElementById("mainImage");
-  const lens = document.getElementById("zoomLens");
-
-  function initZoom() {
-    const zoomScale = 2.2;
-
-    container.addEventListener("mouseenter", () => {
-      lens.style.display = "block";
-      img.style.transform = `scale(${zoomScale})`;
-    });
-
-    container.addEventListener("mouseleave", () => {
-      lens.style.display = "none";
-      img.style.transform = "scale(1)";
-      img.style.transformOrigin = "center center";
-    });
-
-    container.addEventListener("mousemove", (e) => {
-      const rect = container.getBoundingClientRect();
-      const x = e.clientX - rect.left - lens.offsetWidth / 2;
-      const y = e.clientY - rect.top - lens.offsetHeight / 2;
-
-      lens.style.left = `${Math.max(0, Math.min(x, rect.width - lens.offsetWidth))}px`;
-      lens.style.top = `${Math.max(0, Math.min(y, rect.height - lens.offsetHeight))}px`;
-
-      const originX = ((e.clientX - rect.left) / rect.width) * 100;
-      const originY = ((e.clientY - rect.top) / rect.height) * 100;
-      img.style.transformOrigin = `${originX}% ${originY}%`;
-    });
-  }
-
-  img.onload = initZoom;
 });
-

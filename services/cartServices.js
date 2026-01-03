@@ -19,7 +19,7 @@ export const findCartById = findCartByIdRepo;
 export const removeCartItem = removeCartItemRepo;
 
 export const calculateCartTotals = (items) => {
-  let subtotal = 0;
+  let subtotal = 0;   // ✅ Regular price sum
   let discount = 0;
 
   items.forEach(item => {
@@ -30,29 +30,31 @@ export const calculateCartTotals = (items) => {
     const qty = item.quantity || 1;
 
     if (stock > 0) {
-      const basePrice = sale > 0 ? sale : regular;
-      let currentPrice = basePrice - offer;
+      // ✅ Subtotal always uses regular price
+      subtotal += regular * qty;
 
+      // Base price (sale if exists, else regular)
+      const basePrice = sale > 0 ? sale : regular;
+
+      // Final selling price after offer
+      let currentPrice = basePrice - offer;
       if (currentPrice < 0) currentPrice = 0;
 
-      subtotal += currentPrice * qty;
-
-      let perUnitDiscount = 0;
-      if (regular > 0 && regular > currentPrice) {
-        perUnitDiscount = regular - currentPrice;
-      } else if (basePrice > currentPrice) {
-        perUnitDiscount = basePrice - currentPrice;
-      }
+      // Discount per unit
+      const perUnitDiscount = Math.max(regular - currentPrice, 0);
 
       discount += perUnitDiscount * qty;
     }
   });
 
-  const tax = Math.round(subtotal * 0.05);
   const deliveryCharge = 0;
-  const total = subtotal + tax + deliveryCharge;
 
-  return { subtotal, discount, tax, deliveryCharge, total };
+  const total = subtotal - discount + deliveryCharge;
+
+  return {
+    subtotal,
+    discount,
+    deliveryCharge,
+    total
+  };
 };
-
-

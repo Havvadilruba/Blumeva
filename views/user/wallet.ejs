@@ -83,88 +83,120 @@
               <p class="header-subtitle">Your wallet transactions</p>
             </div>
 
-            <!-- Filter Buttons -->
-            <div class="filter-buttons">
-              <button onclick="filterTransactions('')" class="filter-btn <%= !query.type ? 'active' : '' %>">All</button>
-              <button onclick="filterTransactions('credit')" class="filter-btn <%= query.type === 'credit' ? 'active' : '' %>">Credits</button>
-              <button onclick="filterTransactions('debit')" class="filter-btn <%= query.type === 'debit' ? 'active' : '' %>">Debits</button>
-            </div>
+            <!-- Filter Buttons - ADD REFUND FILTER -->
+<div class="filter-buttons">
+  <button onclick="filterTransactions('')" class="filter-btn <%= !query.type ? 'active' : '' %>">
+    All
+  </button>
+  <button onclick="filterTransactions('credit')" class="filter-btn <%= query.type === 'credit' ? 'active' : '' %>">
+    Credits
+  </button>
+  <button onclick="filterTransactions('debit')" class="filter-btn <%= query.type === 'debit' ? 'active' : '' %>">
+    Debits
+  </button>
+  <button onclick="filterTransactions('refund')" class="filter-btn <%= query.type === 'refund' ? 'active' : '' %>">
+    Refunds
+  </button>
+</div>
+
+<!-- Transactions List - UPDATED LOGIC -->
+<div class="transactions-list">
+  <% if (transactions && transactions.length > 0) { %>
+    <% transactions.forEach(t => { 
+        const tType = t.type?.toLowerCase();
+        
+        // Determine if it's a credit type (includes refund now)
+        const isCredit = (tType === "credit" || tType === "referral" || tType === "refund");
+        
+        // Get appropriate icon and title based on type
+        let iconClass = "bi-arrow-up-circle";
+        let title = "Money Deducted";
+        
+        if (tType === "credit") {
+          iconClass = "bi-arrow-down-circle";
+          title = "Money Added";
+        } else if (tType === "refund") {
+          iconClass = "bi-arrow-return-left";
+          title = "Refund Received";
+        } else if (tType === "referral") {
+          iconClass = "bi-gift";
+          title = "Referral Bonus";
+        } else if (tType === "debit") {
+          iconClass = "bi-arrow-up-circle";
+          title = "Payment Made";
+        }
+    %>
+
+    <div class="transaction-item">
+      <div class="transaction-content">
+
+        <!-- Left -->
+        <div class="transaction-left">
+
+          <!-- Icon -->
+          <div class="transaction-icon <%= isCredit ? 'icon-credit' : 'icon-debit' %>">
+            <i class="bi <%= iconClass %>"></i>
           </div>
 
-          <!-- Transactions -->
-          <div class="transactions-list">
+          <!-- Details -->
+          <div class="transaction-details">
+            <h3 class="transaction-title">
+              <%= t.note || title %>
+            </h3>
 
-            <% if (transactions && transactions.length > 0) { %>
-              <% transactions.forEach(t => { 
-                  const tType = t.type?.toLowerCase();
-                  const isCredit = (tType === "credit" || tType === "referral");
-              %>
+            <p class="transaction-date">
+              <i class="bi bi-calendar"></i>
+              <%= new Date(t.createdAt).toLocaleString("en-IN", {
+                    day:"numeric", month:"short", year:"numeric",
+                    hour:"2-digit", minute:"2-digit"
+              }) %>
+            </p>
 
-              <div class="transaction-item">
-                <div class="transaction-content">
-
-                  <!-- Left -->
-                  <div class="transaction-left">
-
-                    <!-- Icon -->
-                    <div class="transaction-icon <%= isCredit ? 'icon-credit' : 'icon-debit' %>">
-                      <i class="bi <%= isCredit ? 'bi-arrow-down-circle' : 'bi-arrow-up-circle' %>"></i>
-                    </div>
-
-                    <!-- Details -->
-                    <div class="transaction-details">
-                      <h3 class="transaction-title">
-                        <%= t.note || (isCredit ? "Money Added" : "Money Deducted") %>
-                      </h3>
-
-                      <p class="transaction-date">
-                        <i class="bi bi-calendar"></i>
-                        <%= new Date(t.createdAt).toLocaleString("en-IN", {
-                              day:"numeric", month:"short", year:"numeric",
-                              hour:"2-digit", minute:"2-digit"
-                        }) %>
-                      </p>
-
-                      <% if (t.razorpayPaymentId || t.referenceId) { %>
-                        <p class="payment-id">ID: <%= t.razorpayPaymentId || t.referenceId %></p>
-                      <% } %>
-                    </div>
-
-                  </div>
-
-                  <!-- Right -->
-                  <div class="transaction-right">
-                    <p class="transaction-amount <%= isCredit ? 'amount-credit' : 'amount-debit' %>">
-                      <%= isCredit ? '+' : '-' %>
-                      ₹<%= Number(t.amount).toLocaleString("en-IN") %>
-                    </p>
-
-                    <p class="balance-after">
-                      Balance: ₹<%= Number(t.balanceAfter).toLocaleString("en-IN") %>
-                    </p>
-                  </div>
-
-                </div>
-              </div>
-
-              <% }) %>
-
-            <% } else { %>
-
-              <!-- Empty State -->
-              <div class="empty-state">
-                <div class="empty-icon"><i class="bi bi-receipt"></i></div>
-                <h3>No Transactions Yet</h3>
-                <p>Your transaction history will appear here.</p>
-
-                <button onclick="openAddMoneyModal()" class="btn-empty-state">
-                  <i class="bi bi-plus-circle"></i> Add Money
-                </button>
-              </div>
-
+            <% if (t.razorpayPaymentId || t.referenceId) { %>
+              <p class="payment-id">
+                <% if (tType === 'refund') { %>
+                  Order ID: <%= t.referenceId %>
+                <% } else { %>
+                  ID: <%= t.razorpayPaymentId || t.referenceId %>
+                <% } %>
+              </p>
             <% } %>
-
           </div>
+
+        </div>
+
+        <!-- Right -->
+        <div class="transaction-right">
+          <p class="transaction-amount <%= isCredit ? 'amount-credit' : 'amount-debit' %>">
+            <%= isCredit ? '+' : '-' %>
+            ₹<%= Number(t.amount).toLocaleString("en-IN") %>
+          </p>
+
+          <p class="balance-after">
+            Balance: ₹<%= Number(t.balanceAfter).toLocaleString("en-IN") %>
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <% }) %>
+
+  <% } else { %>
+
+    <!-- Empty State -->
+    <div class="empty-state">
+      <div class="empty-icon"><i class="bi bi-receipt"></i></div>
+      <h3>No Transactions Yet</h3>
+      <p>Your transaction history will appear here.</p>
+
+      <button onclick="openAddMoneyModal()" class="btn-empty-state">
+        <i class="bi bi-plus-circle"></i> Add Money
+      </button>
+    </div>
+
+  <% } %>
+</div>
 
           <!-- Pagination -->
           <% if (transactions && totalPages > 1) { %>

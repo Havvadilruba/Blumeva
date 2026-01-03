@@ -56,19 +56,25 @@ export const listProducts = async (req, res) => {
 };
 
 
-// Product Detail
 export const loadProductDetail = async (req, res) => {
-  const result = await getProductDetail(req.params.id);
+  const userId = req.session?.user?._id || req.user?._id; // Get logged-in user ID
+  const result = await getProductDetail(req.params.id, userId);
+  
   if (!result) return res.redirect("/products");
+
+  const { product, variant, offer, isInWishlist } = result;
 
   res.render("user/product-detail", {
     layout: "layouts/user",
-    title: `${result.product.name} | Blumeva`,
+    title: `${product.name} | Blumeva`,
     pageCSS: "/style/user/product-detail.css",
-    product: result.product,
-    variant: result.variant,
+    product,
+    variant,
+    offer,
+    isInWishlist,
   });
 };
+
 
 
 // Page not found

@@ -223,7 +223,5 @@ editForm.addEventListener("submit", async (e) => {
     submitBtn.disabled = false;
     submitBtn.textContent = "Update Product";
   }
-});
-
-  
+}); 
 });

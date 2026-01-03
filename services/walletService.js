@@ -17,12 +17,18 @@ export const loadMyWalletService = async (userId, { page, type, limit }) => {
   let wallet = await findWalletByUserId(userId);
   if (!wallet) wallet = await createWallet(userId);
 
-  // fetch transactions from WalletLedger
+  // refund filter
   const filter = { userId };
-  if (type) filter.type = type.toUpperCase();
-  else filter.type = { $in: ["CREDIT", "DEBIT", "REFERRAL"] };
+  
+  if (type) {
+    const typeUpper = type.toUpperCase();
+    filter.type = typeUpper;
+  } else {
+    // Show all transaction types (including REFUND)
+    filter.type = { $in: ["CREDIT", "DEBIT", "REFUND", "REFERRAL"] };
+  }
+  
   const totalDocuments = await findFilteredTransationCount(filter);
-
   const transactions = await findTransations(filter, page, limit);
 
   return { user, wallet, transactions, totalDocuments };
@@ -56,8 +62,6 @@ export const addMoneyService = async (userId, amount) => {
   };
 };
 
-
-
 export const verifyPaymentService = async (data, userId) => {
   const session = await mongoose.startSession();
   try {
@@ -65,7 +69,7 @@ export const verifyPaymentService = async (data, userId) => {
     const { error } = razorpayPaymentValidation.validate(data);
     if (error) {
       throw {
-        status: 400,   // BAD_REQUEST
+        status: 400,
         message: error.details[0].message,
       };
     }
@@ -84,7 +88,7 @@ export const verifyPaymentService = async (data, userId) => {
 
     if (expectedSignature !== razorpay_signature) {
       throw {
-        status: 406,   // NOT_ACCEPTABLE
+        status: 406,
         message: "Payment verification failed",
       };
     }
@@ -98,7 +102,7 @@ export const verifyPaymentService = async (data, userId) => {
 
     if (duplicate) {
       return {
-        status: 208,   // ALREADY_REPORTED
+        status: 208,
         success: true,
         message: "Payment already processed",
       };
@@ -125,13 +129,13 @@ export const verifyPaymentService = async (data, userId) => {
     };
 
     await createLedgerEntry(entry, session);
-
+    await updateUserWalletBalance(userId, wallet.balance, session);
 
     await session.commitTransaction();
     session.endSession();
 
     return {
-      status: 202,   // ACCEPTED
+      status: 202,
       success: true,
       message: "Wallet credited successfully",
       newBalance: wallet.balance,
@@ -141,7 +145,7 @@ export const verifyPaymentService = async (data, userId) => {
     session.endSession();
 
     return {
-      status: 404,   // NOT_FOUND
+      status: 404,
       success: false,
       message: error.message,
     };

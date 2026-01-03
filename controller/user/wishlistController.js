@@ -19,6 +19,7 @@ export const loadWishlist = async (req, res) => {
       layout: "layouts/user",
       title: "My Wishlist | Blumeva",
       pageCSS: "/style/user/wishlist.css",
+       activePage: "wishlist",
       ...data
     });
 

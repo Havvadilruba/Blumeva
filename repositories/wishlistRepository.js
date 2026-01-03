@@ -1,19 +1,16 @@
 import mongoose from "mongoose";
 import Wishlist from "../model/wishlistSchema.js";
+import { getAppliedOffer } from "../helpers/offerHelper.js";
 
-
-
-export const fetchWishlistItems = (userId, limit, skip) => {
-  return Wishlist.aggregate([
+export const fetchWishlistItems = async (userId, limit, skip) => {
+  const result = await Wishlist.aggregate([
     { $match: { userId: new mongoose.Types.ObjectId(userId) } },
 
-    // Slice only needed data → Performance!
     { $project: { items: { $slice: ["$items", skip, limit] } } },
 
-    // Item level processing
+
     { $unwind: "$items" },
 
-    // Lookup Variant
     {
       $lookup: {
         from: "variants",
@@ -62,6 +59,60 @@ export const fetchWishlistItems = (userId, limit, skip) => {
     { $unwind: "$category" },
     { $match: { "category.isListed": true } },
 
+    
+    {
+      $lookup: {
+        from: "offers",
+        let: {
+          productId: "$product._id",
+          today: new Date(),
+        },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$offerType", "product"] },
+                  { $in: ["$$productId", "$productID"] },
+                  { $lte: ["$startDate", "$$today"] },
+                  { $gte: ["$endDate", "$$today"] },
+                  { $eq: ["$isActive", true] }
+                ]
+              }
+            }
+          },
+        ],
+        as: "productOffer"
+      }
+    },
+
+   
+    {
+      $lookup: {
+        from: "offers",
+        let: {
+          categoryId: "$category._id",
+          today: new Date(),
+        },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$offerType", "category"] },
+                  { $eq: ["$$categoryId", "$categoryID"] },
+                  { $lte: ["$startDate", "$$today"] },
+                  { $gte: ["$endDate", "$$today"] },
+                  { $eq: ["$isActive", true] }
+                ]
+              }
+            }
+          },
+        ],
+        as: "categoryOffer"
+      }
+    },
+
     // Final result shaping
     {
       $project: {
@@ -71,7 +122,9 @@ export const fetchWishlistItems = (userId, limit, skip) => {
           variant: "$variant",
           brand: "$brand",
           category: "$category",
-          addedAt: "$items.addedAt"
+          addedAt: "$items.addedAt",
+          productOffer: "$productOffer",   
+          categoryOffer: "$categoryOffer"  
         }
       }
     },
@@ -84,8 +137,17 @@ export const fetchWishlistItems = (userId, limit, skip) => {
       }
     }
   ]);
-};
 
+
+  if (result.length > 0 && result[0].items) {
+    result[0].items = result[0].items.map(item => ({
+      ...item,
+      discountAmount: getAppliedOffer(item, item.variant.salePrice)
+    }));
+  }
+
+  return result;
+};
 
 export const getWishlistItemsCount = async (userId) => {
   const result = await Wishlist.aggregate([
@@ -96,8 +158,6 @@ export const getWishlistItemsCount = async (userId) => {
   return result[0]?.totalItems || 0;
 };
 
-
-
 // Add item
 export const createWishlistItem = (userId, productId, variantId) => {
   return Wishlist.findOneAndUpdate(
@@ -106,7 +166,6 @@ export const createWishlistItem = (userId, productId, variantId) => {
     { upsert: true, new: true }
   );
 };
-
 
 // Remove item
 export const removeWishlistItem = (userId, productId, variantId) => {
@@ -117,8 +176,7 @@ export const removeWishlistItem = (userId, productId, variantId) => {
   );
 };
 
-
-// 👉 Missing export added back
+// Check if item is in wishlist
 export const checkInWishlist = (userId, productId, variantId) => {
   return Wishlist.findOne({
     userId,
@@ -126,10 +184,7 @@ export const checkInWishlist = (userId, productId, variantId) => {
   });
 };
 
-
 // Clear wishlist
 export const clearWishlist = (userId) => {
   return Wishlist.deleteOne({ userId });
 };
-
-

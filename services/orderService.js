@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import {
   findOrders,
   countOrders,
@@ -7,6 +8,9 @@ import {
   updateOrder,
   restoreVariantStock
 } from "../repositories/orderRepository.js";
+import Wallet from "../model/walletSchema.js";
+import { createLedgerEntry } from "../repositories/walletLedgerRepository.js";
+import { updateUserWalletBalance } from "../repositories/userRepository.js";
 
 export const getOrderListService = async (search, statusFilter, paymentFilter, page, limit) => {
   let query = {};
@@ -132,7 +136,15 @@ export const updateOrderStatusService = async (id, status) => {
     }
   });
 
-  if (status === "Delivered") order.deliveredDate = now;
+  if (status === "Delivered") {
+  order.deliveredDate = now;
+
+  
+  if (order.paymentStatus === "Pending") {
+    order.paymentStatus = "Paid";
+  }
+}
+
 
   order.markModified("statusTimeline");
   order.markModified("orderedItems");
@@ -172,30 +184,129 @@ export const handleReturnRequestService = async (id, itemId, action, adminNote) 
   return { success: true, order };
 };
 
+// ✅ FIXED: Added refund functionality
 export const markItemReturnedService = async (id, itemId) => {
-  const order = await findRawOrderById(id).populate("orderedItems.variantId");
-  if (!order) return { success: false, message: "Order not found" };
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-  const item = order.orderedItems.id(itemId);
-  if (!item) return { success: false, message: "Item not found" };
+  try {
+    const order = await findRawOrderById(id)
+      .populate("orderedItems.variantId")
+      .session(session);
 
-  if (item.itemStatus !== "ReturnApproved") {
-    return { success: false, message: "Only approved returns allowed" };
+    if (!order) {
+      await session.abortTransaction();
+      return { success: false, message: "Order not found" };
+    }
+
+    const item = order.orderedItems.id(itemId);
+    if (!item) {
+      await session.abortTransaction();
+      return { success: false, message: "Item not found" };
+    }
+
+    if (item.itemStatus !== "ReturnApproved") {
+      await session.abortTransaction();
+      return { success: false, message: "Only approved returns can be marked as returned" };
+    }
+
+    const now = new Date();
+
+    // ✅ 1. Restore stock
+    if (item.variantId && item.variantId._id) {
+      await restoreVariantStock(item.variantId._id, item.quantity, session);
+    }
+
+    // ✅ 2. Update item status
+    item.itemStatus = "Returned";
+    if (!item.itemTimeline) item.itemTimeline = {};
+    item.itemTimeline.returnedAt = now;
+
+    // ✅ 3. Calculate accurate refund
+    const salePrice = item.salePrice || 0;
+    const discountAmount = item.discountAmount || 0;
+    const couponShare = item.couponShare || 0;
+
+    // What user actually paid for this item
+    const finalPricePerUnit = salePrice - discountAmount - couponShare;
+    const refundAmount = finalPricePerUnit * item.quantity;
+
+    // ✅ 4. Process refund (if order was paid)
+    if (order.paymentStatus === "Paid" && refundAmount > 0) {
+      const wallet = await Wallet.findOne({ userId: order.userId }).session(session);
+
+      if (!wallet) {
+        await session.abortTransaction();
+        return { success: false, message: "User wallet not found" };
+      }
+
+      // Credit wallet
+      await Wallet.updateOne(
+        { userId: order.userId },
+        {
+          $inc: { balance: refundAmount, totalCredits: refundAmount },
+          lastTransactionAt: now,
+        },
+        { session }
+      );
+
+      const newBalance = wallet.balance + refundAmount;
+
+      // Create ledger entry
+      await createLedgerEntry(
+        {
+          walletId: wallet._id,
+          userId: order.userId,
+          amount: refundAmount,
+          type: "REFUND",
+          referenceId: order._id,
+          note: `Refund for returned item in order ${order.orderId}`,
+          balanceAfter: newBalance,
+        },
+        session
+      );
+
+      // Update user's wallet balance
+      await updateUserWalletBalance(order.userId, newBalance, session);
+    }
+
+    // ✅ 5. Update order status
+    const returnedItems = order.orderedItems.filter(
+      (i) => i.itemStatus === "Returned"
+    ).length;
+
+    const totalItems = order.orderedItems.length;
+
+    if (returnedItems === totalItems && totalItems > 0) {
+      order.orderStatus = "Returned";
+      if (!order.statusTimeline) order.statusTimeline = {};
+      order.statusTimeline.returnedAt = now;
+    } else if (returnedItems > 0 && returnedItems < totalItems) {
+      order.orderStatus = "Partially Returned";
+    }
+
+    // Save order
+    order.markModified("orderedItems");
+    order.markModified("statusTimeline");
+    await order.save({ session });
+
+    await session.commitTransaction();
+
+    return {
+      success: true,
+      order,
+      refund: refundAmount,
+      message: `Item marked as returned. Refund of ₹${refundAmount.toFixed(2)} processed to wallet.`
+    };
+
+  } catch (error) {
+    console.error("Mark item returned error:", error);
+    await session.abortTransaction();
+    return {
+      success: false,
+      message: error.message || "Failed to mark item as returned"
+    };
+  } finally {
+    session.endSession();
   }
-
-  const now = new Date();
-
-  if (item.variantId && item.variantId._id) {
-    await restoreVariantStock(item.variantId._id, item.quantity);
-  }
-
-  item.itemStatus = "Returned";
-  if (!item.itemTimeline) item.itemTimeline = {};
-  item.itemTimeline.returnedAt = now;
-
-  order.markModified("orderedItems");
-  order.markModified("statusTimeline");
-  await updateOrder(order);
-
-  return { success: true, order };
 };

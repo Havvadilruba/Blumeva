@@ -13,6 +13,7 @@ import orderController from "../controller/admin/orderController.js";
 import offerController from "../controller/admin/offerController.js";
 import couponController from "../controller/admin/couponController.js";
 import adminReferralController from "../controller/admin/adminReferralController.js";
+import salesReportController from "../controller/admin/salesReportController.js";
 
 
 const router = express.Router();
@@ -75,4 +76,9 @@ router.put("/coupons/:couponId", adminAuth, couponController.editCoupon);
 router.patch("/coupons/:couponId/toggle-status", adminAuth, couponController.toggleCouponStatus);
 router.delete("/coupons/:couponId", adminAuth, couponController.deleteCoupon);
 router.get("/referrals", adminAuth, adminReferralController.listReferrals);
+
+router.get("/salesReport", adminAuth, salesReportController.loadSalesReport);
+router.get("/sales-report/excel", adminAuth, salesReportController.loadSalesReportDownload);
+router.get("/sales-report/pdf", adminAuth, salesReportController.loadSalesReportPDF);
+
 export default router;

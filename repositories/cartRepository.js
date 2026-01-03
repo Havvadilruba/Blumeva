@@ -2,8 +2,10 @@
 import Cart from "../model/cartSchema.js";
 import mongoose from "mongoose";
 
+import { getAppliedOffer } from "../helpers/offerHelper.js";
+
 export const getCartItemsRepo = async (userId) => {
-  return Cart.aggregate([
+  const cartItems = await Cart.aggregate([
     { $match: { userId: new mongoose.Types.ObjectId(userId) } },
 
     {
@@ -54,14 +56,13 @@ export const getCartItemsRepo = async (userId) => {
       }
     },
 
-    /** PRODUCT OFFER */
+    /** PRODUCT OFFER - Just fetch raw data */
     {
       $lookup: {
         from: "offers",
         let: {
           productId: "$product._id",
           today: new Date(),
-          salePrice: "$variant.salePrice"
         },
         pipeline: [
           {
@@ -77,33 +78,18 @@ export const getCartItemsRepo = async (userId) => {
               }
             }
           },
-          {
-            $project: {
-              offer: {
-                $cond: {
-                  if: { $eq: ["$discountType", "percentage"] },
-                  then: { $multiply: ["$$salePrice", "$discountValue", 0.01] },
-                  else: "$discountValue"
-                }
-              }
-            }
-          },
-          { $sort: { offer: -1 } },
-          { $limit: 1 }
         ],
         as: "productOffer"
       }
     },
-    { $unwind: { path: "$productOffer", preserveNullAndEmptyArrays: true } },
 
-    /** CATEGORY OFFER */
+    /** CATEGORY OFFER - Just fetch raw data */
     {
       $lookup: {
         from: "offers",
         let: {
           categoryId: "$category._id",
           today: new Date(),
-          salePrice: "$variant.salePrice"
         },
         pipeline: [
           {
@@ -119,39 +105,8 @@ export const getCartItemsRepo = async (userId) => {
               }
             }
           },
-          {
-            $project: {
-              offer: {
-                $cond: {
-                  if: { $eq: ["$discountType", "percentage"] },
-                  then: { $multiply: ["$$salePrice", "$discountValue", 0.01] },
-                  else: "$discountValue"
-                }
-              }
-            }
-          },
-          { $sort: { offer: -1 } },
-          { $limit: 1 }
         ],
         as: "categoryOffer"
-      }
-    },
-    { $unwind: { path: "$categoryOffer", preserveNullAndEmptyArrays: true } },
-
-    /** FINAL DISCOUNT */
-    {
-      $addFields: {
-        productOfferAmount: { $ifNull: ["$productOffer.offer", 0] },
-        categoryOfferAmount: { $ifNull: ["$categoryOffer.offer", 0] }
-      }
-    },
-    {
-      $addFields: {
-        discountAmount: {
-          $ceil: {
-            $max: ["$productOfferAmount", "$categoryOfferAmount"]
-          }
-        }
       }
     },
 
@@ -165,6 +120,14 @@ export const getCartItemsRepo = async (userId) => {
       }
     }
   ]);
+
+  // 🔥 Calculate discount for each cart item using helper function
+  const cartItemsWithOffers = cartItems.map(item => ({
+    ...item,
+    discountAmount: getAppliedOffer(item, item.salePrice)
+  }));
+
+  return cartItemsWithOffers;
 };
 
 export const findCartItemRepo = (userId, variantId) => {
@@ -189,5 +152,19 @@ export const updateCartItemQuantityRepo = (cartItemId, quantity) => {
 
 export const removeCartItemRepo = (cartItemId, userId) => {
   return Cart.findOneAndDelete({ _id: cartItemId, userId });
+};
+
+export const getCartItemsCount = async (userId) => {
+  const result = await Cart.aggregate([
+    { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+    {
+      $group: {
+        _id: null,
+        totalQty: { $sum: "$quantity" }
+      }
+    }
+  ]);
+
+  return result[0]?.totalQty || 0;
 };
 

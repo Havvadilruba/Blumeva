@@ -114,7 +114,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
-  // TOGGLE 
+  // TOGGLE WITH CONFIRMATION
 
   const toggleButtons = document.querySelectorAll(".btn-toggle");
 
@@ -122,6 +122,20 @@ document.addEventListener("DOMContentLoaded", () => {
     btn.addEventListener("click", async (e) => {
       e.preventDefault();
       const id = btn.dataset.id;
+      const isBlocking = btn.classList.contains("btn-block");
+      const action = isBlocking ? "block" : "unblock";
+      const categoryName = btn.closest("tr").querySelector("td:nth-child(2)").textContent.trim();
+
+      // Show confirmation dialog
+      const confirmed = await showConfirmDialog({
+        title: `${isBlocking ? "Block" : "Unblock"} Category`,
+        message: `Are you sure you want to ${action} the category "${categoryName}"?`,
+        confirmText: isBlocking ? "Block" : "Unblock",
+        cancelText: "Cancel",
+        type: isBlocking ? "danger" : "success"
+      });
+
+      if (!confirmed) return;
 
       try {
         const res = await axios.patch(`/admin/category/toggle/${id}`);
@@ -169,4 +183,59 @@ function showToast(message, type = "info") {
     position: "right",
     close: true,
   }).showToast();
+}
+
+// Confirmation Dialog Function
+function showConfirmDialog({ title, message, confirmText, cancelText, type = "danger" }) {
+  return new Promise((resolve) => {
+    // Create overlay
+    const overlay = document.createElement("div");
+    overlay.className = "confirm-overlay";
+    
+    // Create dialog
+    const dialog = document.createElement("div");
+    dialog.className = "confirm-dialog";
+    
+    // Dialog content
+    dialog.innerHTML = `
+      <div class="confirm-header">
+        <h3 class="confirm-title">${title}</h3>
+      </div>
+      <div class="confirm-body">
+        <p class="confirm-message">${message}</p>
+      </div>
+      <div class="confirm-footer">
+        <button class="confirm-btn confirm-cancel">${cancelText}</button>
+        <button class="confirm-btn confirm-action confirm-${type}">${confirmText}</button>
+      </div>
+    `;
+    
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+    
+    // Add animation
+    setTimeout(() => {
+      overlay.classList.add("active");
+      dialog.classList.add("active");
+    }, 10);
+    
+    // Handle button clicks
+    const cancelBtn = dialog.querySelector(".confirm-cancel");
+    const confirmBtn = dialog.querySelector(".confirm-action");
+    
+    const closeDialog = (result) => {
+      overlay.classList.remove("active");
+      dialog.classList.remove("active");
+      setTimeout(() => {
+        document.body.removeChild(overlay);
+        resolve(result);
+      }, 300);
+    };
+    
+    cancelBtn.addEventListener("click", () => closeDialog(false));
+    confirmBtn.addEventListener("click", () => closeDialog(true));
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) closeDialog(false);
+    });
+  });
 }

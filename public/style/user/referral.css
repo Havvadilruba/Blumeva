@@ -1,9 +1,12 @@
+/* Main Section Wrapper */
+.wallet-page {
+  padding: 40px;
+}
+
 /* Page Layout Container */
 .page-layout {
   display: flex;
-  gap: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
+  gap: 25px;
 }
 
 /* Sidebar - Fixed width on left */
@@ -15,7 +18,7 @@
 /* Main Content - Takes remaining space on right */
 .main-content {
   flex: 1;
-  min-width: 0; /* Prevents flex item from overflowing */
+  min-width: 0;
 }
 
 /* Page Title */
@@ -23,15 +26,16 @@
   font-size: 1.5rem;
   font-weight: 600;
   margin-bottom: 1.25rem;
+  margin: 0 0 20px 0;
 }
 
 /* Referral Main Card */
 .referral-main-card {
-  margin-bottom: 1.5rem;
-  background: white;
+  margin-bottom: 25px;
+  background: #fff;
   border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 35px;
+  border: 1px solid #e6e8ec;
 }
 
 .referral-header {
@@ -40,6 +44,12 @@
   align-items: center;
   gap: 2rem;
   flex-wrap: wrap;
+}
+
+.balance-label {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin-bottom: 8px;
 }
 
 .ref-code {
@@ -70,10 +80,10 @@
 
 /* Button Styling */
 .btn-add-money {
-  background-color: #3b82f6;
+  background-color: #1d4ed8;
   color: white;
   border: none;
-  padding: 0.75rem 1.5rem;
+  padding: 10px 16px;
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
@@ -82,15 +92,15 @@
 }
 
 .btn-add-money:hover {
-  background-color: #2563eb;
+  background-color: #153a9c;
 }
 
 /* Transaction History Section */
 .transaction-history {
-  background: white;
+  background: #fff;
   border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 35px;
+  border: 1px solid #e6e8ec;
 }
 
 .history-header {
@@ -175,8 +185,13 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  .wallet-page {
+    padding: 20px;
+  }
+
   .page-layout {
     flex-direction: column;
+    gap: 20px;
   }
 
   .sidebar {
@@ -200,6 +215,11 @@
 
   .stat-number {
     font-size: 1.5rem;
+  }
+
+  .referral-main-card,
+  .transaction-history {
+    padding: 20px;
   }
 
   .ref-table {
