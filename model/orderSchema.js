@@ -53,6 +53,11 @@ const orderedItemSchema = new mongoose.Schema({
     returnedAt: Date,
   },
 
+  isReviewed: {
+    type: Boolean,
+    default: false,
+  },
+
   reason: String,
   adminNote: String,
 });

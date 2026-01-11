@@ -48,6 +48,7 @@ const addToCart = async (req, res) => {
         message: "Product not found"
       });
     }
+   
 
     const product = variant.productId;
     const brand = await Brand.findById(product.brand);

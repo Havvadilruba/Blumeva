@@ -5,6 +5,10 @@ import Product from "../model/productSchema.js";
 import Wishlist from "../model/wishlistSchema.js";
 import mongoose from "mongoose";
 
+import {
+  getProductRatingSummary,
+} from "../repositories/reviewRepository.js";
+
 import { getAppliedOffer } from "../helpers/offerHelper.js";
 
 export const getLandingPageData = async (userId) => {
@@ -177,6 +181,7 @@ export const getLandingPageData = async (userId) => {
     ...product,
     discountAmount: getAppliedOffer(product, product.salePrice)
   }));
+
 
   return { categories, brands, latestProducts: productsWithOffers };
 };

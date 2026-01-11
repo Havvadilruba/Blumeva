@@ -2,23 +2,30 @@ import multer from "multer";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import cloudinary from "../config/cloudinary.js";
 
-
-
 const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
     let folder = "uploads";
 
-    
-    if (file.fieldname === "logo") folder = "brands"; 
+    if (file.fieldname === "logo") folder = "brands";
     if (file.fieldname === "image") folder = "categories";
-    if (file.fieldname === "images") folder = "products"; 
-    if (file.fieldname === "profileImage") folder = "profile"; 
+    if (file.fieldname === "bannerImage") folder = "banners";
+    if (file.fieldname === "images") folder = "products";
+    if (file.fieldname === "profileImage") folder = "profile";
 
     return {
       folder,
-      allowed_formats: ["jpg", "jpeg", "png", "webp","avif", "gif"],
-      public_id: file.originalname.split(".")[0] + "-" + Date.now(), // unique filename
+      resource_type: "image", // 🔑 REQUIRED for SVG
+      allowed_formats: [
+        "jpg",
+        "jpeg",
+        "png",
+        "webp",
+        "avif",
+        "gif",
+        "svg" // ✅ ADD SVG
+      ],
+      public_id: file.originalname.split(".")[0] + "-" + Date.now(),
     };
   },
 });

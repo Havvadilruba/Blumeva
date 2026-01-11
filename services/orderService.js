@@ -184,7 +184,6 @@ export const handleReturnRequestService = async (id, itemId, action, adminNote) 
   return { success: true, order };
 };
 
-// ✅ FIXED: Added refund functionality
 export const markItemReturnedService = async (id, itemId) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -207,52 +206,74 @@ export const markItemReturnedService = async (id, itemId) => {
 
     if (item.itemStatus !== "ReturnApproved") {
       await session.abortTransaction();
-      return { success: false, message: "Only approved returns can be marked as returned" };
+      return {
+        success: false,
+        message: "Only approved returns can be marked as returned",
+      };
+    }
+
+    // ❗ Prevent double refund
+    if (item.refundProcessed) {
+      await session.abortTransaction();
+      return { success: false, message: "Refund already processed" };
     }
 
     const now = new Date();
 
-    // ✅ 1. Restore stock
+    /* ------------------------------------
+       1. Restore stock
+    ------------------------------------ */
     if (item.variantId && item.variantId._id) {
       await restoreVariantStock(item.variantId._id, item.quantity, session);
     }
 
-    // ✅ 2. Update item status
+    /* ------------------------------------
+       2. Update item status
+    ------------------------------------ */
     item.itemStatus = "Returned";
-    if (!item.itemTimeline) item.itemTimeline = {};
+    item.itemTimeline = item.itemTimeline || {};
     item.itemTimeline.returnedAt = now;
 
-    // ✅ 3. Calculate accurate refund
+    /* ------------------------------------
+       3. Accurate refund calculation
+    ------------------------------------ */
     const salePrice = item.salePrice || 0;
     const discountAmount = item.discountAmount || 0;
     const couponShare = item.couponShare || 0;
+    const quantity = item.quantity || 1;
 
-    // What user actually paid for this item
-    const finalPricePerUnit = salePrice - discountAmount - couponShare;
-    const refundAmount = finalPricePerUnit * item.quantity;
+    // ✅ couponShare is PER LINE ITEM → divide per unit
+    const couponPerUnit = couponShare / quantity;
 
-    // ✅ 4. Process refund (if order was paid)
+    const finalPricePerUnit =
+      salePrice - discountAmount - couponPerUnit;
+
+    let refundAmount =
+      Math.round(finalPricePerUnit * quantity * 100) / 100;
+
+    if (refundAmount < 0) refundAmount = 0;
+
+    /* ------------------------------------
+       4. Process refund (wallet)
+    ------------------------------------ */
     if (order.paymentStatus === "Paid" && refundAmount > 0) {
-      const wallet = await Wallet.findOne({ userId: order.userId }).session(session);
+      const wallet = await Wallet.findOneAndUpdate(
+        { userId: order.userId },
+        {
+          $inc: {
+            balance: refundAmount,
+            totalCredits: refundAmount,
+          },
+          $set: { lastTransactionAt: now },
+        },
+        { new: true, session }
+      );
 
       if (!wallet) {
         await session.abortTransaction();
         return { success: false, message: "User wallet not found" };
       }
 
-      // Credit wallet
-      await Wallet.updateOne(
-        { userId: order.userId },
-        {
-          $inc: { balance: refundAmount, totalCredits: refundAmount },
-          lastTransactionAt: now,
-        },
-        { session }
-      );
-
-      const newBalance = wallet.balance + refundAmount;
-
-      // Create ledger entry
       await createLedgerEntry(
         {
           walletId: wallet._id,
@@ -261,16 +282,19 @@ export const markItemReturnedService = async (id, itemId) => {
           type: "REFUND",
           referenceId: order._id,
           note: `Refund for returned item in order ${order.orderId}`,
-          balanceAfter: newBalance,
+          balanceAfter: wallet.balance,
         },
         session
       );
 
-      // Update user's wallet balance
-      await updateUserWalletBalance(order.userId, newBalance, session);
+      await updateUserWalletBalance(order.userId, wallet.balance, session);
+
+      item.refundProcessed = true;
     }
 
-    // ✅ 5. Update order status
+    /* ------------------------------------
+       5. Update order status
+    ------------------------------------ */
     const returnedItems = order.orderedItems.filter(
       (i) => i.itemStatus === "Returned"
     ).length;
@@ -279,13 +303,12 @@ export const markItemReturnedService = async (id, itemId) => {
 
     if (returnedItems === totalItems && totalItems > 0) {
       order.orderStatus = "Returned";
-      if (!order.statusTimeline) order.statusTimeline = {};
+      order.statusTimeline = order.statusTimeline || {};
       order.statusTimeline.returnedAt = now;
-    } else if (returnedItems > 0 && returnedItems < totalItems) {
+    } else if (returnedItems > 0) {
       order.orderStatus = "Partially Returned";
     }
 
-    // Save order
     order.markModified("orderedItems");
     order.markModified("statusTimeline");
     await order.save({ session });
@@ -296,15 +319,16 @@ export const markItemReturnedService = async (id, itemId) => {
       success: true,
       order,
       refund: refundAmount,
-      message: `Item marked as returned. Refund of ₹${refundAmount.toFixed(2)} processed to wallet.`
+      message: `Item marked as returned. Refund of ₹${refundAmount.toFixed(
+        2
+      )} processed to wallet.`,
     };
-
   } catch (error) {
     console.error("Mark item returned error:", error);
     await session.abortTransaction();
     return {
       success: false,
-      message: error.message || "Failed to mark item as returned"
+      message: error.message || "Failed to mark item as returned",
     };
   } finally {
     session.endSession();

@@ -1,24 +1,76 @@
+/* ===== Blumeva Sidebar Styles ===== */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Lato:wght@300;400;700&display=swap');
+
 .sidebar {
-  width: 240px;
-  background: #ffffff;
-  border: 1px solid #e6e8ec;
-  border-radius: 12px;
-  padding: 25px;
+  width: 280px;
+  background: linear-gradient(145deg, #FFFFFF 0%, #FAF8F3 100%);
+  border: 2px solid rgba(201, 164, 92, 0.2);
+  border-radius: 25px;
+  padding: 30px 25px;
+  box-shadow: 
+    0 15px 45px rgba(31, 31, 31, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  position: relative;
+  transition: all 0.3s ease;
 }
 
+.sidebar::before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(135deg, #C9A45C, #7A8B5A);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  border-radius: 25px;
+  z-index: -1;
+}
+
+.sidebar:hover::before {
+  opacity: 0.05;
+}
+
+/* ===== Profile Header ===== */
 .profile-header {
   text-align: center;
-  margin-bottom: 20px;
-  border-bottom: 1px solid #e6e8ec;
-  padding-bottom: 18px;
+  margin-bottom: 25px;
+  border-bottom: 2px solid rgba(201, 164, 92, 0.15);
+  padding-bottom: 25px;
 }
 
 .sidebar .avatar {
-  width: 75px;
-  height: 75px;
+  width: 85px;
+  height: 85px;
   border-radius: 50%;
   overflow: hidden;
-  margin: 0 auto 12px;
+  margin: 0 auto 15px;
+  border: 3px solid #C9A45C;
+  box-shadow: 
+    0 8px 20px rgba(201, 164, 92, 0.25),
+    inset 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.sidebar .avatar::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(201, 164, 92, 0.1), transparent);
+  pointer-events: none;
+}
+
+.sidebar .avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 
+    0 12px 28px rgba(201, 164, 92, 0.35),
+    inset 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .sidebar .avatar img {
@@ -27,34 +79,217 @@
   object-fit: cover;
 }
 
+.profile-header h4 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #2B2B2B;
+  font-family: 'Playfair Display', serif;
+  margin-bottom: 6px;
+  letter-spacing: -0.3px;
+}
 
+.profile-header p {
+  font-size: 13px;
+  color: #6F6F6F;
+  font-weight: 400;
+  margin: 0;
+}
+
+/* ===== Menu ===== */
 .menu {
   padding: 0;
   margin: 0;
+  list-style: none;
 }
 
 .menu li {
   list-style: none;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .menu a {
-  display: block;
-  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  padding: 13px 16px;
   text-decoration: none;
-  border-radius: 10px;
-  color: #333;
-  font-size: 15px;
+  border-radius: 12px;
+  color: #2B2B2B;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Lato', sans-serif;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.menu li.active a,
+.menu a::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 3px;
+  background: linear-gradient(135deg, #C9A45C, #B89350);
+  transform: scaleY(0);
+  transition: transform 0.3s ease;
+}
+
 .menu a:hover {
-  background: #eaf1ff;
-  color: #1d4ed8;
-  font-weight: 600;
+  background: linear-gradient(135deg, rgba(201, 164, 92, 0.08), rgba(201, 164, 92, 0.12));
+  color: #C9A45C;
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(201, 164, 92, 0.15);
 }
 
-.logout a {
-  color: #d82734;
+.menu a:hover::before {
+  transform: scaleY(1);
+}
+
+.menu li.active a {
+  background: linear-gradient(135deg, rgba(201, 164, 92, 0.15), rgba(201, 164, 92, 0.1));
+  color: #C9A45C;
   font-weight: 600;
+  box-shadow: 
+    0 4px 12px rgba(201, 164, 92, 0.15),
+    inset 0 1px 3px rgba(201, 164, 92, 0.1);
+}
+
+.menu li.active a::before {
+  transform: scaleY(1);
+}
+
+/* ===== Logout Button ===== */
+.menu li.logout {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 2px solid rgba(201, 164, 92, 0.15);
+}
+
+.menu li.logout form {
+  margin: 0;
+  padding: 0;
+}
+
+.logout-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 13px 16px;
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.08), rgba(220, 38, 38, 0.12));
+  border: 2px solid rgba(220, 38, 38, 0.2);
+  border-radius: 12px;
+  color: #DC2626;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Lato', sans-serif;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.logout-btn:hover {
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.15), rgba(220, 38, 38, 0.2));
+  border-color: #DC2626;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.2);
+}
+
+.logout-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 3px 8px rgba(220, 38, 38, 0.15);
+}
+
+/* Alternative Logout Link Style (if using <a> instead of button) */
+.menu li.logout a {
+  color: #DC2626;
+  font-weight: 600;
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.08), rgba(220, 38, 38, 0.12));
+  border: 2px solid rgba(220, 38, 38, 0.2);
+}
+
+.menu li.logout a::before {
+  background: linear-gradient(135deg, #DC2626, #B91C1C);
+}
+
+.menu li.logout a:hover {
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.15), rgba(220, 38, 38, 0.2));
+  border-color: #DC2626;
+  color: #DC2626;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.2);
+}
+
+/* ===== Responsive Design ===== */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 260px;
+    padding: 25px 20px;
+  }
+
+  .sidebar .avatar {
+    width: 75px;
+    height: 75px;
+  }
+
+  .profile-header h4 {
+    font-size: 17px;
+  }
+
+  .menu a {
+    font-size: 13px;
+    padding: 12px 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 25px;
+    border-radius: 20px;
+  }
+
+  .sidebar .avatar {
+    width: 70px;
+    height: 70px;
+  }
+
+  .profile-header h4 {
+    font-size: 16px;
+  }
+
+  .profile-header p {
+    font-size: 12px;
+  }
+
+  .menu a {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar {
+    padding: 25px 20px;
+    border-radius: 18px;
+  }
+
+  .sidebar .avatar {
+    width: 65px;
+    height: 65px;
+  }
+
+  .profile-header h4 {
+    font-size: 15px;
+  }
+
+  .menu a {
+    font-size: 13px;
+    padding: 11px 13px;
+  }
+
+  .logout-btn {
+    font-size: 13px;
+    padding: 11px 13px;
+  }
 }

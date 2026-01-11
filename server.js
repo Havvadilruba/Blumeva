@@ -6,6 +6,7 @@ import passport from "./config/passport.js";
 import connectDB from "./config/db.js";
 import userRouter from "./routes/userRouter.js";
 import adminRouter from "./routes/adminRouter.js";
+import assets from "./helpers/assets.js";
 import { sessionConfig } from "./middlewares/session.js";
 import { headerCountsMiddleware } from "./middlewares/headerCount.js";
 import { setUser } from "./middlewares/setUser.js";

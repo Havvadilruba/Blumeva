@@ -2,6 +2,10 @@
 import Product from "../model/productSchema.js";
 import { ObjectId } from "mongodb";
 import { getAppliedOffer } from "../helpers/offerHelper.js";
+import {
+  findReviewsByProductId,
+  getProductRatingSummary,
+} from "../repositories/reviewRepository.js";
 
 export const getProductDetail = async (productId, userId = null) => {
   const [product] = await Product.aggregate([
@@ -178,6 +182,8 @@ export const getProductDetail = async (productId, userId = null) => {
   const variant = product.variants.find((v) => v.stock > 0) || product.variants[0];
   const offer = getAppliedOffer(product, variant.salePrice);
 
+  const reviews = await findReviewsByProductId(product._id, 10);
+  const { avgRating } = await getProductRatingSummary(product._id);
   // 🔥 FIXED: Check if the selected variant is in wishlist
   const isInWishlist = userId && product.wishlistedVariants 
     ? product.wishlistedVariants.some(wv => wv.toString() === variant._id.toString())
@@ -190,6 +196,13 @@ export const getProductDetail = async (productId, userId = null) => {
     product, 
     variant, 
     offer,
-    isInWishlist 
+    isInWishlist,
+   reviews: reviews.map((review) => ({
+      userName: review.userId?.name || "User",
+      rating: review.rating,
+      comment: review.comment,
+      date: review.createdAt,
+    })),
+    avgRating,
   };
 };

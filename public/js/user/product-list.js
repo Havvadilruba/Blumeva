@@ -1,6 +1,9 @@
+// Navigate to product details page
 function goToProduct(productId) {
   window.location.href = `/product/${productId}`;
 }
+
+// Search functionality with debounce
 document.addEventListener("DOMContentLoaded", () => {
   const searchInput = document.getElementById("search-input");
   const clearButton = document.getElementById("clear-search");
@@ -13,8 +16,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const url = new URL(window.location);
         const q = searchInput.value.trim();
 
-        if (q) url.searchParams.set("q", q);
-        else url.searchParams.delete("q");
+        if (q) {
+          url.searchParams.set("q", q);
+        } else {
+          url.searchParams.delete("q");
+        }
 
         url.searchParams.set("page", 1);
         window.location.href = url.href;
@@ -30,74 +36,131 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-
-
-function brandFilter(e){
-  const brand = e.getAttribute('name') || '';
+// Brand filter with double-click to unselect
+function brandFilter(element) {
+  const brandValue = element.getAttribute('data-value');
+  const input = element.querySelector('input[type="radio"]');
   const url = new URL(window.location);
-  if (brand) url.searchParams.set('brand', brand);
-  else url.searchParams.delete('brand');
+  
+  // Check if this brand is already selected
+  const currentBrand = url.searchParams.get('brand');
+  
+  if (currentBrand === brandValue && input.checked) {
+    // Double-click: unselect
+    input.checked = false;
+    url.searchParams.delete('brand');
+  } else {
+    // First click: select
+    url.searchParams.set('brand', brandValue);
+  }
+  
   url.searchParams.set('page', 1);
-  window.location = url.href;
+  window.location.href = url.href;
 }
 
-function categoryFilter(e){
-  const category = e.getAttribute('name') || '';
+// Category filter with double-click to unselect
+function categoryFilter(element) {
+  const categoryValue = element.getAttribute('data-value');
+  const input = element.querySelector('input[type="radio"]');
   const url = new URL(window.location);
-  if (category) url.searchParams.set('category', category);
-  else url.searchParams.delete('category');
+  
+  // Check if this category is already selected
+  const currentCategory = url.searchParams.get('category');
+  
+  if (currentCategory === categoryValue && input.checked) {
+    // Double-click: unselect
+    input.checked = false;
+    url.searchParams.delete('category');
+  } else {
+    // First click: select
+    url.searchParams.set('category', categoryValue);
+  }
+  
   url.searchParams.set('page', 1);
-  window.location = url.href;
+  window.location.href = url.href;
 }
 
-function ratingFilter(e){
-  const rating = e.getAttribute('name') || '';
+// Rating filter with double-click to unselect
+function ratingFilter(element) {
+  const ratingValue = element.getAttribute('data-value');
+  const input = element.querySelector('input[type="radio"]');
   const url = new URL(window.location);
-  if (rating) url.searchParams.set('rating', rating);
-  else url.searchParams.delete('rating');
+  
+  // Check if this rating is already selected
+  const currentRating = url.searchParams.get('rating');
+  
+  if (currentRating === ratingValue && input.checked) {
+    // Double-click: unselect
+    input.checked = false;
+    url.searchParams.delete('rating');
+  } else {
+    // First click: select
+    url.searchParams.set('rating', ratingValue);
+  }
+  
   url.searchParams.set('page', 1);
-  window.location = url.href;
+  window.location.href = url.href;
 }
 
-function applyFilter(){
-  const sortBy = document.getElementById('sort-by').value || '';
-  const minPrice = document.getElementById('price-from').value;
-  const maxPrice = document.getElementById('price-to').value;
+// Apply filters (sort and price)
+function applyFilter() {
+  const sortBy = document.getElementById('sort-by')?.value || '';
+  const minPrice = document.getElementById('price-from')?.value || '';
+  const maxPrice = document.getElementById('price-to')?.value || '';
   const url = new URL(window.location);
 
-  if (sortBy) url.searchParams.set('sort', sortBy);
-  else url.searchParams.delete('sort');
+  // Sort filter
+  if (sortBy) {
+    url.searchParams.set('sort', sortBy);
+  } else {
+    url.searchParams.delete('sort');
+  }
 
-  if (minPrice) url.searchParams.set('priceMin', minPrice);
-  else url.searchParams.delete('priceMin');
+  // Price filters
+  if (minPrice) {
+    url.searchParams.set('priceMin', minPrice);
+  } else {
+    url.searchParams.delete('priceMin');
+  }
 
-  if (maxPrice) url.searchParams.set('priceMax', maxPrice);
-  else url.searchParams.delete('priceMax');
+  if (maxPrice) {
+    url.searchParams.set('priceMax', maxPrice);
+  } else {
+    url.searchParams.delete('priceMax');
+  }
 
   url.searchParams.set('page', 1);
-  window.location = url.href;
+  window.location.href = url.href;
 }
 
-function clearFilters(){
+// Clear all filters
+function clearFilters() {
   const url = new URL(window.location.origin + window.location.pathname);
-  window.location = url.href;
+  window.location.href = url.href;
 }
 
-function changePage(page){
+// Change pagination page
+function changePage(page) {
   const url = new URL(window.location);
   url.searchParams.set("page", page);
   window.location.href = url.href;
 }
 
-function searchProducts(){
-  const q = document.getElementById('search-input').value || '';
+// Search products (alternative method)
+function searchProducts() {
+  const searchInput = document.getElementById('search-input');
+  const q = searchInput?.value?.trim() || '';
   const url = new URL(window.location);
-  if (q) url.searchParams.set('q', q);
-  else url.searchParams.delete('q');
+  
+  if (q) {
+    url.searchParams.set('q', q);
+  } else {
+    url.searchParams.delete('q');
+  }
+  
   url.searchParams.set('page', 1);
-  window.location = url.href;
+  window.location.href = url.href;
 }
-
 
 
 

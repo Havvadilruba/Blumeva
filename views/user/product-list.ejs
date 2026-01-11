@@ -1,145 +1,192 @@
 <%- include("../partials/user/header") %>
 
-
 <!-- Breadcrumbs -->
 <nav class="breadcrumb">
-  <a href="/">Home</a> ›
+  <a href="/"><i class="fa-solid fa-house"></i> Home</a>
+  <span class="separator">›</span>
   <% if (query.category) { %>
     <a href="/products?category=<%= query.category %>"><%= query.category %></a>
     <% if (query.brand) { %>
-      › <a href="/products?category=<%= query.category %>&brand=<%= query.brand %>"><%= query.brand %></a>
+      <span class="separator">›</span>
+      <a href="/products?category=<%= query.category %>&brand=<%= query.brand %>"><%= query.brand %></a>
     <% } %>
   <% } else if (query.brand) { %>
     <a href="/products?brand=<%= query.brand %>"><%= query.brand %></a>
   <% } else { %>
-    <span>All Products</span>
+    <span class="current">All Products</span>
   <% } %>
 </nav>
 
+<!-- Product List Page -->
 <section class="product-list-page">
-  <div class="container">
+  <div class="page-container">
+    <div class="main-content-wrapper">
 
-    <aside class="sidebar">
+      <!-- Sidebar Wrapper with Filters -->
+      <div class="sidebar-wrapper">
+        
+        <!-- Sidebar Filters -->
+        <aside class="sidebar">
+          <div class="sidebar-header">
+            <h3><i class="fa-solid fa-filter"></i> Filters</h3>
+          </div>
 
-    <!-- Category -->
-    <div class="filter-block">
-    <h4>Category</h4>
-    <% categories.forEach(c => { %>
-      <label onclick="categoryFilter(this)" name="<%= c.name %>">
-        <input type="radio" name="category" value="<%= c.name %>"
-          <%= query.category === c.name ? 'checked' : '' %> />
-        <%= c.name %>
-      </label>
-    <% }) %>
-  </div>
+          <!-- Category Filter -->
+          <div class="filter-block">
+            <h4><i class="fa-solid fa-layer-group"></i> Category</h4>
+            <div class="filter-options">
+              <% categories.forEach(c => { %>
+                <label class="filter-option" onclick="categoryFilter(this)" data-value="<%= c.name %>">
+                  <input type="radio" name="category" value="<%= c.name %>"
+                    <%= query.category === c.name ? 'checked' : '' %> />
+                  <span class="checkmark"></span>
+                  <span class="label-text"><%= c.name %></span>
+                </label>
+              <% }) %>
+            </div>
+          </div>
 
-    <!-- Brand -->
-      <div class="filter-block">
-    <h4>Brand</h4>
-    <% brands.forEach(b => { %>
-      <label onclick="brandFilter(this)" name="<%= b.name %>">
-        <input type="radio" name="brand" value="<%= b.name %>"
-          <%= query.brand === b.name ? 'checked' : '' %> />
-        <%= b.name %>
-      </label>
-    <% }) %>
-  </div>
+          <!-- Brand Filter -->
+          <div class="filter-block">
+            <h4><i class="fa-solid fa-tags"></i> Brand</h4>
+            <div class="filter-options">
+              <% brands.forEach(b => { %>
+                <label class="filter-option" onclick="brandFilter(this)" data-value="<%= b.name %>">
+                  <input type="radio" name="brand" value="<%= b.name %>"
+                    <%= query.brand === b.name ? 'checked' : '' %> />
+                  <span class="checkmark"></span>
+                  <span class="label-text"><%= b.name %></span>
+                </label>
+              <% }) %>
+            </div>
+          </div>
 
+          <!-- Price Filter -->
+          <div class="filter-block">
+            <h4><i class="fa-solid fa-indian-rupee-sign"></i> Price Range</h4>
+            <div class="price-range">
+              <input type="number" id="price-from" placeholder="Min ₹" value="<%= query.priceMin || '' %>">
+              <span class="range-separator">—</span>
+              <input type="number" id="price-to" placeholder="Max ₹" value="<%= query.priceMax || '' %>">
+              <button type="button" class="apply-price-btn" onclick="applyFilter()">
+                <i class="fa-solid fa-check"></i> Apply
+              </button>
+            </div>
+          </div>
 
-    <!-- Price -->
-    <div class="filter-block">
-    <h4>Price</h4>
-    <div class="price-range">
-      <input type="number" id="price-from" placeholder="Min" value="<%= query.priceMin || '' %>">
-      <input type="number" id="price-to" placeholder="Max" value="<%= query.priceMax || '' %>">
-      <button type="button" onclick="applyFilter()">Apply</button>
-    </div>
-  </div>
+          <!-- Clear Filters Button -->
+          <button type="button" class="clear-filters-btn" onclick="clearFilters()">
+            <i class="fa-solid fa-rotate-right"></i> Clear All Filters
+          </button>
+        </aside>
 
-    <!--  Rating Filter -->
-    <div class="filter-block">
-    <h4>Rating</h4>
-    <% [5,4,3,2,1].forEach(r => { %>
-      <label onclick="ratingFilter(this)" name="<%= r %>">
-        <input type="radio" name="rating" value="<%= r %>" <%= query.rating == r ? 'checked' : '' %> />
-        <% for (let i=1;i<=5;i++){ %>
-          <% if(i <= r){ %><i class="fa-solid fa-star"></i><% } else { %><i class="fa-regular fa-star"></i><% } %>
-        <% } %>
-      </label>
-    <% }) %>
-  </div>
-
-    <!-- Buttons -->
-   
-  <button type="button" class="clear-btn" onclick="clearFilters()">Clear</button>
-
-</aside>
-
-    <!-- Main Product Section -->
-    <main class="products">
-
-      <!-- Top Controls -->
-      <div class="top-controls">
-        <div class="search-bar">
-  <input 
-    type="text" 
-    id="search-input" 
-    name="q" 
-    placeholder="Search products..." 
-    value="<%= query.q || '' %>" 
-  />
-  <% if (query.q) { %>
-    <button type="button" id="clear-search">✕</button>
-  <% } %>
-</div>
-
-
-
-          <div class="sort-dropdown">
-    <label>Sort By:</label>
-    <select id="sort-by" onchange="applyFilter()">
-      <option value="">Default</option>
-      <option value="new" <%= query.sort==='new' ? 'selected' : '' %>>New Arrivals</option>
-      <option value="low" <%= query.sort==='low' ? 'selected' : '' %>>Price: Low to High</option>
-      <option value="high" <%= query.sort==='high' ? 'selected' : '' %>>Price: High to Low</option>
-      <option value="a-z" <%= query.sort==='a-z' ? 'selected' : '' %>>A → Z</option>
-      <option value="z-a" <%= query.sort==='z-a' ? 'selected' : '' %>>Z → A</option>
-      <option value="rating" <%= query.sort==='rating' ? 'selected' : '' %>>Top Rated</option>
-    </select>
-  </div>
-</div>
-      <div class="product-grid">
-        <% if (products.length === 0) { %>
-          <p>No products found.</p>
-        <% } %>
-
-        <% products.forEach(product => { %>
-          <%- include("../partials/user/productCard", { product }) %>
-        <% }) %>
       </div>
 
+      <!-- Main Product Section -->
+      <main class="products-section">
 
-      <!-- Pagination -->
-      <div class="pagination">
-  <% if (currentPage > 1) { %>
-    <button onclick="changePage(<%= currentPage - 1 %>)">Prev</button>
-  <% } %>
+        <!-- Top Controls -->
+        <div class="top-controls">
+          <!-- Search Bar -->
+          <div class="search-bar">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input 
+              type="text" 
+              id="search-input" 
+              name="q" 
+              placeholder="Search products..." 
+              value="<%= query.q || '' %>" 
+            />
+            <% if (query.q) { %>
+              <button type="button" id="clear-search" class="clear-search-btn">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            <% } %>
+          </div>
 
-  <% for (let i = 1; i <= totalPages; i++) { %>
-    <button 
-      onclick="changePage(<%= i %>)" 
-      class="<%= i === currentPage ? 'active' : '' %>">
-      <%= i %>
-    </button>
-  <% } %>
+          <!-- Sort Dropdown -->
+          <div class="sort-dropdown">
+            <label><i class="fa-solid fa-arrow-down-wide-short"></i> Sort By:</label>
+            <select id="sort-by" onchange="applyFilter()">
+              <option value="">Default</option>
+              <option value="new" <%= query.sort==='new' ? 'selected' : '' %>>New Arrivals</option>
+              <option value="low" <%= query.sort==='low' ? 'selected' : '' %>>Price: Low to High</option>
+              <option value="high" <%= query.sort==='high' ? 'selected' : '' %>>Price: High to Low</option>
+              <option value="a-z" <%= query.sort==='a-z' ? 'selected' : '' %>>A → Z</option>
+              <option value="z-a" <%= query.sort==='z-a' ? 'selected' : '' %>>Z → A</option>
+              <option value="rating" <%= query.sort==='rating' ? 'selected' : '' %>>Top Rated</option>
+            </select>
+          </div>
+        </div>
 
-  <% if (currentPage < totalPages) { %>
-    <button onclick="changePage(<%= currentPage + 1 %>)">Next</button>
-  <% } %>
-</div>
+        <!-- Product Grid -->
+        <div class="product-grid">
+          <% if (products.length === 0) { %>
+            <div class="no-products">
+              <i class="fa-solid fa-box-open"></i>
+              <p>No products found matching your criteria.</p>
+              <button onclick="clearFilters()" class="clear-btn-inline">Clear Filters</button>
+            </div>
+          <% } else { %>
+            <% products.forEach(product => { %>
+              <%- include("../partials/user/productCard", { product }) %>
+            <% }) %>
+          <% } %>
+        </div>
 
+        <!-- Pagination -->
+        <% if (totalPages > 1) { %>
+          <div class="pagination">
+            <% if (currentPage > 1) { %>
+              <button onclick="changePage(<%= currentPage - 1 %>)" class="page-btn prev-btn">
+                <i class="fa-solid fa-chevron-left"></i> Prev
+              </button>
+            <% } %>
 
-    </main>
+            <% 
+              let startPage = Math.max(1, currentPage - 2);
+              let endPage = Math.min(totalPages, currentPage + 2);
+              
+              if (currentPage <= 3) {
+                endPage = Math.min(5, totalPages);
+              }
+              if (currentPage > totalPages - 3) {
+                startPage = Math.max(1, totalPages - 4);
+              }
+            %>
+
+            <% if (startPage > 1) { %>
+              <button onclick="changePage(1)" class="page-btn">1</button>
+              <% if (startPage > 2) { %>
+                <span class="page-ellipsis">...</span>
+              <% } %>
+            <% } %>
+
+            <% for (let i = startPage; i <= endPage; i++) { %>
+              <button 
+                onclick="changePage(<%= i %>)" 
+                class="page-btn <%= i === currentPage ? 'active' : '' %>">
+                <%= i %>
+              </button>
+            <% } %>
+
+            <% if (endPage < totalPages) { %>
+              <% if (endPage < totalPages - 1) { %>
+                <span class="page-ellipsis">...</span>
+              <% } %>
+              <button onclick="changePage(<%= totalPages %>)" class="page-btn"><%= totalPages %></button>
+            <% } %>
+
+            <% if (currentPage < totalPages) { %>
+              <button onclick="changePage(<%= currentPage + 1 %>)" class="page-btn next-btn">
+                Next <i class="fa-solid fa-chevron-right"></i>
+              </button>
+            <% } %>
+          </div>
+        <% } %>
+
+      </main>
+    </div>
   </div>
 </section>
 

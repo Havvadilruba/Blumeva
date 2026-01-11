@@ -179,56 +179,35 @@
                       <% } %>
                     </div>
                     <div class="item-price">
-  <%
-    const regular = item.regularPrice;
-    const sale = item.salePrice;
-    const offerAmount = item.discountAmount || 0;
-    const current = sale - offerAmount;
-
-    const hasDiscount = regular > current;
-    const discountPercent = hasDiscount
-      ? Math.round(((regular - current) / regular) * 100)
-      : 0;
-  %>
-
-  <!-- Final price * quantity -->
-  <p class="price">
-    ₹<%= (current * item.quantity).toLocaleString('en-IN') %>
-  </p>
-
-  <!-- Per unit pricing + strike-off if discount -->
-  <div class="unit-prices">
-    <span class="sale-unit">
-      ₹<%= current.toLocaleString('en-IN') %> each
-    </span>
-
-    <% if (hasDiscount) { %>
-      <del class="regular-unit">
-        ₹<%= regular.toLocaleString('en-IN') %>
-      </del>
-    <% } %>
-  </div>
-
-  <% if (hasDiscount) { %>
-    <span class="offer-badge">
-      <%= discountPercent %>% OFF
-    </span>
-  <% } %>
-</div>
-
+                      <%
+                        const regular = item.regularPrice;
+                        const sale = item.salePrice;
+                        const offerAmount = item.discountAmount || 0;
+                        const current = sale - offerAmount;
+                        const hasDiscount = regular > current;
+                        const discountPercent = hasDiscount ? Math.round(((regular - current) / regular) * 100) : 0;
+                      %>
+                      <p class="price">₹<%= (current * item.quantity).toLocaleString('en-IN') %></p>
+                      <div class="unit-prices">
+                        <span class="sale-unit">₹<%= current.toLocaleString('en-IN') %> each</span>
+                        <% if (hasDiscount) { %>
+                          <del class="regular-unit">₹<%= regular.toLocaleString('en-IN') %></del>
+                        <% } %>
+                      </div>
+                      <% if (hasDiscount) { %>
+                        <span class="offer-badge"><%= discountPercent %>% OFF</span>
+                      <% } %>
+                    </div>
                   </div>
 
                   <!-- Item Actions -->
                   <div class="item-actions">
-
-                    <!-- Cancel Item Button -->
                     <% if (cancellableStatuses.includes(item.itemStatus)) { %>
                       <button class="btn-cancel-item" onclick="showCancelItemModal('<%= item._id %>', '<%= (item.productId?.name || 'this item').replace(/'/g, "\\'") %>')">
                         <i class="bi bi-x-circle"></i> Cancel This Item
                       </button>
                     <% } %>
 
-                    <!-- Return Item Button -->
                     <% if (item.itemStatus === 'Delivered') { %>
                       <%
                         const deliveredDate = item.itemTimeline?.deliveredAt || order.deliveredDate;
@@ -239,6 +218,17 @@
                         <i class="bi bi-check-circle-fill"></i>
                         Delivered on <%= new Date(deliveredDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) %>
                       </div>
+                      
+                      <% if (!item.isReviewed) { %>
+                        <button class="btn-review-item" onclick="openReviewModal('<%= item._id %>', '<%= item.productId._id %>', '<%= item.variantId._id %>')">
+                          <i class="bi bi-star"></i> Write Review
+                        </button>
+                      <% } else { %>
+                        <div class="review-submitted">
+                          <i class="bi bi-check-circle-fill"></i> Review Submitted
+                        </div>
+                      <% } %>
+                      
                       <% if (canReturn) { %>
                         <button class="btn-return-item" onclick="showReturnItemModal('<%= item._id %>', '<%= (item.productId?.name || 'this item').replace(/'/g, "\\'") %>')">
                           <i class="bi bi-arrow-return-left"></i> Return This Item (<%= 7 - daysSinceDelivery %> days left)
@@ -248,7 +238,6 @@
                       <% } %>
                     <% } %>
 
-                    <!-- Return Status Messages -->
                     <% if (item.itemStatus === 'ReturnRequested') { %>
                       <div class="return-status pending">
                         <i class="bi bi-clock-history"></i> 
@@ -291,7 +280,6 @@
                       </div>
                     <% } %>
 
-                    <!-- Show Cancellation/Return Reason -->
                     <% if ((item.itemStatus === 'Cancelled' || item.itemStatus.includes('Return')) && item.reason) { %>
                       <div class="item-reason">
                         <strong><%= item.itemStatus === 'Cancelled' ? 'Cancellation' : 'Return' %> Reason:</strong>
@@ -308,7 +296,6 @@
 
       <!-- Right Column -->
       <div class="right-column">
-        <!-- Delivery Address -->
         <div class="card">
           <div class="card-header">
             <h2>Delivery Address</h2>
@@ -327,7 +314,6 @@
           </div>
         </div>
 
-        <!-- Payment Information -->
         <div class="card">
           <div class="card-header">
             <h2>Payment Info</h2>
@@ -359,41 +345,39 @@
           </div>
         </div>
 
-          <div class="summary-row">
-  <span>Subtotal</span>
-  <span>₹<%= order.subtotal.toLocaleString('en-IN') %></span>
-</div>
+        <div class="card">
+          <div class="card-header">
+            <h2>Order Summary</h2>
+          </div>
+          <div class="card-body">
+            <div class="summary-row">
+              <span>Subtotal</span>
+              <span>₹<%= order.subtotal.toLocaleString('en-IN') %></span>
+            </div>
+            <% if (order.discount > 0) { %>
+              <div class="summary-row discount">
+                <span>Product Discount</span>
+                <span>-₹<%= order.discount.toLocaleString('en-IN') %></span>
+              </div>
+            <% } %>
+            <% if (order.couponDiscount > 0) { %>
+              <div class="summary-row discount">
+                <span>Coupon Discount</span>
+                <span>-₹<%= order.couponDiscount.toLocaleString('en-IN') %></span>
+              </div>
+            <% } %>
+            <div class="summary-row">
+              <span>Delivery</span>
+              <span><%= order.deliveryCharge === 0 ? 'FREE' : '₹' + order.deliveryCharge.toLocaleString('en-IN') %></span>
+            </div>
+            <div class="summary-divider"></div>
+            <div class="summary-row total">
+              <span>Total</span>
+              <span>₹<%= order.finalAmount.toLocaleString('en-IN') %></span>
+            </div>
+          </div>
+        </div>
 
-<% if (order.discount > 0) { %>
-  <div class="summary-row discount">
-    <span>Product Discount</span>
-    <span>-₹<%= order.discount.toLocaleString('en-IN') %></span>
-  </div>
-<% } %>
-
-<% if (order.couponDiscount > 0) { %>
-  <div class="summary-row discount">
-    <span>Coupon Discount</span>
-    <span>-₹<%= order.couponDiscount.toLocaleString('en-IN') %></span>
-  </div>
-<% } %>
-
-<div class="summary-row">
-  <span>Delivery</span>
-  <span>
-    <%= order.deliveryCharge === 0 ? 'FREE' : '₹' + order.deliveryCharge.toLocaleString('en-IN') %>
-  </span>
-</div>
-
-<div class="summary-divider"></div>
-
-<div class="summary-row total">
-  <span>Total</span>
-  <span>₹<%= order.finalAmount.toLocaleString('en-IN') %></span>
-</div>
-
-
-        <!-- Expected/Delivered Delivery -->
         <div class="card">
           <div class="card-header">
             <h2><%= order.deliveredDate ? 'Delivery Details' : 'Expected Delivery' %></h2>
@@ -405,12 +389,7 @@
                 <div>
                   <p class="delivery-label">Delivered On</p>
                   <p class="delivery-value">
-                    <%= new Date(order.deliveredDate).toLocaleDateString('en-IN', { 
-                      weekday: 'long',
-                      day: '2-digit', 
-                      month: 'long', 
-                      year: 'numeric' 
-                    }) %>
+                    <%= new Date(order.deliveredDate).toLocaleDateString('en-IN', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }) %>
                   </p>
                 </div>
               </div>
@@ -420,12 +399,7 @@
                 <div>
                   <p class="delivery-label">Expected By</p>
                   <p class="delivery-value">
-                    <%= new Date(order.expectedDelivery).toLocaleDateString('en-IN', { 
-                      weekday: 'long',
-                      day: '2-digit', 
-                      month: 'long', 
-                      year: 'numeric' 
-                    }) %>
+                    <%= new Date(order.expectedDelivery).toLocaleDateString('en-IN', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }) %>
                   </p>
                 </div>
               </div>
@@ -435,7 +409,7 @@
       </div>
     </div>
   </div>
-  </div>
+</div>
 </div>
 
 <!-- Cancel Order Modal -->
@@ -443,9 +417,7 @@
   <div class="modal-content">
     <div class="modal-header">
       <h3>Cancel Entire Order</h3>
-      <button class="modal-close" onclick="closeCancelOrderModal()">
-        <i class="bi bi-x"></i>
-      </button>
+      <button class="modal-close" onclick="closeCancelOrderModal()"><i class="bi bi-x"></i></button>
     </div>
     <div class="modal-body">
       <p>Are you sure you want to cancel all items in this order?</p>
@@ -467,9 +439,7 @@
   <div class="modal-content">
     <div class="modal-header">
       <h3>Cancel Item</h3>
-      <button class="modal-close" onclick="closeCancelItemModal()">
-        <i class="bi bi-x"></i>
-      </button>
+      <button class="modal-close" onclick="closeCancelItemModal()"><i class="bi bi-x"></i></button>
     </div>
     <div class="modal-body">
       <p>Are you sure you want to cancel <strong id="cancelItemName"></strong>?</p>
@@ -490,9 +460,7 @@
   <div class="modal-content">
     <div class="modal-header">
       <h3>Request Return</h3>
-      <button class="modal-close" onclick="closeReturnItemModal()">
-        <i class="bi bi-x"></i>
-      </button>
+      <button class="modal-close" onclick="closeReturnItemModal()"><i class="bi bi-x"></i></button>
     </div>
     <div class="modal-body">
       <p>Request return for <strong id="returnItemName"></strong></p>
@@ -511,246 +479,306 @@
   </div>
 </div>
 
+<!-- Review Modal -->
+<div id="reviewModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Rate this Product</h3>
+      <button class="modal-close" onclick="closeReviewModal()"><i class="bi bi-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <form id="reviewForm">
+        <input type="hidden" id="reviewOrderItemId">
+        <input type="hidden" id="reviewProductId">
+        <input type="hidden" id="reviewVariantId">
+        <div class="form-group">
+          <label>Rating <span class="required">*</span></label>
+          <div class="star-rating">
+            <i class="bi bi-star" onclick="setRating(1)" data-star="1"></i>
+            <i class="bi bi-star" onclick="setRating(2)" data-star="2"></i>
+            <i class="bi bi-star" onclick="setRating(3)" data-star="3"></i>
+            <i class="bi bi-star" onclick="setRating(4)" data-star="4"></i>
+            <i class="bi bi-star" onclick="setRating(5)" data-star="5"></i>
+          </div>
+          <input type="hidden" id="reviewRating" required>
+        </div>
+        <div class="form-group">
+          <label for="reviewComment">Comment <span class="required">*</span></label>
+          <textarea id="reviewComment" rows="4" maxlength="300" placeholder="Share your experience..." required></textarea>
+          <small class="form-help"><i class="bi bi-info-circle"></i> Maximum 300 characters</small>
+        </div>
+        <div class="modal-footer" style="border-top: none; padding-top: 0;">
+          <button type="button" class="btn-secondary" onclick="closeReviewModal()">Cancel</button>
+          <button type="submit" class="btn-primary">Submit Review</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
 <%- include('../partials/user/footer') %>
 
 <script>
   const orderItems = <%- JSON.stringify(order.orderedItems) %>;
-  let selectedItemIds = [];
-  const activeOrderId = document.querySelector(".order-detail-page")?.dataset.orderId;
+let selectedItemIds = [];
+const activeOrderId = document.querySelector(".order-detail-page")?.dataset.orderId;
+let selectedRating = 0;
 
-  // Modal Functions
-  window.showCancelOrderModal = function () {
-    // Get all cancellable items
-    const cancellableStatuses = ['Pending', 'Confirmed', 'Processing'];
-    selectedItemIds = orderItems
-      .filter(item => cancellableStatuses.includes(item.itemStatus))
-      .map(item => item._id);
+// Review Modal Functions
+window.openReviewModal = function(orderItemId, productId, variantId) {
+  document.getElementById('reviewModal').style.display = 'flex';
+  document.getElementById('reviewOrderItemId').value = orderItemId;
+  document.getElementById('reviewProductId').value = productId;
+  document.getElementById('reviewVariantId').value = variantId;
+  setRating(0);
+  document.getElementById('reviewComment').value = '';
+};
 
-    if (selectedItemIds.length === 0) {
-      Toastify({
-        text: "No items available to cancel",
-        duration: 2000,
-        style: { background: "orange" }
-      }).showToast();
-      return;
-    }
+window.closeReviewModal = function() {
+  document.getElementById('reviewModal').style.display = 'none';
+};
 
-    document.getElementById("cancelOrderModal").style.display = "flex";
-  };
-
-  window.closeCancelOrderModal = function () {
-    document.getElementById("cancelOrderModal").style.display = "none";
-    document.getElementById("cancelOrderReason").value = "";
-  };
-
-  window.showCancelItemModal = function (itemId, name) {
-    selectedItemIds = [itemId];
-    document.getElementById("cancelItemName").innerText = name;
-    document.getElementById("cancelItemModal").style.display = "flex";
-  };
-
-  window.closeCancelItemModal = function () {
-    document.getElementById("cancelItemModal").style.display = "none";
-    document.getElementById("cancelItemReason").value = "";
-  };
-
-  window.showReturnItemModal = function (itemId, name) {
-    selectedItemIds = [itemId];
-    document.getElementById("returnItemName").innerText = name;
-    document.getElementById("returnItemModal").style.display = "flex";
-  };
-
-  window.closeReturnItemModal = function () {
-    document.getElementById("returnItemModal").style.display = "none";
-    document.getElementById("returnItemReason").value = "";
-  };
-
-  window.cancelOrder = async function () {
-    const reason = document.getElementById("cancelOrderReason").value.trim();
-
-    if (selectedItemIds.length === 0) {
-      Toastify({
-        text: "No items to cancel",
-        duration: 2000,
-        style: { background: "orange" }
-      }).showToast();
-      return;
-    }
-
-    try {
-      const res = await axios.post(`/orders/${activeOrderId}/cancel-items`, {
-        itemIds: selectedItemIds,
-        reason
-      });
-
-      if (res.data.success) {
-        Toastify({
-          text: res.data.message || "Items cancelled successfully",
-          duration: 2500,
-          gravity: "top",
-          position: "right",
-          style: { background: "#dc3545" }
-        }).showToast();
-
-        closeCancelOrderModal();
-        setTimeout(() => location.reload(), 2000);
-      } else {
-        Toastify({
-          text: res.data.message || "Failed to cancel items",
-          duration: 2500,
-          style: { background: "orange" }
-        }).showToast();
-      }
-    } catch (err) {
-      console.error("Cancel order error:", err);
-      Toastify({
-        text: "Something went wrong while cancelling",
-        duration: 2500,
-        style: { background: "red" }
-      }).showToast();
-    }
-  };
-
-  // CANCEL ONE ITEM
-  window.cancelItem = async function () {
-    const reason = document.getElementById("cancelItemReason").value.trim();
-
-    try {
-      const res = await axios.post(`/orders/${activeOrderId}/cancel-items`, {
-        itemIds: selectedItemIds,
-        reason
-      });
-
-      if (res.data.success) {
-        Toastify({
-          text: res.data.message || "Item cancelled successfully",
-          duration: 2500,
-          gravity: "top",
-          position: "right",
-          style: { background: "#dc3545" }
-        }).showToast();
-
-        closeCancelItemModal();
-        setTimeout(() => location.reload(), 2000);
-      } else {
-        Toastify({
-          text: res.data.message || "Failed to cancel item",
-          duration: 2500,
-          style: { background: "orange" }
-        }).showToast();
-      }
-    } catch (err) {
-      console.error("Cancel item error:", err);
-      Toastify({
-        text: "Unable to cancel item",
-        duration: 2500,
-        style: { background: "red" }
-      }).showToast();
-    }
-  };
-
-  // REQUEST RETURN ITEM
-  window.requestReturn = async function () {
-    const reason = document.getElementById("returnItemReason").value.trim();
-
-    if (!reason) {
-      Toastify({
-        text: "Return reason is mandatory",
-        duration: 2500,
-        gravity: "top",
-        position: "right",
-        style: { background: "orange" }
-      }).showToast();
-      return;
-    }
-
-    try {
-      const res = await axios.post(`/orders/${activeOrderId}/return-item`, {
-        itemId: selectedItemIds[0],
-        reason
-      });
-
-      if (res.data.success) {
-        Toastify({
-          text: res.data.message || "Return request submitted",
-          duration: 2500,
-          gravity: "top",
-          position: "right",
-          style: { background: "#0d6efd" }
-        }).showToast();
-
-        closeReturnItemModal();
-        setTimeout(() => location.reload(), 2000);
-      } else {
-        Toastify({
-          text: res.data.message || "Failed to submit return request",
-          duration: 2500,
-          style: { background: "orange" }
-        }).showToast();
-      }
-    } catch (err) {
-      console.error("Return request error:", err);
-      Toastify({
-        text: err.response?.data?.message || "Something went wrong",
-        duration: 2500,
-        style: { background: "red" }
-      }).showToast();
-    }
-  };
-
-  // Close modal when clicking outside
-  window.addEventListener("click", (e) => {
-    document.querySelectorAll(".modal").forEach(modal => {
-      if (e.target === modal) {
-        modal.style.display = "none";
-      }
-    });
-  });
-
-  // Track Item Modal
-window.showTrackItemModal = function (itemId, name) {
-  const item = orderItems.find(i => i._id === itemId);
+window.setRating = function(rating) {
+  selectedRating = rating;
+  document.getElementById('reviewRating').value = rating;
   
-  if (!item) {
+  document.querySelectorAll('[data-star]').forEach(star => {
+    const starValue = parseInt(star.dataset.star);
+    if (starValue <= rating) {
+      star.classList.remove('bi-star');
+      star.classList.add('bi-star-fill');
+      star.style.color = '#fbbf24';
+    } else {
+      star.classList.remove('bi-star-fill');
+      star.classList.add('bi-star');
+      star.style.color = '#d1d5db';
+    }
+  });
+};
+
+document.getElementById('reviewForm')?.addEventListener('submit', async function(e) {
+  e.preventDefault();
+
+  if (!selectedRating) {
     Toastify({
-      text: "Item not found",
+      text: "Please select a rating",
+      duration: 3000,
+      gravity: "top",
+      position: "right",
+      style: { background: "#f59e0b" }
+    }).showToast();
+    return;
+  }
+
+  const payload = {
+    orderItemId: document.getElementById('reviewOrderItemId').value,
+    productId: document.getElementById('reviewProductId').value,
+    variantId: document.getElementById('reviewVariantId').value,
+    rating: selectedRating,
+    comment: document.getElementById('reviewComment').value.trim(),
+  };
+
+  try {
+    await axios.post('/reviews', payload);
+    Toastify({
+      text: "Review submitted successfully 🎉",
+      duration: 3000,
+      gravity: "top",
+      position: "right",
+      style: { background: "#22c55e" }
+    }).showToast();
+    closeReviewModal();
+    setTimeout(() => location.reload(), 1200);
+  } catch (error) {
+    Toastify({
+      text: error?.response?.data?.message || "Failed to submit review. Try again.",
+      duration: 4000,
+      gravity: "top",
+      position: "right",
+      style: { background: "#ef4444" }
+    }).showToast();
+  }
+});
+
+// Cancel Order Modal
+window.showCancelOrderModal = function() {
+  const cancellableStatuses = ['Pending', 'Confirmed', 'Processing'];
+  selectedItemIds = orderItems.filter(item => cancellableStatuses.includes(item.itemStatus)).map(item => item._id);
+  
+  if (selectedItemIds.length === 0) {
+    Toastify({
+      text: "No items available to cancel",
+      duration: 2000,
+      style: { background: "orange" }
+    }).showToast();
+    return;
+  }
+  document.getElementById("cancelOrderModal").style.display = "flex";
+};
+
+window.closeCancelOrderModal = function() {
+  document.getElementById("cancelOrderModal").style.display = "none";
+  document.getElementById("cancelOrderReason").value = "";
+};
+
+window.cancelOrder = async function() {
+  const reason = document.getElementById("cancelOrderReason").value.trim();
+
+  if (selectedItemIds.length === 0) {
+    Toastify({
+      text: "No items to cancel",
       duration: 2000,
       style: { background: "orange" }
     }).showToast();
     return;
   }
 
-  // Set item name and status
-  document.getElementById("trackItemName").innerText = name;
-  const statusBadge = document.getElementById("trackItemStatus");
-  statusBadge.innerText = item.itemStatus;
-  
-  // Set status class
-  let statusClass = '';
-  if (item.itemStatus === 'Delivered') statusClass = 'status-delivered';
-  else if (item.itemStatus === 'Shipped' || item.itemStatus === 'Out for Delivery') statusClass = 'status-shipping';
-  else if (item.itemStatus === 'Pending') statusClass = 'status-pending';
-  else if (item.itemStatus === 'Confirmed' || item.itemStatus === 'Processing') statusClass = 'status-processing';
-  else if (item.itemStatus === 'Cancelled') statusClass = 'status-cancelled';
-  else if (item.itemStatus === 'ReturnRequested') statusClass = 'status-return-pending';
-  else if (item.itemStatus === 'ReturnApproved') statusClass = 'status-return-approved';
-  else if (item.itemStatus === 'Returned') statusClass = 'status-returned';
-  
-  statusBadge.className = 'item-status ' + statusClass;
+  try {
+    const res = await axios.post(`/orders/${activeOrderId}/cancel-items`, {
+      itemIds: selectedItemIds,
+      reason
+    });
 
-  // Build timeline HTML
-  const timelineHTML = buildItemTimeline(item);
-  document.getElementById("itemTrackingTimeline").innerHTML = timelineHTML;
-
-  // Show modal
-  document.getElementById("trackItemModal").style.display = "flex";
+    if (res.data.success) {
+      Toastify({
+        text: res.data.message || "Items cancelled successfully",
+        duration: 2500,
+        gravity: "top",
+        position: "right",
+        style: { background: "#dc3545" }
+      }).showToast();
+      closeCancelOrderModal();
+      setTimeout(() => location.reload(), 2000);
+    } else {
+      Toastify({
+        text: res.data.message || "Failed to cancel items",
+        duration: 2500,
+        style: { background: "orange" }
+      }).showToast();
+    }
+  } catch (err) {
+    console.error("Cancel order error:", err);
+    Toastify({
+      text: "Something went wrong while cancelling",
+      duration: 2500,
+      style: { background: "red" }
+    }).showToast();
+  }
 };
 
-window.closeTrackItemModal = function () {
-  document.getElementById("trackItemModal").style.display = "none";
+// Cancel Item Modal
+window.showCancelItemModal = function(itemId, name) {
+  selectedItemIds = [itemId];
+  document.getElementById("cancelItemName").innerText = name;
+  document.getElementById("cancelItemModal").style.display = "flex";
 };
 
+window.closeCancelItemModal = function() {
+  document.getElementById("cancelItemModal").style.display = "none";
+  document.getElementById("cancelItemReason").value = "";
+};
 
+window.cancelItem = async function() {
+  const reason = document.getElementById("cancelItemReason").value.trim();
+
+  try {
+    const res = await axios.post(`/orders/${activeOrderId}/cancel-items`, {
+      itemIds: selectedItemIds,
+      reason
+    });
+
+    if (res.data.success) {
+      Toastify({
+        text: res.data.message || "Item cancelled successfully",
+        duration: 2500,
+        gravity: "top",
+        position: "right",
+        style: { background: "#dc3545" }
+      }).showToast();
+      closeCancelItemModal();
+      setTimeout(() => location.reload(), 2000);
+    } else {
+      Toastify({
+        text: res.data.message || "Failed to cancel item",
+        duration: 2500,
+        style: { background: "orange" }
+      }).showToast();
+    }
+  } catch (err) {
+    console.error("Cancel item error:", err);
+    Toastify({
+      text: "Unable to cancel item",
+      duration: 2500,
+      style: { background: "red" }
+    }).showToast();
+  }
+};
+
+// Return Item Modal
+window.showReturnItemModal = function(itemId, name) {
+  selectedItemIds = [itemId];
+  document.getElementById("returnItemName").innerText = name;
+  document.getElementById("returnItemModal").style.display = "flex";
+};
+
+window.closeReturnItemModal = function() {
+  document.getElementById("returnItemModal").style.display = "none";
+  document.getElementById("returnItemReason").value = "";
+};
+
+window.requestReturn = async function() {
+  const reason = document.getElementById("returnItemReason").value.trim();
+
+  if (!reason) {
+    Toastify({
+      text: "Return reason is mandatory",
+      duration: 2500,
+      gravity: "top",
+      position: "right",
+      style: { background: "orange" }
+    }).showToast();
+    return;
+  }
+
+  try {
+    const res = await axios.post(`/orders/${activeOrderId}/return-item`, {
+      itemId: selectedItemIds[0],
+      reason
+    });
+
+    if (res.data.success) {
+      Toastify({
+        text: res.data.message || "Return request submitted",
+        duration: 2500,
+        gravity: "top",
+        position: "right",
+        style: { background: "#0d6efd" }
+      }).showToast();
+      closeReturnItemModal();
+      setTimeout(() => location.reload(), 2000);
+    } else {
+      Toastify({
+        text: res.data.message || "Failed to submit return request",
+        duration: 2500,
+        style: { background: "orange" }
+      }).showToast();
+    }
+  } catch (err) {
+    console.error("Return request error:", err);
+    Toastify({
+      text: err.response?.data?.message || "Something went wrong",
+      duration: 2500,
+      style: { background: "red" }
+    }).showToast();
+  }
+};
+
+// Close modal when clicking outside
+window.addEventListener("click", (e) => {
+  document.querySelectorAll(".modal").forEach(modal => {
+    if (e.target === modal) {
+      modal.style.display = "none";
+    }
+  });
+});
 </script>
-

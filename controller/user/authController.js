@@ -307,6 +307,14 @@ const sendResetOtp = async (req, res) => {
      success: false, 
      message: "No user found with this email" });
 
+     if (user.googleId) {
+  return res.status(403).json({
+    success: false,
+    isGoogleUser: true,
+    message: "This account was created using Google. Please login with Google.",
+  });
+}
+
     const otp = generateOtp();
     const sent = await sendVerificationEmail(email, otp);
     if (!sent)

@@ -1,5 +1,6 @@
 import TempOrder from "../../model/tempOrderSchema.js";
 import crypto from "crypto";
+import PDFDocument from "pdfkit";
 
 import mongoose from "mongoose";
 
@@ -221,6 +222,13 @@ export const placeOrder = async (req, res) => {
           throw { status: 400, message: "Insufficient stock" };
         }
       }
+
+      if (paymentMethod === "cod" && finalAmount > 1000) {
+  throw {
+    status: 400,
+    message: "Cash on Delivery is available only for orders up to ₹1000",
+  };
+}
 
       const [order] = await Order.create([{
         userId,
@@ -873,18 +881,22 @@ const cancelOrderItems = async (req, res) => {
 
       // refund
       if (order.paymentStatus === "Paid") {
-        const salePrice = item.salePrice || 0;
-        const discountAmount = item.discountAmount || 0;
-        const couponShare = item.couponShare || 0;
-        
-        // Calculate final price per unit (what user paid)
-        const finalPricePerUnit = salePrice - discountAmount - couponShare;
-        
-        // Total refund for this item
-        const itemRefund = finalPricePerUnit * item.quantity;
-        
-        refundAmount += itemRefund;
-      }
+  const salePrice = item.salePrice || 0;
+  const discountAmount = item.discountAmount || 0;
+  const couponShare = item.couponShare || 0;
+
+  const couponPerUnit = couponShare / item.quantity;
+
+  const finalPricePerUnit =
+    salePrice - discountAmount - couponPerUnit;
+
+  const itemRefund =
+    Math.round(finalPricePerUnit * item.quantity * 100) / 100;
+
+  refundAmount += itemRefund;
+  item.refundProcessed = true;
+}
+
     }
 
     // NO CANCELLATION
@@ -1087,9 +1099,7 @@ const requestReturn = async (req, res) => {
 const downloadInvoice = async (req, res) => {
   try {
     const userId = req.session.user?._id;
-    if (!userId) {
-      return res.redirect("/login");
-    }
+    if (!userId) return res.redirect("/login");
 
     const { id } = req.params;
 
@@ -1105,21 +1115,19 @@ const downloadInvoice = async (req, res) => {
       })
       .lean();
 
-    if (!order) {
-      return res.status(404).send("Order not found");
-    }
+    if (!order) return res.status(404).send("Order not found");
 
-    // Only allow invoice download for completed/finalized orders
     const allowedStatuses = [
-      "Delivered", 
-      "Cancelled", 
-      "Returned", 
+      "Delivered",
+      "Cancelled",
+      "Returned",
       "Partially Returned",
       "Partially Cancelled",
-      "Partially Delivered"
+      "Partially Delivered",
     ];
+
     if (!allowedStatuses.includes(order.orderStatus)) {
-      return res.status(400).send("Invoice not available for this order status");
+      return res.status(400).send("Invoice not available for this order");
     }
 
     const doc = new PDFDocument({ margin: 50 });
@@ -1132,158 +1140,154 @@ const downloadInvoice = async (req, res) => {
 
     doc.pipe(res);
 
-    // Company Header
+    /* ------------------------------------
+       HEADER
+    ------------------------------------ */
     doc.fontSize(24).font("Helvetica-Bold").text("BLUMEVA", { align: "center" });
     doc.fontSize(10).font("Helvetica").text("Face Care", { align: "center" });
     doc.moveDown();
 
-    // Invoice Title
     doc.fontSize(20).font("Helvetica-Bold").text("INVOICE", { align: "center" });
     doc.moveDown();
 
-    // Order Information
     doc.fontSize(10).font("Helvetica");
-    doc.text(`Invoice Number: ${order.orderId}`, 50);
-    doc.text(
-      `Invoice Date: ${new Date(order.createdAt).toLocaleDateString("en-IN")}`,
-      50
-    );
-    doc.text(`Payment Method: ${order.paymentMethod.toUpperCase()}`, 50);
-    doc.text(`Payment Status: ${order.paymentStatus}`, 50);
+    doc.text(`Invoice No: ${order.orderId}`);
+    doc.text(`Date: ${new Date(order.createdAt).toLocaleDateString("en-IN")}`);
+    doc.text(`Payment: ${order.paymentMethod.toUpperCase()}`);
+    doc.text(`Status: ${order.paymentStatus}`);
     doc.moveDown();
 
-    // Billing and Shipping Information
-    const leftColumn = 50;
-    const rightColumn = 300;
-    let currentY = doc.y;
+    /* ------------------------------------
+       BILLING / SHIPPING
+    ------------------------------------ */
+    const leftX = 50;
+    const rightX = 300;
+    const startY = doc.y;
 
-    doc.fontSize(12).font("Helvetica-Bold").text("Bill To:", leftColumn, currentY);
-    doc.fontSize(10).font("Helvetica");
-    doc.text(order.userId?.name || "N/A", leftColumn, currentY + 20);
-    doc.text(order.userId?.email || "N/A", leftColumn, currentY + 35);
+    doc.font("Helvetica-Bold").text("Bill To:", leftX, startY);
+    doc.font("Helvetica").text(order.userId?.name || "", leftX, startY + 20);
+    doc.text(order.userId?.email || "", leftX, startY + 35);
 
-    doc.fontSize(12).font("Helvetica-Bold").text("Ship To:", rightColumn, currentY);
-    doc.fontSize(10).font("Helvetica");
-    doc.text(order.shippingAddress?.fullName || "", rightColumn, currentY + 20);
-    doc.text(order.shippingAddress?.phone || "", rightColumn, currentY + 35);
-    doc.text(order.shippingAddress?.address1 || "", rightColumn, currentY + 50, {
-      width: 200,
-    });
-    if (order.shippingAddress?.address2) {
-      doc.text(order.shippingAddress.address2, rightColumn, currentY + 65, {
-        width: 200,
-      });
-    }
+    doc.font("Helvetica-Bold").text("Ship To:", rightX, startY);
+    doc.font("Helvetica").text(order.shippingAddress?.fullName || "", rightX, startY + 20);
+    doc.text(order.shippingAddress?.phone || "", rightX, startY + 35);
+    doc.text(order.shippingAddress?.address1 || "", rightX, startY + 50, { width: 200 });
     doc.text(
-      `${order.shippingAddress?.city}, ${order.shippingAddress?.state}`,
-      rightColumn,
-      currentY + 80
-    );
-    doc.text(
-      `${order.shippingAddress?.pincode}, ${order.shippingAddress?.country}`,
-      rightColumn,
-      currentY + 95
+      `${order.shippingAddress?.city}, ${order.shippingAddress?.state} - ${order.shippingAddress?.pincode}`,
+      rightX,
+      startY + 65
     );
 
-    doc.moveDown(8);
+    doc.moveDown(6);
 
-    // Items Table
-    const tableTop = doc.y + 20;
+    /* ------------------------------------
+       ITEMS TABLE
+    ------------------------------------ */
+    const tableTop = doc.y;
     const itemX = 50;
-    const descX = 150;
+    const descX = 140;
     const qtyX = 350;
-    const priceX = 400;
+    const priceX = 410;
     const totalX = 480;
 
-    doc.fontSize(10).font("Helvetica-Bold").fillColor("#333");
-    doc.rect(50, tableTop - 5, 500, 25).fillAndStroke("#f0f0f0", "#ddd");
-    
-    doc.fillColor("#000");
-    doc.text("#", itemX, tableTop + 5);
-    doc.text("Description", descX, tableTop + 5);
-    doc.text("Qty", qtyX, tableTop + 5);
-    doc.text("Price", priceX, tableTop + 5);
-    doc.text("Total", totalX, tableTop + 5);
+    doc.font("Helvetica-Bold").fontSize(10);
+    doc.text("#", itemX, tableTop);
+    doc.text("Description", descX, tableTop);
+    doc.text("Qty", qtyX, tableTop);
+    doc.text("Price", priceX, tableTop);
+    doc.text("Total", totalX, tableTop);
 
-    doc.font("Helvetica");
-    let yPosition = tableTop + 30;
-    let itemNumber = 1;
+    doc.moveDown();
+    doc.font("Helvetica").fontSize(9);
+
+    let y = doc.y;
+    let index = 1;
+    let invoiceSubtotal = 0;
 
     order.orderedItems.forEach((item) => {
-      const productName = item.productId?.name || "Product";
+      const salePrice = item.salePrice || 0;
+      const discount = item.discountAmount || 0;
+      const couponShare = item.couponShare || 0;
+      const qty = item.quantity || 1;
+
+      const couponPerUnit = couponShare / qty;
+      const finalUnitPrice = salePrice - discount - couponPerUnit;
+
+      const isInactive =
+        item.itemStatus === "Cancelled" ||
+        item.itemStatus === "Returned";
+
+      const lineTotal = isInactive
+        ? 0
+        : Math.round(finalUnitPrice * qty * 100) / 100;
+
+      if (!isInactive) invoiceSubtotal += lineTotal;
+
       const variantInfo = item.variantId
         ? `${item.variantId.quantityValue}${item.variantId.quantityType}`
         : "";
-      const itemTotal = item.price * item.quantity;
 
-      doc.fontSize(9);
-      doc.text(itemNumber.toString(), itemX, yPosition);
-      doc.text(`${productName}\n(${variantInfo})`, descX, yPosition, {
-        width: 180,
-      });
-      doc.text(item.quantity.toString(), qtyX, yPosition);
-      doc.text(`₹${item.price.toFixed(2)}`, priceX, yPosition);
-      doc.text(`₹${itemTotal.toFixed(2)}`, totalX, yPosition);
+      doc.text(index++, itemX, y);
+      doc.text(
+        `${item.productId?.name || "Product"}\n(${variantInfo})`,
+        descX,
+        y,
+        { width: 190 }
+      );
+      doc.text(qty.toString(), qtyX, y);
+      doc.text(`₹${(isInactive ? 0 : finalUnitPrice).toFixed(2)}`, priceX, y);
+      doc.text(`₹${lineTotal.toFixed(2)}`, totalX, y);
 
-      yPosition += 35;
-      itemNumber++;
-
-      doc.moveTo(50, yPosition - 5).lineTo(550, yPosition - 5).stroke("#e0e0e0");
+      y += 30;
     });
 
-    // Summary
-    yPosition += 20;
-    const summaryX = 380;
+    /* ------------------------------------
+       SUMMARY
+    ------------------------------------ */
+    y += 10;
+    doc.moveTo(350, y).lineTo(550, y).stroke();
+    y += 10;
 
-    doc.fontSize(10).font("Helvetica");
-    doc.text("Subtotal:", summaryX, yPosition);
-    doc.text(`₹${order.subtotal.toFixed(2)}`, totalX, yPosition, { align: "right" });
-    yPosition += 20;
+    doc.fontSize(10);
+    doc.text("Subtotal:", 350, y);
+    doc.text(`₹${invoiceSubtotal.toFixed(2)}`, totalX, y, { align: "right" });
+    y += 18;
 
-    if (order.discount > 0) {
-      doc.fillColor("#16a34a");
-      doc.text("Discount:", summaryX, yPosition);
-      doc.text(`-₹${order.discount.toFixed(2)}`, totalX, yPosition, { align: "right" });
-      doc.fillColor("#000");
-      yPosition += 20;
+    if (order.deliveryCharge > 0) {
+      doc.text("Delivery:", 350, y);
+      doc.text(`₹${order.deliveryCharge.toFixed(2)}`, totalX, y, { align: "right" });
+      y += 18;
     }
 
-    if (order.tax > 0) {
-      doc.text("Tax:", summaryX, yPosition);
-      doc.text(`₹${order.tax.toFixed(2)}`, totalX, yPosition, { align: "right" });
-      yPosition += 20;
-    }
-
-    doc.text("Delivery Charge:", summaryX, yPosition);
+    doc.font("Helvetica-Bold");
+    doc.text("Total:", 350, y);
     doc.text(
-      order.deliveryCharge === 0 ? "FREE" : `₹${order.deliveryCharge.toFixed(2)}`,
+      `₹${(invoiceSubtotal + order.deliveryCharge).toFixed(2)}`,
       totalX,
-      yPosition,
+      y,
       { align: "right" }
     );
-    yPosition += 20;
 
-    doc.moveTo(summaryX, yPosition).lineTo(550, yPosition).stroke();
-    yPosition += 10;
-
-    doc.fontSize(12).font("Helvetica-Bold");
-    doc.text("Total Amount:", summaryX, yPosition);
-    doc.text(`₹${order.finalAmount.toFixed(2)}`, totalX, yPosition, {
-      align: "right",
-    });
-
-    // Footer
-    doc.fontSize(9).font("Helvetica").fillColor("#666")
-      .text("Thank you for shopping with Blumeva!", 50, doc.page.height - 80, {
-        align: "center",
-      });
-    doc.text("For queries, contact: support@blumeva.com", 50, doc.page.height - 65, {
-      align: "center",
-    });
+    /* ------------------------------------
+       FOOTER
+    ------------------------------------ */
+    doc.font("Helvetica").fontSize(9).fillColor("#666");
+    doc.text(
+      "Thank you for shopping with Blumeva",
+      50,
+      doc.page.height - 80,
+      { align: "center" }
+    );
+    doc.text(
+      "Support: support@blumeva.com",
+      50,
+      doc.page.height - 65,
+      { align: "center" }
+    );
 
     doc.end();
-  } catch (error) {
-    console.error("Download invoice error:", error);
+  } catch (err) {
+    console.error("Invoice error:", err);
     res.status(500).send("Error generating invoice");
   }
 };

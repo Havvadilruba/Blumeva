@@ -1,13 +1,22 @@
 <%- include("../../views/partials/user/header") %>
 
+<% if (banner) { %>
 <section class="landing-hero">
-  <img src="/images/mainimage.jpg" alt="Hero" />
+  <img src="<%= banner.image %>" alt="<%= banner.title %>">
   <div class="hero-text">
-    <h1>Pure Care for Your Face</h1>
-    <p>Discover the beauty of healthy skin.</p>
-    <a href="<%= user ? '/products' : '/signup' %>" class="btn">Get Started</a>
+    <h1><%= banner.title %></h1>
+
+    <% if (banner.description) { %>
+      <p><%= banner.description %></p>
+    <% } %>
+
+    <a href="<%= banner.link %>" class="btn">
+      <%= banner.ctaText || 'Shop Now' %>
+    </a>
   </div>
 </section>
+<% } %>
+
 
 <section class="about">
   <h2>Why Blumeva?</h2>

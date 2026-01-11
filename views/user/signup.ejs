@@ -4,75 +4,168 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Create Account | Blumeva</title>
-  <link rel="stylesheet" href="style/user/signup.css" />
-
   
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  
+  <!-- Toastify CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+  
+  <!-- Signup CSS -->
+  <link rel="stylesheet" href="/style/user/signup.css" />
 </head>
 <body>
-  <div class="container">
-    <header>
-        <div class="logo">
-  <img src="/images/Frame.svg" alt="Logo" class="logo-icon" />
-  <span>Blumeva</span>
-</div>
+  <div class="signup-container">
+    <!-- Logo Header -->
+    <header class="signup-header">
+      <a href="/" class="logo">
+        <img src="/images/Frame.svg" alt="Blumeva Logo" class="logo-icon" />
+        <span>Blumeva</span>
+      </a>
     </header>
-    <h4 class="ph4">Create Your Blumeva Account</h4>
 
-    
-<% if (message) { %>
-  <div class="backend-message">
-    <%= message %>
-  </div>
-<% } %>
+    <!-- Welcome Text -->
+    <div class="welcome-section">
+      <h1>Create Your Account</h1>
+      <p>Join Blumeva for pure, natural skincare</p>
+    </div>
 
-    <form class="form" id="signform" method="post" action="/signup" novalidate>
-      <label for="name">Full Name</label>
-      <input type="text" name="name" id="name" placeholder="Enter your full name" />
-        <div id="error1" class="error-message" ></div>
+    <!-- Backend Message -->
+    <% if (typeof message !== 'undefined' && message) { %>
+      <div class="backend-message">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <%= message %>
+      </div>
+    <% } %>
 
-      <label for="email">Email</label>
-      <input type="text" name="email" id="email" placeholder="Enter your email" />
+    <!-- Signup Form -->
+    <form class="signup-form" id="signform" method="POST" action="/signup" novalidate>
+      <!-- Full Name -->
+      <div class="form-group">
+        <label for="name">
+          <i class="fa-regular fa-user"></i>
+          Full Name
+        </label>
+        <input 
+          type="text" 
+          name="name" 
+          id="name" 
+          placeholder="Enter your full name" 
+          autocomplete="name"
+        />
+        <div id="error1" class="error-message"></div>
+      </div>
+
+      <!-- Email -->
+      <div class="form-group">
+        <label for="email">
+          <i class="fa-regular fa-envelope"></i>
+          Email Address
+        </label>
+        <input 
+          type="email" 
+          name="email" 
+          id="email" 
+          placeholder="Enter your email" 
+          autocomplete="email"
+        />
         <div id="error2" class="error-message"></div>
-
-
-      <label for="password">Password</label>
-      <div class="password-field">
-        <input type="password" name="password" id="password" placeholder="Enter your password" />
-        <i class="fa-regular fa-eye"></i>
       </div>
-      <div id="error3" class="error-message"></div>
 
-      <label for="confirm">Confirm Password</label>
-      <div class="password-field">
-        <input type="password" id="confirm" name="cpassword" placeholder="Confirm your password" />
-        <i class="fa-regular fa-eye"></i>
+      <!-- Password -->
+      <div class="form-group">
+        <label for="password">
+          <i class="fa-solid fa-lock"></i>
+          Password
+        </label>
+        <div class="password-field">
+          <input 
+            type="password" 
+            name="password" 
+            id="password" 
+            placeholder="Create a strong password" 
+            autocomplete="new-password"
+          />
+          <i class="fa-regular fa-eye toggle-password"></i>
+        </div>
+        <div id="error3" class="error-message"></div>
       </div>
-       <div id="error4" class="error-message"></div>
 
-       <label for="referral">Referral Code (Optional)</label>
-      <input type="text" name="referralCode" id="referral" placeholder="Enter referral code">
-      <div id="error5" class="error-message"></div>
+      <!-- Confirm Password -->
+      <div class="form-group">
+        <label for="confirm">
+          <i class="fa-solid fa-lock"></i>
+          Confirm Password
+        </label>
+        <div class="password-field">
+          <input 
+            type="password" 
+            name="cpassword" 
+            id="confirm" 
+            placeholder="Confirm your password" 
+            autocomplete="new-password"
+          />
+          <i class="fa-regular fa-eye toggle-password"></i>
+        </div>
+        <div id="error4" class="error-message"></div>
+      </div>
 
+      <!-- Referral Code -->
+      <div class="form-group">
+        <label for="referral">
+          <i class="fa-solid fa-gift"></i>
+          Referral Code <span class="optional">(Optional)</span>
+        </label>
+        <input 
+          type="text" 
+          name="referralCode" 
+          id="referral" 
+          placeholder="Enter referral code"
+        />
+        <div id="error5" class="error-message"></div>
+      </div>
 
-      <button type="submit" class="create-btn">Create Account</button>
+      <!-- Submit Button -->
+      <button type="submit" class="create-btn">
+        <span>Create Account</span>
+        <i class="fa-solid fa-arrow-right"></i>
+      </button>
     </form>
 
+    <!-- Divider -->
     <div class="divider">
-      <span>Or sign up with</span>
+      <span>Or continue with</span>
     </div>
 
+    <!-- Social Login -->
     <div class="social-login">
-      <a href="auth/google" class="social-btn google">
-        <i class="fa-brands fa-google"></i> Google
-      </>
+      <a href="/auth/google" class="social-btn google">
+        <i class="fa-brands fa-google"></i>
+        <span>Google</span>
+      </a>
     </div>
 
+    <!-- Login Link -->
     <p class="login-link">
       Already have an account?
-      <a href="/login">Log in</a>
+      <a href="/login">Log in here</a>
     </p>
+
+    <!-- Footer -->
+    <footer class="signup-footer">
+      <p>By creating an account, you agree to our</p>
+      <div class="footer-links">
+        <a href="/terms">Terms of Service</a>
+        <span>•</span>
+        <a href="/privacy">Privacy Policy</a>
+      </div>
+    </footer>
   </div>
+
+  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
   <script src="/js/user/signup.js"></script>

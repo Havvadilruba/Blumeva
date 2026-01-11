@@ -3,9 +3,67 @@ function changeImage(src, e) {
   main.src = src;
   document.querySelectorAll(".thumbnail").forEach(t => t.classList.remove("active"));
   e.target.classList.add("active");
+  
+  // Reinitialize zoom for new image
+  setTimeout(() => {
+    initImageZoom();
+  }, 100);
+}
+
+/* -----------------------------------------------------
+   IMAGE ZOOM FUNCTIONALITY - INTERNAL ZOOM
+------------------------------------------------------ */
+let zoomActive = false;
+
+function initImageZoom() {
+  const imageContainer = document.getElementById("imageContainer");
+  const mainImage = document.getElementById("mainImage");
+  
+  if (!imageContainer || !mainImage) return;
+
+  let zoomLevel = 2; // Zoom magnification level
+
+  imageContainer.addEventListener("mousemove", function(e) {
+    if (!zoomActive) return;
+    
+    const rect = imageContainer.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    // Calculate percentage position
+    const xPercent = (x / rect.width) * 100;
+    const yPercent = (y / rect.height) * 100;
+    
+    // Apply zoom transform
+    mainImage.style.transformOrigin = `${xPercent}% ${yPercent}%`;
+    mainImage.style.transform = `scale(${zoomLevel})`;
+    mainImage.style.cursor = 'zoom-in';
+  });
+
+  imageContainer.addEventListener("mouseenter", function() {
+    zoomActive = true;
+    imageContainer.style.overflow = 'hidden';
+  });
+
+  imageContainer.addEventListener("mouseleave", function() {
+    zoomActive = false;
+    mainImage.style.transform = 'scale(1)';
+    mainImage.style.transformOrigin = 'center center';
+    mainImage.style.cursor = 'crosshair';
+  });
 }
 
 document.addEventListener("DOMContentLoaded", function () {
+  // Initialize image zoom
+  const mainImage = document.getElementById("mainImage");
+  if (mainImage) {
+    mainImage.addEventListener("load", initImageZoom);
+    if (mainImage.complete) initImageZoom();
+  }
+
+  /* -----------------------------------------------------
+     VARIANT & CART FUNCTIONALITY
+  ------------------------------------------------------ */
   const variantBadges = document.querySelectorAll(".variant-badge");
   const priceSection = document.getElementById("priceSection");
   const stockInfo = document.getElementById("stockInfo");
@@ -40,57 +98,53 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   /* -----------------------------------------------------
-     UPDATE WISHLIST ICON
-  ------------------------------------------------------ */
-
-  /* -----------------------------------------------------
      TOGGLE WISHLIST
   ------------------------------------------------------ */
   window.toggleWishlist = async function (event) {
-  event.preventDefault();
-  event.stopPropagation();
+    event.preventDefault();
+    event.stopPropagation();
 
-  const btn = event.currentTarget;
-  const icon = btn.querySelector("i");
+    const btn = event.currentTarget;
+    const icon = btn.querySelector("i");
 
-  const activeVariant = document.querySelector(".variant-badge.active");
-  if (!activeVariant) {
-    showToast("Please select a variant", "error");
-    return;
-  }
-
-  const variantId = activeVariant.dataset.variantid;
-  btn.disabled = true;
-
-  try {
-    const res = await axios.post("/wishlist/toggle", { variantId });
-    const data = res.data;
-
-    if (!data.success) {
-      showToast(data.message || "Login required", "error");
+    const activeVariant = document.querySelector(".variant-badge.active");
+    if (!activeVariant) {
+      showToast("Please select a variant", "error");
       return;
     }
 
-    if (data.action === "added") {
-      icon.classList.replace("fa-regular", "fa-solid");
-      btn.classList.add("active");
-      showToast("Added to Wishlist ❤️", "success");
-    } else {
-      icon.classList.replace("fa-solid", "fa-regular");
-      btn.classList.remove("active");
-      showToast("Removed from Wishlist", "success");
-    }
+    const variantId = activeVariant.dataset.variantid;
+    btn.disabled = true;
 
-  } catch (error) {
-    if (error.response?.status === 401) {
-      showToast("Please login first", "error");
-    } else {
-      showToast("Wishlist failed", "error");
+    try {
+      const res = await axios.post("/wishlist/toggle", { variantId });
+      const data = res.data;
+
+      if (!data.success) {
+        showToast(data.message || "Login required", "error");
+        return;
+      }
+
+      if (data.action === "added") {
+        icon.classList.replace("fa-regular", "fa-solid");
+        btn.classList.add("active");
+        showToast("Added to Wishlist ❤️", "success");
+      } else {
+        icon.classList.replace("fa-solid", "fa-regular");
+        btn.classList.remove("active");
+        showToast("Removed from Wishlist", "success");
+      }
+
+    } catch (error) {
+      if (error.response?.status === 401) {
+        showToast("Please login first", "error");
+      } else {
+        showToast("Wishlist failed", "error");
+      }
+    } finally {
+      btn.disabled = false;
     }
-  } finally {
-    btn.disabled = false;
-  }
-};
+  };
 
   /* -----------------------------------------------------
      ADD TO CART
@@ -174,29 +228,28 @@ document.addEventListener("DOMContentLoaded", function () {
   /* -----------------------------------------------------
      VARIANT CHANGE
   ------------------------------------------------------ */
-variantBadges.forEach(badge => {
-  badge.addEventListener("click", () => {
-    variantBadges.forEach(b => b.classList.remove("active"));
-    badge.classList.add("active");
+  variantBadges.forEach(badge => {
+    badge.addEventListener("click", () => {
+      variantBadges.forEach(b => b.classList.remove("active"));
+      badge.classList.add("active");
 
-    updatePrice();
-    updateStock(num(badge, "stock"));
+      updatePrice();
+      updateStock(num(badge, "stock"));
 
-    // 🔥 Sync wishlist icon like product card
-    const isInWishlist = badge.dataset.inwishlist === "true";
-    const icon = document.querySelector(".wishlist-btn i");
-    const btn = document.querySelector(".wishlist-btn");
+      // Sync wishlist icon
+      const isInWishlist = badge.dataset.inwishlist === "true";
+      const icon = document.querySelector(".wishlist-btn i");
+      const btn = document.querySelector(".wishlist-btn");
 
-    if (isInWishlist) {
-      icon.classList.replace("fa-regular", "fa-solid");
-      btn.classList.add("active");
-    } else {
-      icon.classList.replace("fa-solid", "fa-regular");
-      btn.classList.remove("active");
-    }
+      if (isInWishlist) {
+        icon.classList.replace("fa-regular", "fa-solid");
+        btn.classList.add("active");
+      } else {
+        icon.classList.replace("fa-solid", "fa-regular");
+        btn.classList.remove("active");
+      }
+    });
   });
-});
-
 
   /* -----------------------------------------------------
      INITIAL LOAD
@@ -210,9 +263,8 @@ variantBadges.forEach(badge => {
     updatePrice();
     updateStock(num(firstActive, "stock"));
     
-    // Get variant ID and check wishlist status
     const variantId = firstActive.dataset.variantid;
-    if (variantId) {
+    if (variantId && typeof updateWishlistIcon === "function") {
       updateWishlistIcon(variantId);
     }
   }

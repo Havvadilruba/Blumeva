@@ -11,6 +11,7 @@ import orderController from "../controller/user/orderController.js";
 import wishlistController from "../controller/user/wishlistController.js";
 import walletController from "../controller/user/walletController.js";
 import userReferralController from "../controller/user/userReferralController.js";
+import reviewController from "../controller/user/reviewController.js";
 import noCache from "../middlewares/noCache.js";
 import upload from "../middlewares/multer.js"; 
 
@@ -31,6 +32,9 @@ router.post("/resendOtp", authController.resendOtp)
 router.get("/login",noCache,authController.loadLogin)
 router.post("/login",authController.login)
 router.post("/logout",middle.userAuth, authController.logout);
+
+router.get("/contact", userController.loadContactPage);
+router.get("/about", userController.loadAboutPage);
 
 router.get("/forgot-password",noCache, authController.loadForgotPassword);
 router.post("/forgot-password", authController.sendResetOtp);
@@ -99,4 +103,6 @@ router.post('/wallet/add-money',middle.userAuth, walletController.addMoney);
 router.post("/wallet/verify-payment", middle.userAuth,walletController.verifyPayment);
 
 router.get("/referral", middle.userAuth, userReferralController.loadReferralPage);
+
+router.post("/reviews", middle.userAuth, reviewController.createReview);
 export default router;

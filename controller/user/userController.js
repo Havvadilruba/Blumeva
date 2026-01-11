@@ -1,14 +1,16 @@
 import { getLandingPageData } from "../../services/landingService.js";
 import { getFilteredProducts } from "../../services/productListUserService.js";
 import { getProductDetail } from "../../services/productDetailService.js";
+import { getLiveBannerService } from "../../services/bannerService.js";
 
+import assets from "../../helpers/assets.js";
 
 // Landing Page
 // Landing Page
 export const loadLandingpage = async (req, res) => {
   try {
     const userId = req.session?.user?._id || null;  // <-- Pass userId safely
-
+     const banner = await getLiveBannerService();
     const { categories, brands, latestProducts } = await getLandingPageData(userId);
 
     res.render("user/landing", {
@@ -17,7 +19,9 @@ export const loadLandingpage = async (req, res) => {
       pageCSS: "/style/user/landing.css",
       categories,
       brands,
+       banner,
       latestProducts,
+      assets
     });
 
   } catch (err) {
@@ -30,9 +34,13 @@ export const loadLandingpage = async (req, res) => {
 // Product Listing
 export const listProducts = async (req, res) => {
   try {
-    const userId = req.session?.user?._id || null;   // <-- ADD THIS
+    const userId = req.session?.user?._id || null;
 
-    const data = await getFilteredProducts(req.query, userId); // <-- PASS userId
+    // 🔹 Main product list
+    const data = await getFilteredProducts(req.query, userId);
+
+    // 🔹 Latest / related products
+    const { latestProducts } = await getLandingPageData(userId);
 
     res.render("user/product-list", {
       layout: "layouts/user",
@@ -40,6 +48,7 @@ export const listProducts = async (req, res) => {
       pageCSS: "/style/user/product-list.css",
 
       ...data,
+
       query: req.query,
       pagination: {
         currentPage: data.currentPage,
@@ -61,8 +70,8 @@ export const loadProductDetail = async (req, res) => {
   const result = await getProductDetail(req.params.id, userId);
   
   if (!result) return res.redirect("/products");
-
-  const { product, variant, offer, isInWishlist } = result;
+  const { latestProducts } = await getLandingPageData(userId);
+  const { product, variant, offer, isInWishlist, reviews, avgRating } = result; // ✅ Add reviews and avgRating
 
   res.render("user/product-detail", {
     layout: "layouts/user",
@@ -72,6 +81,9 @@ export const loadProductDetail = async (req, res) => {
     variant,
     offer,
     isInWishlist,
+    reviews,      // ✅ Add this
+    avgRating,  
+    latestProducts  // ✅ Add this (if you want to use it)
   });
 };
 
@@ -90,12 +102,36 @@ const pageNotFound = async (req, res) => {
     res.redirect("/pageNotFound");
   }
 };
+export const loadContactPage = async (req, res) => {
+  try {
+    res.render("user/contact", {
+      layout: "layouts/user",
+      title: "Contact Us | Blumeva",
+      pageCSS: "/style/user/contact.css"
+    });
+  } catch (error) {
+    console.error("Contact Page Error:", error);
+    res.redirect("/pageNotFound");
+  }
+};
 
-
-
+export const loadAboutPage = async (req, res) => {
+  try {
+    res.render("user/about", {
+      layout: "layouts/user",
+      title: "About Us | Blumeva",
+      pageCSS: "/style/user/about.css"
+    });
+  } catch (error) {
+    console.error("About Page Error:", error);
+    res.redirect("/pageNotFound");
+  }
+};
 export default{ 
   loadLandingpage, 
   pageNotFound, 
   listProducts, 
-  loadProductDetail 
+  loadProductDetail ,
+  loadContactPage,
+  loadAboutPage
 };

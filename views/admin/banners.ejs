@@ -1,0 +1,296 @@
+<%- include('../partials/admin/sidebar') %>
+
+<div class="page-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <div>
+        <h1>Banner Management</h1>
+        <p class="subtitle">Create and manage homepage banners</p>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="openAddBannerModal()">
+      <i class="bi bi-plus-circle"></i>
+      Add New Banner
+    </button>
+  </div>
+
+  <!-- Analytics Cards -->
+  <div class="stats-grid">
+    <div class="stat-card stat-blue">
+      <div class="stat-icon">
+        <i class="bi bi-images"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Total Banners</div>
+        <div class="stat-value"><%= banners.length || 0 %></div>
+      </div>
+    </div>
+
+    <div class="stat-card stat-green">
+      <div class="stat-icon">
+        <i class="bi bi-check-circle"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Active Banners</div>
+        <div class="stat-value"><%= banners.filter(b => b.isActive).length || 0 %></div>
+      </div>
+    </div>
+
+    <div class="stat-card stat-purple">
+      <div class="stat-icon">
+        <i class="bi bi-calendar-check"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Live Now</div>
+        <div class="stat-value">
+          <% 
+            const now = new Date();
+            const liveCount = banners.filter(b => {
+              const start = new Date(b.startDate);
+              const end = new Date(b.endDate);
+              return b.isActive && now >= start && now <= end;
+            }).length;
+          %>
+          <%= liveCount %>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-card stat-orange">
+      <div class="stat-icon">
+        <i class="bi bi-clock-history"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Scheduled</div>
+        <div class="stat-value">
+          <% 
+            const scheduledCount = banners.filter(b => {
+              const start = new Date(b.startDate);
+              return b.isActive && now < start;
+            }).length;
+          %>
+          <%= scheduledCount %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Banners Grid -->
+  <% if (banners && banners.length > 0) { %>
+    <div class="banners-grid">
+      <% banners.forEach(banner => { %>
+        <% 
+          const now = new Date();
+          const start = new Date(banner.startDate);
+          const end = new Date(banner.endDate);
+
+          let statusClass = '';
+          let statusText = '';
+
+          if (!banner.isActive) {
+            statusClass = 'status-inactive';
+            statusText = 'Inactive';
+          } else if (now > end) {
+            statusClass = 'status-expired';
+            statusText = 'Expired';
+          } else if (now < start) {
+            statusClass = 'status-scheduled';
+            statusText = 'Scheduled';
+          } else {
+            statusClass = 'status-live';
+            statusText = 'Live';
+          }
+        %>
+
+        <div class="banner-card">
+          <div class="banner-image-container">
+            <img src="<%= banner.image %>" alt="<%= banner.title %>">
+
+            <span class="status-badge <%= statusClass %>"><%= statusText %></span>
+          </div>
+
+          <div class="banner-content">
+            <h3 class="banner-title"><%= banner.title %></h3>
+            <% if (banner.description) { %>
+              <p class="banner-description"><%= banner.description %></p>
+            <% } %>
+
+            <div class="banner-meta">
+              <div class="meta-item">
+                <i class="bi bi-link-45deg"></i>
+                <span><%= banner.link %></span>
+              </div>
+              <div class="meta-item">
+                <i class="bi bi-tag"></i>
+                <span><%= banner.ctaText || 'Shop Now' %></span>
+              </div>
+            </div>
+
+            <div class="banner-dates">
+              <div class="date-item">
+                <i class="bi bi-calendar-event"></i>
+                <span><%= new Date(banner.startDate).toLocaleDateString('en-IN') %></span>
+              </div>
+              <div class="date-separator">→</div>
+              <div class="date-item">
+                <i class="bi bi-calendar-x"></i>
+                <span><%= new Date(banner.endDate).toLocaleDateString('en-IN') %></span>
+              </div>
+            </div>
+
+            <div class="banner-actions">
+  <button class="btn-action btn-edit" data-id="<%= banner._id %>">
+    <i class="bi bi-pencil"></i>
+    Edit
+  </button>
+  <button class="btn-action <%= banner.isActive ? 'btn-toggle-off' : 'btn-toggle-on' %>"
+          data-id="<%= banner._id %>">
+    <i class="bi <%= banner.isActive ? 'bi-toggle-on' : 'bi-toggle-off' %>"></i>
+    <%= banner.isActive ? 'Deactivate' : 'Activate' %>
+  </button>
+  <button class="btn-action btn-delete" data-id="<%= banner._id %>">
+    <i class="bi bi-trash"></i>
+    Delete
+  </button>
+</div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  <% } else { %>
+    <div class="empty-state">
+      <i class="bi bi-images"></i>
+      <p>No banners found</p>
+      <button class="btn-primary" onclick="openAddBannerModal()">Create Your First Banner</button>
+    </div>
+  <% } %>
+</div>
+
+<!-- Add/Edit Banner Modal -->
+<div id="bannerModal" class="modal">
+  <div class="modal-content modal-large">
+    <div class="modal-header">
+      <h2 id="modalTitle">Add New Banner</h2>
+      <button class="modal-close" onclick="closeBannerModal()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <form id="bannerForm" enctype="multipart/form-data">
+      <input type="hidden" id="bannerId" name="bannerId">
+      
+      <div class="form-group">
+        <label for="bannerImage">Banner Image <span class="required">*</span></label>
+        <div class="image-upload-container">
+          <div class="image-preview" id="imagePreview">
+            <i class="bi bi-image"></i>
+            <span>Click to upload banner image</span>
+          </div>
+          <input 
+                type="file" 
+                id="bannerImage" 
+                name="bannerImage"
+                accept="image/*"
+                style="display: none;"
+                onchange="previewImage(this)"
+                >
+
+        </div>
+        <small class="form-help">Recommended: 1920x600px, JPG or PNG, max 2MB</small>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="title">Banner Title <span class="required">*</span></label>
+          <input 
+            type="text" 
+            id="title" 
+            name="title" 
+            class="form-input" 
+            placeholder="e.g., Summer Sale 2025"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="ctaText">CTA Button Text</label>
+          <input 
+            type="text" 
+            id="ctaText" 
+            name="ctaText" 
+            class="form-input" 
+            placeholder="Shop Now"
+            value="Shop Now"
+          >
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="description">Description</label>
+        <textarea 
+          id="description" 
+          name="description" 
+          class="form-textarea" 
+          rows="3"
+          placeholder="Optional banner description"
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="link">Link URL <span class="required">*</span></label>
+        <input 
+          type="text" 
+          id="link" 
+          name="link" 
+          class="form-input" 
+          placeholder="/collections/summer-sale"
+          required
+        >
+        <small class="form-help">Where should the banner link to?</small>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="startDate">Start Date <span class="required">*</span></label>
+          <input 
+            type="datetime-local" 
+            id="startDate" 
+            name="startDate" 
+            class="form-input"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="endDate">End Date <span class="required">*</span></label>
+          <input 
+            type="datetime-local" 
+            id="endDate" 
+            name="endDate" 
+            class="form-input"
+            required
+          >
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="isActive">Status</label>
+        <select id="isActive" name="isActive" class="form-select">
+          <option value="true">Active</option>
+          <option value="false">Inactive</option>
+        </select>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeBannerModal()">Cancel</button>
+        <button type="submit" class="btn-primary" id="submitBtn">
+          <i class="bi bi-check-circle"></i>
+          <span id="submitBtnText">Create Banner</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="/js/admin/banners.js"></script>

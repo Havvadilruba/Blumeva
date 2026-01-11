@@ -82,8 +82,8 @@ export const getAvailableCoupon = (userId, now) => {
       $match: {
         $expr: {
           $or: [
-            { $eq: ["$totalUsageLimit", 0] }, // unlimited total usage
-            { $lt: ["$currentUsageCount", "$totalUsageLimit"] }, // still available
+            { $eq: ["$totalUsageLimit", 0] }, 
+            { $lt: ["$currentUsageCount", "$totalUsageLimit"] }, 
           ],
         },
       },

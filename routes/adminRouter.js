@@ -14,6 +14,8 @@ import offerController from "../controller/admin/offerController.js";
 import couponController from "../controller/admin/couponController.js";
 import adminReferralController from "../controller/admin/adminReferralController.js";
 import salesReportController from "../controller/admin/salesReportController.js";
+import dashboardController from "../controller/admin/dashboardController.js";
+import bannerController from "../controller/admin/bannerController.js";
 
 
 const router = express.Router();
@@ -24,8 +26,9 @@ router.use(checkAdmin);
 router.get("/page-404", adminController.pageNotFound);
 router.get("/login", authController.loadLogin);
 router.post("/login", authController.login);
-router.get("/", adminAuth, adminController.loadDashboard);
 router.post("/logout", adminController.logout);
+
+router.get("/",adminAuth, dashboardController.loadDashboard)
 
 
 router.get("/customers", adminAuth, customerController.customerInfo);
@@ -80,5 +83,12 @@ router.get("/referrals", adminAuth, adminReferralController.listReferrals);
 router.get("/salesReport", adminAuth, salesReportController.loadSalesReport);
 router.get("/sales-report/excel", adminAuth, salesReportController.loadSalesReportDownload);
 router.get("/sales-report/pdf", adminAuth, salesReportController.loadSalesReportPDF);
+
+router.get("/banners", adminAuth, bannerController.loadBanners);
+router.get("/banners/:id", adminAuth, bannerController.getBanner);
+router.post("/banners",adminAuth,upload.single("bannerImage"),bannerController.addBanner);
+router.put("/banners/:id",adminAuth,upload.single("bannerImage"),bannerController.updateBanner);
+router.patch("/banners/:id/toggle",adminAuth,bannerController.toggleBannerStatus);
+router.delete("/banners/:id",adminAuth,bannerController.deleteBanner);
 
 export default router;

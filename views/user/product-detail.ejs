@@ -13,7 +13,6 @@
   <div class="left-section">
     <div id="imageContainer" class="main-image-box">
       <img id="mainImage" src="<%= product.images[0] %>" alt="<%= product.name %>">
-      <div id="zoomLens"></div>
     </div>
 
     <div class="thumbnails">
@@ -32,11 +31,12 @@
 
     <!-- Rating -->
     <div class="rating">
-      <% for (let i = 1; i <= 5; i++) { %>
-        <i class="fa-star <%= i <= Math.round(product.avgRating || 0) ? 'fas' : 'far' %>"></i>
-      <% } %>
-      <span>(Rating: <%= (product.avgRating || 0).toFixed(1) %>/5)</span>
-    </div>
+  <% for (let i = 1; i <= 5; i++) { %>
+    <i class="fa-star <%= i <= Math.round(avgRating || 0) ? 'fas' : 'far' %>"></i>
+  <% } %>
+  <span>(Rating: <%= (avgRating || 0).toFixed(1) %>/5)</span>
+</div>
+
 
     <% if (variant) { %>
 
@@ -142,8 +142,83 @@
       <h3>Description</h3>
       <p><%= product.description || 'No description available.' %></p>
     </div>
+
   </div>
 
+</section>
+
+<!-- You Might Also Like Section - FULL WIDTH -->
+<% if (latestProducts && latestProducts.length > 0) { %>
+<section class="you-might-like-section">
+  <div class="container">
+    <div class="you-might-like-header">
+      <h2>
+        <i class="fa-solid fa-heart-circle-check"></i>
+        You Might Also Like
+      </h2>
+    </div>
+
+    <div class="product-grid">
+      <% latestProducts.slice(0, 4).forEach(product => { %>
+        <%- include("../partials/user/productCard", { product }) %>
+      <% }) %>
+    </div>
+  </div>
+</section>
+<% } %>
+
+<!-- Customer Reviews Section - FULL WIDTH -->
+<section class="reviews-section">
+  <div class="container">
+    <div class="reviews-header">
+      <h2>
+        <i class="fa-solid fa-comments"></i>
+        Customer Reviews
+      </h2>
+    </div>
+
+    <% if (reviews && reviews.length > 0) { %>
+      <div class="reviews-container">
+        <% reviews.forEach(review => { %>
+          <div class="review-card">
+            <div class="review-header">
+              <div class="reviewer-info">
+                <div class="reviewer-avatar">
+                  <%= review.userName ? review.userName.charAt(0).toUpperCase() : 'U' %>
+                </div>
+                <div class="reviewer-details">
+                  <h4><%= review.userName || 'Anonymous' %></h4>
+                  <p class="review-date">
+                    <i class="fa-regular fa-calendar"></i>
+                    <%= new Date(review.date).toLocaleDateString('en-IN', { 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    }) %>
+                  </p>
+                </div>
+              </div>
+
+              <div class="review-rating">
+                <% for(let i = 1; i <= 5; i++) { %>
+                  <i class="<%= i <= review.rating ? 'fa-solid' : 'fa-regular' %> fa-star <%= i <= review.rating ? '' : 'empty' %>"></i>
+                <% } %>
+              </div>
+            </div>
+
+            <div class="review-comment">
+              <%= review.comment %>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <div class="no-reviews">
+        <i class="fa-regular fa-comment-dots"></i>
+        <p>No reviews yet. Be the first to share your experience!</p>
+      </div>
+    <% } %>
+  </div>
 </section>
 
 <%- include("../partials/user/footer") %>

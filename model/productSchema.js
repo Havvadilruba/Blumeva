@@ -29,12 +29,6 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    avgRating: {
-      type: Number,
-      default: 2,
-      min: [0, "Rating cannot be less than 0"],
-      max: [5, "Rating cannot be more than 5"],
-    },
   },
   { timestamps: true }
 );
