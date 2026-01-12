@@ -28,7 +28,7 @@ import { couponUsageCreate } from "../../repositories/couponUsageRepository.js";
 import Coupon from "../../model/couponSchema.js";
 import { razorpay } from "../../config/razorpay.js";
 
-// utility functions
+
 const decrementVariantStock = (variantId, qty, session) => {
   return Variant.updateOne(
     { _id: variantId, stock: { $gte: qty } },
@@ -40,7 +40,6 @@ const decrementVariantStock = (variantId, qty, session) => {
 function distributeCoupon(orderedItems, couponDiscount) {
   if (!couponDiscount || couponDiscount <= 0) return orderedItems;
 
-  // Calculate base value for each item
   let totalBase = 0;
   orderedItems.forEach(item => {
     const base = (item.salePrice - item.discountAmount) * item.quantity;
@@ -50,10 +49,9 @@ function distributeCoupon(orderedItems, couponDiscount) {
 
   if (totalBase === 0) return orderedItems;
 
-  // Distribute proportionally
   orderedItems.forEach(item => {
     const share = (item._base / totalBase) * couponDiscount;
-    item.couponShare = parseFloat(share.toFixed(2)); // accurate refund
+    item.couponShare = parseFloat(share.toFixed(2)); 
   });
 
   return orderedItems;
@@ -77,17 +75,17 @@ export const placeOrder = async (req, res) => {
 
     const { addressId, paymentMethod } = req.body;
 
-    // ======================================================
+   
     // GET CART ITEMS
-    // ======================================================
+    
     const items = await getCartItems(userId);
     if (!items.length) {
       throw { status: 400, message: "Cart is empty" };
     }
 
-    // ======================================================
+   
     // STOCK VALIDATION 
-    // ======================================================
+
     const hasStockIssue = items.some(
       item => item.stock <= 0 || item.quantity > item.stock
     );
@@ -107,9 +105,9 @@ export const placeOrder = async (req, res) => {
       });
     }
 
-    // ======================================================
+   
     // CALCULATE TOTALS
-    // ======================================================
+
     const totals = calculateCartTotals(items);
     const appliedCoupon = req.session.appliedCoupon || null;
 
@@ -120,12 +118,11 @@ export const placeOrder = async (req, res) => {
     if (appliedCoupon) {
   couponDiscount = appliedCoupon.discount;
 
-  // Final amount = cart total - coupon
   finalAmount = Math.max(totals.total - couponDiscount, 0);
 }
-    // ======================================================
+
     // ADDRESS VALIDATION
-    // ======================================================
+
     const address = await Address.findById(addressId).session(session);
     if (!address) {
       throw { status: 400, message: "Invalid address" };
@@ -133,9 +130,9 @@ export const placeOrder = async (req, res) => {
 
     const expectedDelivery = new Date(Date.now() + 5 * 86400000);
 
-    // ======================================================
-    // ORDERED ITEMS SNAPSHOT
-    // ======================================================
+  
+    // ORDERED ITEMS 
+
     let orderedItems = items.map(item => ({
       productId: item.product._id,
       variantId: item.variant._id,
@@ -162,9 +159,9 @@ export const placeOrder = async (req, res) => {
       addressType: address.addressType
     };
 
-    // ======================================================
+    
     // RAZORPAY
-    // ======================================================
+ 
     if (paymentMethod === "razorpay") {
       await TempOrder.deleteMany({
         userId,
@@ -208,9 +205,9 @@ export const placeOrder = async (req, res) => {
       });
     }
 
-    // ======================================================
+  
     // COD
-    // ======================================================
+ 
     if (paymentMethod === "cod") {
       for (const item of items) {
         const r = await decrementVariantStock(
@@ -270,9 +267,9 @@ export const placeOrder = async (req, res) => {
       return res.json({ success: true, orderId: order.orderId });
     }
 
-    // ======================================================
+  
     // WALLET
-    // ======================================================
+
     if (paymentMethod === "wallet") {
       const wallet = await findWalletByUserId(userId, session);
       if (!wallet || wallet.balance - wallet.holdBalance < finalAmount) {
@@ -473,7 +470,7 @@ export const verifyPayment = async (req, res) => {
       expectedDelivery: new Date(Date.now() + 5 * 86400000)
     }], { session });
 
-    // Reload to get auto-generated orderId
+   
     const order = await Order.findById(orderDoc._id).session(session);
 
     // Create coupon usage record
@@ -493,10 +490,10 @@ export const verifyPayment = async (req, res) => {
       );
     }
 
-    // ✅ FIX 3: Clear cart
+    // Clear cart
     await Cart.deleteMany({ userId }).session(session);
 
-    // ✅ FIX 4: Clear session coupon
+    // Clear session coupon
     req.session.appliedCoupon = null;
 
     // Update temp order
@@ -573,8 +570,6 @@ const loadOrderFailure = async (req, res) => {
     if (!order) {
       return res.redirect("/pageNotFound");
     }
-
-    // Security check: ensure order belongs to user
     if (order.userId.toString() !== userId.toString()) {
       return res.redirect("/pageNotFound");
     }
@@ -673,7 +668,6 @@ const retryPayment = async (req, res) => {
 
 /**
  * Delete Temp Order
- * DELETE /order/delete/temp-order/:id
  */
 const deleteTempOrderController = async (req, res) => {
   try {
@@ -857,7 +851,7 @@ const cancelOrderItems = async (req, res) => {
 
     const now = new Date();
 
-    // Loop selected items
+
     for (const itemIdStr of itemIds) {
       const item = order.orderedItems.id(itemIdStr);
       if (!item) continue;
@@ -899,7 +893,7 @@ const cancelOrderItems = async (req, res) => {
 
     }
 
-    // NO CANCELLATION
+    // Noo CANCELLATION
     if (cancelledCount === 0) {
       await session.abortTransaction();
       return res.json({
@@ -916,7 +910,7 @@ const cancelOrderItems = async (req, res) => {
       order.statusTimeline.cancelledAt = now;
     }
 
-    //  Process refund for ANY paid payment method (wallet, razorpay)
+    //  refund  (wallet, razorpay)
     if (refundAmount > 0 && order.paymentStatus === "Paid") {
       const wallet = await Wallet.findOne({ userId }).session(session);
       
@@ -951,7 +945,7 @@ const cancelOrderItems = async (req, res) => {
         session
       );
 
-      // Update user's wallet balance
+      // Update wallet balance
       await updateUserWalletBalance(userId, newBal, session);
     }
 

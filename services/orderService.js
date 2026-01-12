@@ -139,6 +139,11 @@ export const updateOrderStatusService = async (id, status) => {
   if (status === "Delivered") {
   order.deliveredDate = now;
 
+  order.orderedItems.forEach(item => {
+    if (!item.itemTimeline) item.itemTimeline = {};
+    item.itemTimeline.deliveredAt = now;
+  });
+
   
   if (order.paymentStatus === "Pending") {
     order.paymentStatus = "Paid";

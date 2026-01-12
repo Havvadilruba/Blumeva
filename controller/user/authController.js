@@ -136,7 +136,7 @@ const verifyOtp = async (req, res) => {
       referredBy: null,
     });
 
-    /** Check if user entered a valid referral code */
+    
     let referredByUser = null;
 
     if (userSession.referralCode) {
@@ -151,7 +151,7 @@ const verifyOtp = async (req, res) => {
 
     await newUser.save();
 
-    /** Process referral rewards */
+   
     if (referredByUser) {
       try {
         await processReferral(referredByUser._id, newUser._id, userSession.referralCode );
@@ -160,7 +160,7 @@ const verifyOtp = async (req, res) => {
       }
     }
 
-    /** Cleanup session */
+
     delete req.session.userOtp;
     delete req.session.userData;
 

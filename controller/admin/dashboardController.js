@@ -14,7 +14,7 @@ export const loadDashboard = async (req, res) => {
     pageCSS: "dashboard",
     activePage: "dashboard",
     filter,
-    ...dashboardData, // ✅ THIS FIXES EVERYTHING
+    ...dashboardData, 
   });
 };
 

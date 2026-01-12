@@ -7,14 +7,11 @@ export const getDashboardStatsRepo = async () => {
     { $unwind: "$orderedItems" },
 
     {
-      $match: {
-        "orderedItems.itemStatus": {
-          $in: ["Delivered", "ReturnRequested", "ReturnRejected"],
-        },
-      },
-    },
-
-
+  $match: {
+    "orderedItems.itemStatus": "Delivered",
+  },
+}
+,
     {
       $group: {
         _id: null,

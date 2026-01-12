@@ -25,7 +25,7 @@ export const loadBanners = async (req, res) => {
   }
 };
 
-// Get single banner (for edit)
+
 export const getBanner = async (req, res) => {
   try {
     const banner = await getBannerByIdService(req.params.id);
@@ -47,23 +47,22 @@ export const addBanner = async (req, res) => {
     console.log("BODY:", req.body);
     console.log("FILE:", req.file);
 
-    // Check if image is provided first
+ 
     if (!req.file) {
       return res.status(400).json({
         message: "Banner image is required"
       });
     }
 
-    // Remove bannerId and any empty/undefined fields
+
     const { bannerId, ...cleanBody } = req.body;
-    
-    // Convert string booleans to actual booleans
+
     const formData = {
       ...cleanBody,
       isActive: cleanBody.isActive === 'true' || cleanBody.isActive === true
     };
 
-    // Remove empty strings and undefined values
+
     Object.keys(formData).forEach(key => {
       if (formData[key] === '' || formData[key] === undefined || formData[key] === null) {
         delete formData[key];
@@ -72,7 +71,7 @@ export const addBanner = async (req, res) => {
 
     console.log("Cleaned form data:", formData);
 
-    // Validate the form data
+
     const { error, value } = createBannerSchema.validate(formData, {
       abortEarly: false,
       convert: true
@@ -88,10 +87,10 @@ export const addBanner = async (req, res) => {
 
     console.log("Validated data:", value);
 
-    // Create banner with Cloudinary URL
+   
     const newBanner = await createBannerService({
       ...value,
-      image: req.file.path // Cloudinary returns full URL in path
+      image: req.file.path 
     });
 
     console.log("Banner created:", newBanner);
@@ -116,23 +115,20 @@ export const updateBanner = async (req, res) => {
     console.log("UPDATE - BODY:", req.body);
     console.log("UPDATE - FILE:", req.file);
 
-    // Remove bannerId from body (it's in params)
+
     const { bannerId, ...updateData } = req.body;
 
-    // Convert string booleans to actual booleans
+ 
     const formData = {
       ...updateData,
       isActive: updateData.isActive === 'true' || updateData.isActive === true
     };
 
-    // Remove empty strings and undefined values
     Object.keys(formData).forEach(key => {
       if (formData[key] === '' || formData[key] === undefined) {
         delete formData[key];
       }
     });
-
-    // Validate only the fields being updated
     const { error, value } = updateBannerSchema.validate(formData, {
       abortEarly: false,
       convert: true,
@@ -146,14 +142,12 @@ export const updateBanner = async (req, res) => {
       });
     }
 
-    // Check if at least something is being updated
     if (Object.keys(value).length === 0 && !req.file) {
       return res.status(400).json({
         message: "At least one field must be updated"
       });
     }
 
-    // Date validation if both dates are provided
     if (value.startDate && value.endDate) {
       if (new Date(value.endDate) <= new Date(value.startDate)) {
         return res.status(400).json({
@@ -162,7 +156,6 @@ export const updateBanner = async (req, res) => {
       }
     }
 
-    // Only add new image if uploaded
     if (req.file) {
       value.image = req.file.path;
       console.log("New image uploaded:", req.file.path);

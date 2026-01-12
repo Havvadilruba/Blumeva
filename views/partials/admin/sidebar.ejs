@@ -1,92 +1,137 @@
 <div class="sidebar">
   <div>
-    <div class="logo">Blumeva</div>
+    <div class="logo">
+      <img src="/images/Frame.svg" alt="Blumeva Logo" class="logo-icon" />
+      <span>Blumeva</span>
+    </div>
 
     <ul class="menu">
-      <li><a href="/admin" class="<%= activePage === 'dashboard' ? 'active' : '' %>">
-  <i class="ri-dashboard-line"></i><span>Dashboard</span>
-</a></li>
+      <li>
+        <a href="/admin" class="<%= activePage === 'dashboard' ? 'active' : '' %>">
+          <i class="ri-dashboard-line"></i>
+          <span>Dashboard</span>
+        </a>
+      </li>
 
-      <li><a href="/admin/salesReport" class="<%= activePage === 'salesReport' ? 'active' : '' %>">
-  <i class="ri-line-chart-line"></i><span>Sales Report</span>
-</a></li>
+      <li>
+        <a href="/admin/salesReport" class="<%= activePage === 'salesReport' ? 'active' : '' %>">
+          <i class="ri-line-chart-line"></i>
+          <span>Sales Report</span>
+        </a>
+      </li>
 
-<li class="dropdown">
-  <a href="#" class="toggle-submenu">
-    <i class="ri-folder-line"></i><span>Category</span>
-    <i class="ri-arrow-down-s-line arrow"></i>
-  </a>
-  <div class="submenu">
-    <a href="/admin/category" class="<%= activePage === 'categoryList' ? 'active' : '' %>">
-      <i class="ri-list-unordered"></i><span>Category List</span>
-    </a>
-    <a href="/admin/category/add" class="<%= activePage === 'addCategory' ? 'active' : '' %>">
-      <i class="ri-add-line"></i><span>Add Category</span>
-    </a>
-  </div>
-</li>
-<li>
-  <a href="/admin/banners" class="<%= activePage === 'banners' ? 'active' : '' %>">
-    <i class="ri-image-line"></i><span>Banners</span>
-  </a>
-</li>
-<li class="dropdown">
-  <a href="#" class="toggle-submenu">
-    <i class="ri-shopping-bag-line"></i><span>Products</span>
-    <i class="ri-arrow-down-s-line arrow"></i>
-  </a>
-  <div class="submenu">
-    <a href="/admin/products" class="<%= activePage === 'productList' ? 'active' : '' %>">
-      <i class="ri-list-check-2"></i><span>Product List</span>
-    </a>
-    <a href="/admin/products/add" class="<%= activePage === 'addProduct' ? 'active' : '' %>">
-      <i class="ri-add-line"></i><span>Add Product</span>
-    </a>
-  </div>
-</li>
+      <li class="dropdown">
+        <a href="#" class="toggle-submenu">
+          <i class="ri-folder-line"></i>
+          <span>Category</span>
+          <i class="ri-arrow-down-s-line arrow"></i>
+        </a>
+        <div class="submenu">
+          <a href="/admin/category" class="<%= activePage === 'categoryList' ? 'active' : '' %>">
+            <i class="ri-list-unordered"></i>
+            <span>Category List</span>
+          </a>
+          <a href="/admin/category/add" class="<%= activePage === 'addCategory' ? 'active' : '' %>">
+            <i class="ri-add-line"></i>
+            <span>Add Category</span>
+          </a>
+        </div>
+      </li>
 
+      <li>
+        <a href="/admin/banners" class="<%= activePage === 'banners' ? 'active' : '' %>">
+          <i class="ri-image-line"></i>
+          <span>Banners</span>
+        </a>
+      </li>
 
-      <li><a href="/admin/customers"><i class="ri-user-line"></i><span>Customers</span></a></li>
-      <li><a href="/admin/orders"><i class="ri-file-list-line"></i><span>Orders</span></a></li>
-      <li><a href="/admin/brands"><i class="ri-price-tag-3-line"></i><span>Brands</span></a></li>
-      <li><a href="#"><i class="ri-bank-card-line"></i><span>Payments</span></a></li>
-      <li><a href="/admin/referrals"><i class="ri-gift-line"></i><span>Referrals</span></a></li>
+      <li class="dropdown">
+        <a href="#" class="toggle-submenu">
+          <i class="ri-shopping-bag-line"></i>
+          <span>Products</span>
+          <i class="ri-arrow-down-s-line arrow"></i>
+        </a>
+        <div class="submenu">
+          <a href="/admin/products" class="<%= activePage === 'productList' ? 'active' : '' %>">
+            <i class="ri-list-check-2"></i>
+            <span>Product List</span>
+          </a>
+          <a href="/admin/products/add" class="<%= activePage === 'addProduct' ? 'active' : '' %>">
+            <i class="ri-add-line"></i>
+            <span>Add Product</span>
+          </a>
+        </div>
+      </li>
 
-<li>
-  <a href="/admin/offers" class="<%= activePage === 'offer' ? 'active' : '' %>">
-    <i class="ri-price-tag-2-line"></i><span>Offers</span>
-  </a>
-</li>
+      <li>
+        <a href="/admin/customers" class="<%= activePage === 'customers' ? 'active' : '' %>">
+          <i class="ri-user-line"></i>
+          <span>Customers</span>
+        </a>
+      </li>
 
-<li>
-  <a href="/admin/coupons" class="<%= activePage === 'coupons' ? 'active' : '' %>">
-    <i class="ri-coupon-3-line"></i><span>Coupons</span>
-  </a>
-</li>
+      <li>
+        <a href="/admin/orders" class="<%= activePage === 'orders' ? 'active' : '' %>">
+          <i class="ri-file-list-line"></i>
+          <span>Orders</span>
+        </a>
+      </li>
 
+      <li>
+        <a href="/admin/brands" class="<%= activePage === 'brands' ? 'active' : '' %>">
+          <i class="ri-price-tag-3-line"></i>
+          <span>Brands</span>
+        </a>
+      </li>
 
+      <li>
+        <a href="/admin/payments" class="<%= activePage === 'payments' ? 'active' : '' %>">
+          <i class="ri-bank-card-line"></i>
+          <span>Payments</span>
+        </a>
+      </li>
 
+      <li>
+        <a href="/admin/referrals" class="<%= activePage === 'referrals' ? 'active' : '' %>">
+          <i class="ri-gift-line"></i>
+          <span>Referrals</span>
+        </a>
+      </li>
+
+      <li>
+        <a href="/admin/offers" class="<%= activePage === 'offer' ? 'active' : '' %>">
+          <i class="ri-price-tag-2-line"></i>
+          <span>Offers</span>
+        </a>
+      </li>
+
+      <li>
+        <a href="/admin/coupons" class="<%= activePage === 'coupons' ? 'active' : '' %>">
+          <i class="ri-coupon-3-line"></i>
+          <span>Coupons</span>
+        </a>
+      </li>
     </ul>
   </div>
 
   <div>
     <div class="profile">
-     <img
-  src="<%= admin?.profileImage && admin.profileImage.trim() !== '' 
-        ? admin.profileImage 
-        : 'https://res.cloudinary.com/dtazbbayi/image/upload/v1766385959/user-profile-icon-avatar-person-sign-profile-picture-portrait-symbol-easily-editable-line_fpdimj.jpg' %>"
-  alt="Admin Profile"
-/>
-
+      <img
+        src="<%= admin?.profileImage && admin.profileImage.trim() !== '' 
+              ? admin.profileImage 
+              : 'https://res.cloudinary.com/dtazbbayi/image/upload/v1766385959/user-profile-icon-avatar-person-sign-profile-picture-portrait-symbol-easily-editable-line_fpdimj.jpg' %>"
+        alt="Admin Profile"
+      />
       <div class="profile-info">
         <h4><%= admin?.name %></h4>
-       <p><%= admin?.email %></p>
+        <p><%= admin?.email %></p>
       </div>
     </div>
 
     <form id="logoutForm" action="/admin/logout" method="POST">
       <button type="submit" class="logout">
-        <i class="ri-logout-box-r-line"></i><span>Logout</span>
+        <i class="ri-logout-box-r-line"></i>
+        <span>Logout</span>
       </button>
     </form>
   </div>

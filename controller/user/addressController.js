@@ -115,7 +115,7 @@ const deleteAddress = async (req, res) => {
       });
     }
 
-    // If deleting default, assign another as default
+   
     if (address.setDefault) {
       const anotherAddress = await Address.findOne({
         userId,

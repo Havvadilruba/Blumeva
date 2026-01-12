@@ -32,10 +32,10 @@ export const fetchWishlistItems = async (userId, limit, skip) => {
     },
     { $unwind: "$product" },
 
-    // Filter unavailable items (blocked product / inactive brand / unlisted category)
+    
     { $match: { "product.isBlocked": false } },
 
-    // Join Brand
+  
     {
       $lookup: {
         from: "brands",

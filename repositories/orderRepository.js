@@ -2,25 +2,19 @@ import Order from "../model/orderSchema.js";
 import User from "../model/userSchema.js";
 import Variant from "../model/variantSchema.js";
 
-// ----------------------------------------------
-// Create Order
-// ----------------------------------------------
+
 export const createOrder = (orderData) => {
   return Order.create(orderData);
 };
 
-// ----------------------------------------------
-// Find Order by orderId (Human readable)
-// ----------------------------------------------
+
 export const findOrderByOrderId = (orderId) => {
   return Order.findOne({ orderId })
     .populate("orderedItems.productId")
     .populate("orderedItems.variantId");
 };
 
-// ----------------------------------------------
-// Find User Orders (All orders of a user)
-// ----------------------------------------------
+
 export const findUserOrders = (query) => {
   return Order.find(query)
     .sort({ createdAt: -1 })
@@ -28,9 +22,7 @@ export const findUserOrders = (query) => {
     .populate("orderedItems.variantId");
 };
 
-// ----------------------------------------------
-// Find Order by MongoDB _id
-// ----------------------------------------------
+
 export const findOrderById = (id) => {
   return Order.findById(id)
     .populate({
@@ -47,25 +39,19 @@ export const findOrderById = (id) => {
     });
 };
 
-// ----------------------------------------------
-// Save Order (after updates)
-// ----------------------------------------------
+
 export const saveOrder = (order) => {
   return order.save();
 };
 
-// ----------------------------------------------
-// Find Order (with product details)
-// ----------------------------------------------
+
 export const findOrderByIdWithItems = (orderId) => {
   return Order.findById(orderId)
     .populate("orderedItems.productId")
     .populate("orderedItems.variantId");
 };
 
-// ----------------------------------------------
-// Find Order with User
-// ----------------------------------------------
+
 export const findOrderByOrderIdWithUser = (orderId) => {
   return Order.findOne({ orderId })
     .populate("orderedItems.productId")
@@ -73,9 +59,7 @@ export const findOrderByOrderIdWithUser = (orderId) => {
     .populate("userId");
 };
 
-// ----------------------------------------------
-// Find Orders (Admin listing with sort)
-// ----------------------------------------------
+
 export const findOrders = (query, skip, limit) => {
   return Order.find(query)
     .populate("userId", "name email")
@@ -85,16 +69,12 @@ export const findOrders = (query, skip, limit) => {
     .lean();
 };
 
-// ----------------------------------------------
-// Count Orders
-// ----------------------------------------------
+
 export const countOrders = (query) => {
   return Order.countDocuments(query);
 };
 
-// ----------------------------------------------
-// Search Users for Order Filtering
-// ----------------------------------------------
+
 export const searchUsers = async (search) => {
   return User.find({
     $or: [
@@ -104,9 +84,6 @@ export const searchUsers = async (search) => {
   }).select("_id");
 };
 
-// ----------------------------------------------
-// Variant Stock Restore (for cancel/return)
-// ----------------------------------------------
 export const restoreVariantStock = (variantId, qty) => {
   return Variant.findByIdAndUpdate(
     variantId,

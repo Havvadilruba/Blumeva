@@ -6,38 +6,84 @@
   <title>Admin Login - Blumeva</title>
   <link rel="stylesheet" href="/style/admin/login.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 <body>
   <div class="login-container">
-    <div class="login-box">
+    <div class="login-header">
       <div class="logo">
-        <img src="/images/Frame.svg" alt="Logo" class="logo-icon" />
+        <img src="/images/Frame.svg" alt="Blumeva Logo" class="logo-icon" />
         <span>Blumeva</span>
       </div>
-      <p class="subtitle">Welcome to the Blumeva Administration</p>
+    </div>
 
-      <form id="adminLoginForm">
-        <label for="email">Email</label>
-        <input type="email" id="email" name="email" placeholder="Enter your email" />
+    <div class="admin-badge">
+      <i class="fas fa-shield-alt"></i>
+      <span>Admin Portal</span>
+    </div>
 
-        <label for="password">Password</label>
-        <div class="password-wrapper">
-          <input type="password" id="password" name="password" placeholder="Enter your password"  />
-          <span class="toggle-password">👁</span>
-        </div>
+    <div class="welcome-section">
+      <h1>Welcome Back</h1>
+      <p>Sign in to access the administration panel</p>
+    </div>
 
-        <button type="submit" class="login-btn">Login</button>
-      </form>
+    <% if (typeof message !== 'undefined' && message) { %>
+    <div class="backend-message">
+      <i class="fas fa-exclamation-circle"></i>
+      <%= message %>
+    </div>
+    <% } %>
 
-      <div class="secure">
-        <img src="https://cdn-icons-png.flaticon.com/512/3064/3064197.png" alt="Lock" />
-        <span>Secure Login</span>
+    <form id="adminLoginForm" class="login-form">
+      <div class="form-group">
+        <label for="email">
+          <i class="fas fa-envelope"></i>
+          Email Address
+        </label>
+        <input 
+          type="email" 
+          id="email" 
+          name="email" 
+          placeholder="admin@blumeva.com" 
+          required 
+        />
       </div>
 
-      <footer>
-        © 2025 <b>Blumeva</b>. All rights reserved.
-      </footer>
+      <div class="form-group">
+        <label for="password">
+          <i class="fas fa-lock"></i>
+          Password
+        </label>
+        <div class="password-field">
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            placeholder="Enter your password" 
+            required 
+          />
+          <i class="fas fa-eye toggle-password"></i>
+        </div>
+      </div>
+
+      <button type="submit" class="login-btn">
+        <span>Sign In</span>
+        <i class="fas fa-arrow-right"></i>
+      </button>
+    </form>
+
+    <div class="secure-badge">
+      <i class="fas fa-lock"></i>
+      <span>Secure Admin Login</span>
+    </div>
+
+    <div class="login-footer">
+      <p>© 2025 <strong>Blumeva</strong>. All rights reserved.</p>
+      <div class="footer-links">
+        <a href="/privacy">Privacy Policy</a>
+        <span>•</span>
+        <a href="/terms">Terms of Service</a>
+      </div>
     </div>
   </div>
 
@@ -45,12 +91,18 @@
   <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
   <script>
+    // Password toggle
     const toggle = document.querySelector(".toggle-password");
     const passwordInput = document.querySelector("#password");
+    
     toggle.addEventListener("click", () => {
       const type = passwordInput.getAttribute("type") === "password" ? "text" : "password";
       passwordInput.setAttribute("type", type);
+      toggle.classList.toggle("fa-eye");
+      toggle.classList.toggle("fa-eye-slash");
     });
+
+    // Form submission
     const form = document.getElementById("adminLoginForm");
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -65,8 +117,9 @@
         if (result.success) {
           Toastify({
             text: result.message,
-            backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
+            backgroundColor: "linear-gradient(135deg, #C9A45C 0%, #B89350 100%)",
             duration: 2000,
+            className: "toastify",
           }).showToast();
 
           setTimeout(() => {
@@ -75,26 +128,30 @@
         } else {
           Toastify({
             text: result.message || "Login failed",
-            backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
+            backgroundColor: "linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)",
             duration: 3000,
+            className: "toastify",
           }).showToast();
         }
       } catch (error) {
-        const msg = error.response?.data?.message || "Server error. Try again later.";
+        const msg = error.response?.data?.message || "Server error. Please try again later.";
         Toastify({
           text: msg,
-          backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
+          backgroundColor: "linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)",
           duration: 3000,
+          className: "toastify",
         }).showToast();
       }
     });
 
+    // Check for logout message
     const params = new URLSearchParams(window.location.search);
     if (params.get("logout")) {
       Toastify({
         text: "Logged out successfully",
-        backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
+        backgroundColor: "linear-gradient(135deg, #C9A45C 0%, #B89350 100%)",
         duration: 2000,
+        className: "toastify",
       }).showToast();
     }
   </script>

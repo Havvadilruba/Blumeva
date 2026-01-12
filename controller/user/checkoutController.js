@@ -45,6 +45,7 @@ const loadCheckout = async (req, res) => {
     const now = new Date();
 
     const availableCoupons = await getAvailableCoupon(userId, now);
+    
     const walletData = await findWalletByUserId(userId);
 
 const wallet = walletData || {
@@ -62,7 +63,7 @@ const wallet = walletData || {
         subtotal: totals.subtotal,
         discount: totals.discount,
         deliveryCharge: totals.deliveryCharge,
-        couponDiscount: couponDiscount, // ✅ Add this
+        couponDiscount: couponDiscount, 
         total: totals.total,
         payableAmount: payableAmount
       },
@@ -86,7 +87,7 @@ export const applyCoupon = async (req, res) => {
     const userId = req.session.user?._id;
 
     const cartItems = await getCartItems(userId);
-    const totals = calculateCartTotals(cartItems); // tax-free
+    const totals = calculateCartTotals(cartItems); 
 
     const result = await applyCouponService(
       { code: req.body.code },

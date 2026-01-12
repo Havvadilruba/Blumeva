@@ -29,16 +29,15 @@ const verifyRazorpayPayment = async (req, res) => {
     if (!userId)
       return res.json({ success: false, message: "Login required" });
 
-    // -------------------------------------------
-    // 1. Fetch TEMP ORDER
-    // -------------------------------------------
+   
+    // Fetch TEMP ORDER
+
     const tempOrder = await findTempOrderById(tempOrderId);
     if (!tempOrder)
       throw { status: 400, message: "Temporary order not found" };
 
-    // -------------------------------------------
-    // 2. PREVENT DUPLICATE ORDER CREATION
-    // -------------------------------------------
+    //  PREVENT DUPLICATE ORDER CREATION
+   
     const existingOrder = await Order.findOne({
       "paymentInfo.razorpayPaymentId": razorpay_payment_id,
     });
@@ -50,9 +49,9 @@ const verifyRazorpayPayment = async (req, res) => {
       });
     }
 
-    // -------------------------------------------
-    // 3. Verify Razorpay Signature
-    // -------------------------------------------
+  
+    // Verify Razorpay Signature
+
     const expectedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
       .update(razorpay_order_id + "|" + razorpay_payment_id)
@@ -62,9 +61,9 @@ const verifyRazorpayPayment = async (req, res) => {
       throw { status: 400, message: "Invalid payment signature" };
     }
 
-    // -------------------------------------------
-    // 4. Update Temp Order Payment Info
-    // -------------------------------------------
+    
+    //  Update Temp Order Payment Info
+
     await updateTempOrder(
       tempOrderId,
       {
@@ -75,9 +74,9 @@ const verifyRazorpayPayment = async (req, res) => {
       session
     );
 
-    // -------------------------------------------
+   
     // 5. Reduce Stock (session safe)
-    // -------------------------------------------
+
     for (let item of tempOrder.orderedItems) {
       const updated = await Variant.updateOne(
         { _id: item.variantId, stock: { $gte: item.quantity } },
@@ -90,9 +89,8 @@ const verifyRazorpayPayment = async (req, res) => {
       }
     }
 
-    // -------------------------------------------
     // 6. Create Final Order
-    // -------------------------------------------
+ 
     const [finalOrder] = await Order.create(
       [
         {
@@ -127,9 +125,9 @@ const verifyRazorpayPayment = async (req, res) => {
       { session }
     );
 
-    // -------------------------------------------
-    // 7. Handle Coupon Usage
-    // -------------------------------------------
+   
+    //  Handle Coupon Usage
+ 
     if (tempOrder.couponId) {
       await couponUsageCreate(
         tempOrder.couponId,
@@ -145,14 +143,13 @@ const verifyRazorpayPayment = async (req, res) => {
       );
     }
 
-    // -------------------------------------------
-    // 8. Clear Cart
-    // -------------------------------------------
+  
+    // Clear Cart
+   
     await Cart.deleteMany({ userId }, { session });
 
-    // -------------------------------------------
-    // 9. Delete Temp Order
-    // -------------------------------------------
+  
+    //  Delete Temp Order
     await deleteTempOrder(tempOrderId, session);
 
     await session.commitTransaction();

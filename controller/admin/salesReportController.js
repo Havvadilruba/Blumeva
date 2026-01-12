@@ -68,10 +68,10 @@ export const loadSalesReportPDF = async (req, res, next) => {
       reportType = "daily", 
       startDate, 
       endDate,
-      limit = 1000 // Default safe limit from modal
+      limit = 1000 
     } = req.query;
 
-    // Safety check for maximum limit
+
     const pdfLimit = Number(limit);
     if (pdfLimit > 100000) {
       return res.status(400).json({ 
@@ -87,7 +87,7 @@ export const loadSalesReportPDF = async (req, res, next) => {
       limit: pdfLimit,
     });
 
-    // Render EJS template to HTML string
+    // EJS  to HTML 
     const templatePath = path.join(__dirname, "../../views/admin/sales-report-pdf.ejs");
     const html = await ejs.renderFile(templatePath, {
       salesData: data.salesData,
@@ -107,7 +107,7 @@ export const loadSalesReportPDF = async (req, res, next) => {
 
     const pdfBuffer = await page.pdf({
       format: "A4",
-      landscape: true, // Better for tables
+      landscape: true, 
       printBackground: true,
       margin: {
         top: "15mm",

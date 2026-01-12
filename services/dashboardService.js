@@ -10,7 +10,7 @@ import {
 } from "../repositories/dashboardRepository.js";
 
 
-// Dashboard service - aggregate and format dashboard data
+
 export const getDashboardStatsService = async () => {
   return getDashboardStatsRepo();
 };
@@ -78,7 +78,7 @@ export const getSalesChartService = async (filter) => {
       });
 
   } else {
-    // ✅ Direct error (no AppError / HttpStatus)
+   
     throw new Error("Invalid dashboard filter");
   }
 

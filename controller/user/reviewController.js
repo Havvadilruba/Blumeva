@@ -27,7 +27,6 @@ export const createReview = async (req, res, next) => {
       message: "Review submitted successfully",
     });
   } catch (error) {
-    // Forward error to global error handler OR respond directly
     return res.status(400).json({
       success: false,
       message: error.message || "Failed to submit review",

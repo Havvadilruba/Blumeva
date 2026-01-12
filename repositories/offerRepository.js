@@ -2,7 +2,7 @@ import Offer from "../model/offerSchema.js";
 import Product from "../model/productSchema.js";
 import Category from "../model/categorySchema.js";
 
-// Find offers with filters
+
 export const findOffers = async (filter, page, limit) => {
   const skip = (page - 1) * limit;
   
@@ -21,12 +21,12 @@ export const findOffers = async (filter, page, limit) => {
     .lean();
 };
 
-// Count offers
+
 export const countOffers = async (filter) => {
   return await Offer.countDocuments(filter);
 };
 
-// Find offer by ID
+
 export const findOfferById = async (id) => {
   return await Offer.findById(id)
     .populate({
@@ -40,7 +40,7 @@ export const findOfferById = async (id) => {
     .lean();
 };
 
-// Find offer by name and type
+
 export const findOfferByName = async (offerName, offerType, excludeId = null) => {
   const query = { 
     offerName: { $regex: new RegExp(`^${offerName}$`, 'i') },
@@ -54,22 +54,21 @@ export const findOfferByName = async (offerName, offerType, excludeId = null) =>
   return await Offer.findOne(query);
 };
 
-// Create new offer
 export const createOffer = async (offerData) => {
   return await Offer.create(offerData);
 };
 
-// Update offer
+
 export const updateOffer = async (id, offerData) => {
   return await Offer.findByIdAndUpdate(id, offerData, { new: true });
 };
 
-// Delete offer
+
 export const deleteOffer = async (id) => {
   return await Offer.findByIdAndDelete(id);
 };
 
-// Toggle offer status
+
 export const toggleOfferStatusRepo = async (id) => {
   const offer = await Offer.findById(id);
   if (!offer) return null;
@@ -79,7 +78,7 @@ export const toggleOfferStatusRepo = async (id) => {
   return offer;
 };
 
-// Get analytics
+
 export const getOfferAnalytics = async () => {
   const now = new Date();
   
@@ -102,12 +101,12 @@ export const getOfferAnalytics = async () => {
   };
 };
 
-// Get active categories
+
 export const getActiveCategories = async () => {
   return await Category.find({ isListed: true }).select('name').lean();
 };
 
-// Search products 
+
 export const searchProducts = async (query) => {
   return await Product.find({
     name: { $regex: query, $options: 'i' },
@@ -120,7 +119,7 @@ export const searchProducts = async (query) => {
   .lean();
 };
 
-// Get active PRODUCT offers
+
 export const getAvailableProductOffers = async (now) => {
   return Offer.find({
     offerType: 'product',
@@ -130,7 +129,7 @@ export const getAvailableProductOffers = async (now) => {
   }).lean();
 };
 
-// Get active CATEGORY offers
+
 export const getAvailableCategoryOffers = async (now) => {
   return Offer.find({
     offerType: 'category',

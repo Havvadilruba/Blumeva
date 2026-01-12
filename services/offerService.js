@@ -41,14 +41,14 @@ export const getOfferPageDataService = async (
       filter.endDate = { $lt: now };
     }
     
-    // Get total count
+
     const totalOffers = await countOffers(filter);
     const totalPages = Math.ceil(totalOffers / limit);
     
-    // Get offers
+   
     let offers = await findOffers(filter, currentPage, limit);
     
-    // Sort offers
+    
     if (sortFilter === 'oldest') {
       offers = offers.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
     } else if (sortFilter === 'value-high') {
@@ -57,7 +57,7 @@ export const getOfferPageDataService = async (
       offers = offers.sort((a, b) => a.discountValue - b.discountValue);
     }
     
-    // Get categories and analytics
+   
     const [categories, analytics] = await Promise.all([
       getActiveCategories(),
       getOfferAnalytics()
@@ -129,7 +129,7 @@ export const editOfferService = async (id, offerData) => {
       throw error;
     }
     
-//new name conflicts with another offer
+
     if (offer.offerName !== offerData.offerName) {
       const existing = await findOfferByName(offerData.offerName, offerData.offerType, id);
       
@@ -165,7 +165,7 @@ export const toggleOfferStatusService = async (id) => {
   }
 };
 
-// Delete offer
+
 export const deleteOfferService = async (id) => {
   try {
     const offer = await findOfferById(id);
@@ -183,7 +183,7 @@ export const deleteOfferService = async (id) => {
   }
 };
 
-// Search products for offer creation
+
 export const searchProductsService = async (query) => {
   try {
     if (!query || query.trim().length < 2) {

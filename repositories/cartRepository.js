@@ -56,7 +56,7 @@ export const getCartItemsRepo = async (userId) => {
       }
     },
 
-    /** PRODUCT OFFER - Just fetch raw data */
+    /** PRODUCT OFFER */
     {
       $lookup: {
         from: "offers",
@@ -83,7 +83,7 @@ export const getCartItemsRepo = async (userId) => {
       }
     },
 
-    /** CATEGORY OFFER - Just fetch raw data */
+    /** CATEGORY OFFER  */
     {
       $lookup: {
         from: "offers",
@@ -110,7 +110,6 @@ export const getCartItemsRepo = async (userId) => {
       }
     },
 
-    /** Final returning fields */
     {
       $addFields: {
         stock: "$variant.stock",
@@ -121,7 +120,7 @@ export const getCartItemsRepo = async (userId) => {
     }
   ]);
 
-  // 🔥 Calculate discount for each cart item using helper function
+
   const cartItemsWithOffers = cartItems.map(item => ({
     ...item,
     discountAmount: getAppliedOffer(item, item.salePrice)

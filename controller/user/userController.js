@@ -36,10 +36,9 @@ export const listProducts = async (req, res) => {
   try {
     const userId = req.session?.user?._id || null;
 
-    // 🔹 Main product list
+    
     const data = await getFilteredProducts(req.query, userId);
 
-    // 🔹 Latest / related products
     const { latestProducts } = await getLandingPageData(userId);
 
     res.render("user/product-list", {
@@ -81,9 +80,9 @@ export const loadProductDetail = async (req, res) => {
     variant,
     offer,
     isInWishlist,
-    reviews,      // ✅ Add this
+    reviews,      
     avgRating,  
-    latestProducts  // ✅ Add this (if you want to use it)
+    latestProducts 
   });
 };
 

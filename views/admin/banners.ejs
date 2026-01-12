@@ -177,7 +177,7 @@
       </button>
     </div>
 
-    <form id="bannerForm" enctype="multipart/form-data">
+    <form id="bannerForm" enctype="multipart/form-data" novalidate>
       <input type="hidden" id="bannerId" name="bannerId">
       
       <div class="form-group">
@@ -209,7 +209,7 @@
             name="title" 
             class="form-input" 
             placeholder="e.g., Summer Sale 2025"
-            required
+  
           >
         </div>
 
@@ -245,7 +245,7 @@
           name="link" 
           class="form-input" 
           placeholder="/collections/summer-sale"
-          required
+      
         >
         <small class="form-help">Where should the banner link to?</small>
       </div>
@@ -258,7 +258,7 @@
             id="startDate" 
             name="startDate" 
             class="form-input"
-            required
+        
           >
         </div>
 
@@ -269,7 +269,7 @@
             id="endDate" 
             name="endDate" 
             class="form-input"
-            required
+        
           >
         </div>
       </div>
