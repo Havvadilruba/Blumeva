@@ -16,7 +16,7 @@ export const getFilteredProducts = async (query, userId) => {
   const searchQuery = query.q ? query.q.trim() : "";
   const currentPage = parseInt(query.page) || 1;
 
-  const limit = 2;
+  const limit = 6;
   const skip = (currentPage - 1) * limit;
 
   // Get wishlist variant IDs

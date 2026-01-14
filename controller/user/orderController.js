@@ -1287,6 +1287,8 @@ const downloadInvoice = async (req, res) => {
 };
 
 
+
+
 export default {
   loadOrders,
   loadOrderDetail,

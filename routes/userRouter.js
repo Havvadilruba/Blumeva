@@ -20,8 +20,6 @@ console.log("User router loaded");
 router.use(middle.checkUser)
 console.log("After checkUser");      
 
-
-
 router.get("/pageNotFound",userController.pageNotFound)
 router.get("/signup",noCache,authController.loadSignup)
 router.post("/signup",authController.signup)
@@ -67,7 +65,6 @@ router.patch("/address/:id", middle.userAuth, addressController.updateAddress);
 router.delete("/address/:id", middle.userAuth, addressController.deleteAddress);
 router.patch("/address/set-default/:id", middle.userAuth, addressController.setDefaultAddress);
 
-
 router.post("/cart/add", middle.userAuth, cartController.addToCart);
 router.get("/cart", middle.userAuth, cartController.loadCart);
 router.patch("/cart/update/:id",middle.userAuth, cartController.updateCartItem);
@@ -83,7 +80,6 @@ router.post("/order/razorpay/verify", middle.userAuth, orderController.verifyPay
 
 router.get("/order/success/:orderId", middle.userAuth, orderController.loadOrderSuccess);
 router.get("/orders", orderController.loadOrders);
-
 
 router.get("/orders/:id", middle.userAuth,orderController.loadOrderDetail);
 router.get("/order/failure/:id", middle.userAuth, orderController.loadOrderFailure);

@@ -64,6 +64,7 @@ export const listProducts = async (req, res) => {
 };
 
 
+
 export const loadProductDetail = async (req, res) => {
   const userId = req.session?.user?._id || req.user?._id; // Get logged-in user ID
   const result = await getProductDetail(req.params.id, userId);

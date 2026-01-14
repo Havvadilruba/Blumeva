@@ -147,20 +147,38 @@ function changePage(page) {
 }
 
 // Search products (alternative method)
-function searchProducts() {
-  const searchInput = document.getElementById('search-input');
-  const q = searchInput?.value?.trim() || '';
-  const url = new URL(window.location);
-  
-  if (q) {
-    url.searchParams.set('q', q);
-  } else {
-    url.searchParams.delete('q');
+// Search functionality with debounce
+document.addEventListener("DOMContentLoaded", () => {
+  const searchInput = document.getElementById("search-input");
+  const clearButton = document.getElementById("clear-search");
+
+  if (searchInput) {
+    let debounceTimer;
+    searchInput.addEventListener("input", () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        const url = new URL(window.location);
+        const q = searchInput.value.trim();
+
+        if (q) {
+          url.searchParams.set("q", q);
+        } else {
+          url.searchParams.delete("q");
+        }
+
+        url.searchParams.set("page", 1);
+        window.location.href = url.href;
+      }, 400);
+    });
   }
-  
-  url.searchParams.set('page', 1);
-  window.location.href = url.href;
-}
 
-
-
+  if (clearButton) {
+    clearButton.addEventListener("click", () => {
+      const url = new URL(window.location);
+      // Only delete the search query parameter
+      url.searchParams.delete("q");
+      url.searchParams.set("page", 1);
+      window.location.href = url.href;
+    });
+  }
+});
