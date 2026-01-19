@@ -155,7 +155,7 @@ export const getLandingPageData = async (userId) => {
     },
     
     { $sort: { createdAt: -1 } },
-    { $limit: 5 },
+    { $limit: 4 },
     
     {
       $project: {

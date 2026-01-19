@@ -44,8 +44,6 @@
         <tr>
           <th>Customer Name</th>
           <th>Email</th>
-          <th>Orders</th>
-          <th>Total Spent</th>
           <th>Status</th>
           <th>Action</th>
         </tr>
@@ -66,8 +64,6 @@
                 <span><%= customer.name %></span>
               </td>
               <td><%= customer.email %></td>
-              <td><%= customer.orders || 0 %></td>
-              <td>₹<%= customer.totalSpent?.toFixed(2) || '0.00' %></td>
               <td>
                 <span class="status <%= customer.isBlocked ? 'blocked' : 'active' %>">
                   <%= customer.isBlocked ? 'Blocked' : 'Active' %>

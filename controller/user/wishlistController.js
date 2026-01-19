@@ -5,6 +5,8 @@ import {
    checkWishlistStatus
    } from "../../services/wishlistService.js";
 
+
+
 // Load Wishlist Page
 export const loadWishlist = async (req, res) => {
   try {
@@ -39,6 +41,7 @@ export const toggleWishlist = async (req, res) => {
         message: "Please login first"
       });
     }
+
 
     const { variantId } = req.body;
     const result = await toggleWishlistItem(userId, variantId);

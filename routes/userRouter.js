@@ -101,4 +101,5 @@ router.post("/wallet/verify-payment", middle.userAuth,walletController.verifyPay
 router.get("/referral", middle.userAuth, userReferralController.loadReferralPage);
 
 router.post("/reviews", middle.userAuth, reviewController.createReview);
+
 export default router;

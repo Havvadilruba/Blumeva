@@ -2,12 +2,30 @@
 
 <nav class="breadcrumb">
   <a href="/">Home</a> ›
-  <a href="/products?category=<%= product.category.name %>"><%= product.category.name %></a> ›
-  <a href="/products?category=<%= product.category.name %>&brand=<%= product.brand.name %>"><%= product.brand.name %></a> ›
-  <span><%= product.name %></span>
+
+  <% if (product?.category && product?.brand) { %>
+    <a href="/products?category=<%= product.category.name %>">
+      <%= product.category.name %>
+    </a> ›
+
+    <a href="/products?category=<%= product.category.name %>&brand=<%= product.brand.name %>">
+      <%= product.brand.name %>
+    </a> ›
+
+    <span><%= product.name %></span>
+  <% } else { %>
+    <span><%= product?.name || "Product" %></span>
+  <% } %>
 </nav>
 
+<% if (blocked) { %>
+  <div class="product-warning">
+    <i class="fa-solid fa-triangle-exclamation"></i>
+    <%= warningMessage %>
+  </div>
+<% } %>
 <section class="product-detail-container">
+
 
   <!-- Main Image  -->
   <div class="left-section">

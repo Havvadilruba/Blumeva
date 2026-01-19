@@ -16,7 +16,7 @@ import adminReferralController from "../controller/admin/adminReferralController
 import salesReportController from "../controller/admin/salesReportController.js";
 import dashboardController from "../controller/admin/dashboardController.js";
 import bannerController from "../controller/admin/bannerController.js";
-
+import controller from "../controller/admin/controller.js";
 
 const router = express.Router();
 
@@ -90,5 +90,7 @@ router.post("/banners",adminAuth,upload.single("bannerImage"),bannerController.a
 router.put("/banners/:id",adminAuth,upload.single("bannerImage"),bannerController.updateBanner);
 router.patch("/banners/:id/toggle",adminAuth,bannerController.toggleBannerStatus);
 router.delete("/banners/:id",adminAuth,bannerController.deleteBanner);
+
+router.get("/couponn",adminAuth,controller.loadCoupon)
 
 export default router;

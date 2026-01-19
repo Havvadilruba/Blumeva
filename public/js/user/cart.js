@@ -371,3 +371,5 @@ function updateSummary(totals) {
   if (taxEl) taxEl.innerText = `₹${totals.tax.toLocaleString("en-IN")}`;
   if (totalEl) totalEl.innerText = `₹${totals.total.toLocaleString("en-IN")}`;
 }
+
+

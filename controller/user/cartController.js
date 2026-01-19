@@ -4,6 +4,7 @@ import Variant from "../../model/variantSchema.js";
 import Product from "../../model/productSchema.js";
 import Brand from "../../model/brandSchema.js";
 import Category from "../../model/categorySchema.js";
+import Cart from "../../model/cartSchema.js"
 import mongoose from "mongoose";
 
 import { addToCartSchema } from "../../validations/cartValidation.js";
@@ -29,6 +30,8 @@ const addToCart = async (req, res) => {
       });
     }
 
+   
+
     const { error } = addToCartSchema.validate(req.body);
     if (error) {
       return res.status(422).json({
@@ -41,13 +44,14 @@ const addToCart = async (req, res) => {
     const userId = req.session.user._id;
 
     const variant = await Variant.findById(variantId).populate("productId");
-
-    if (!variant) {
+ if (!variant) {
       return res.status(404).json({
         success: false,
         message: "Product not found"
       });
     }
+   
+  
    
 
     const product = variant.productId;
@@ -86,6 +90,9 @@ const addToCart = async (req, res) => {
         });
       }
 
+
+
+      
       exists.quantity = newQty;
       await exists.save();
 

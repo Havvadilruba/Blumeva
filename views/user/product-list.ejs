@@ -85,25 +85,8 @@
       <!-- Main Product Section -->
       <main class="products-section">
 
-        <!-- Top Controls -->
+        <!-- Top Controls (Only Sort Dropdown) -->
         <div class="top-controls">
-          <!-- Search Bar -->
-          <div class="search-bar">
-            <i class="fa-solid fa-magnifying-glass search-icon"></i>
-            <input 
-              type="text" 
-              id="search-input" 
-              name="q" 
-              placeholder="Search products..." 
-              value="<%= query.q || '' %>" 
-            />
-            <% if (query.q) { %>
-              <button type="button" id="clear-search" class="clear-search-btn">
-                <i class="fa-solid fa-xmark"></i>
-              </button>
-            <% } %>
-          </div>
-
           <!-- Sort Dropdown -->
           <div class="sort-dropdown">
             <label><i class="fa-solid fa-arrow-down-wide-short"></i> Sort By:</label>

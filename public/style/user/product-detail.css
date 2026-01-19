@@ -882,3 +882,15 @@ body {
     height: 220px;
   }
 }
+
+.product-warning {
+  background: #fff3cd;
+  color: #856404;
+  padding: 14px 16px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}

@@ -51,6 +51,7 @@ const checkUser = async (req, res, next) => {
           res.locals.user = user;
         } else {
           req.session.destroy();
+           return res.redirect("/?message=blocked");
         }
       } else {
         req.session.destroy();

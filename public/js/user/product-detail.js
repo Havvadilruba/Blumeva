@@ -173,11 +173,13 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
     } catch (error) {
-      if (error.response?.status === 401) {
-        showToast("Please login first", "error");
-      } else {
-        showToast("Something went wrong", "error");
-      }
+      if (error.response && error.response.data?.message) {
+    showToast(error.response.data.message, "error");
+  } else if (error.message === "Network Error") {
+    showToast("Network error. Please try again.", "error");
+  } else {
+    showToast("Unexpected error occurred", "error");
+  }
     }
   };
 

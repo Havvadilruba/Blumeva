@@ -5,7 +5,9 @@ import { getLiveBannerService } from "../../services/bannerService.js";
 
 import assets from "../../helpers/assets.js";
 
-// Landing Page
+import Product from "../../model/productSchema.js"
+
+
 // Landing Page
 export const loadLandingpage = async (req, res) => {
   try {
@@ -35,19 +37,30 @@ export const loadLandingpage = async (req, res) => {
 export const listProducts = async (req, res) => {
   try {
     const userId = req.session?.user?._id || null;
-
-    
     const data = await getFilteredProducts(req.query, userId);
-
-    const { latestProducts } = await getLandingPageData(userId);
-
+    
+   const isAjax = req.xhr || 
+                   req.headers.accept?.includes('application/json') ||
+                   req.headers['x-requested-with'] === 'XMLHttpRequest';
+    
+    if (isAjax) {
+      return res.json({
+        success: true,
+        products: data.products,
+        currentPage: data.currentPage,
+        totalPages: data.totalPages,
+        categories: data.categories,  // ADD THIS
+        brands: data.brands,          // ADD THIS
+        query: req.query
+      });
+    }
+    
+    // Return full page for regular requests
     res.render("user/product-list", {
       layout: "layouts/user",
       title: "Products | Blumeva",
       pageCSS: "/style/user/product-list.css",
-
       ...data,
-
       query: req.query,
       pagination: {
         currentPage: data.currentPage,
@@ -59,19 +72,56 @@ export const listProducts = async (req, res) => {
 
   } catch (error) {
     console.error("List Products Error:", error);
+    
+    // Handle errors based on request type
+    const isAjax = req.xhr || 
+                   req.headers.accept?.includes('application/json') ||
+                   req.headers['x-requested-with'] === 'XMLHttpRequest';
+    
+    if (isAjax) {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to fetch products"
+      });
+    }
+    
     res.redirect("/pageNotFound");
   }
 };
 
 
-
 export const loadProductDetail = async (req, res) => {
-  const userId = req.session?.user?._id || req.user?._id; // Get logged-in user ID
+  const userId = req.session?.user?._id || req.user?._id;
   const result = await getProductDetail(req.params.id, userId);
   
   if (!result) return res.redirect("/products");
+  
   const { latestProducts } = await getLandingPageData(userId);
-  const { product, variant, offer, isInWishlist, reviews, avgRating } = result; // ✅ Add reviews and avgRating
+  const { product, variant, offer, isInWishlist, reviews, avgRating } = result;
+
+    if (result.blocked) {
+  return res.render("user/product-detail", {
+    layout: "layouts/user",
+    title: `${result.product.name} | Blumeva`,
+    pageCSS: "/style/user/product-detail.css",
+
+    product: result.product, // ✅ category & brand exist
+    blocked: true,
+    warningMessage: result.message,
+
+    // safe defaults
+     variant: result.variant,   // ✅ IMPORTANT
+    offer: result.offer || 0,  // ✅ OPTIONAL
+    isInWishlist: false,
+    reviews: [],
+    avgRating: 0,
+    latestProducts,
+  });
+}
+
+  
+
+  
 
   res.render("user/product-detail", {
     layout: "layouts/user",
@@ -83,11 +133,11 @@ export const loadProductDetail = async (req, res) => {
     isInWishlist,
     reviews,      
     avgRating,  
-    latestProducts 
+    latestProducts ,
+     blocked: false,
+    warningMessage: null
   });
 };
-
-
 
 // Page not found
 const pageNotFound = async (req, res) => {
@@ -102,6 +152,8 @@ const pageNotFound = async (req, res) => {
     res.redirect("/pageNotFound");
   }
 };
+
+
 export const loadContactPage = async (req, res) => {
   try {
     res.render("user/contact", {

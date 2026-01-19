@@ -115,6 +115,7 @@ h1, h2, h3, h4 {
   letter-spacing: -0.5px;
   transition: all 0.3s ease;
   text-decoration: none;
+  flex: 1;
 }
 
 .logo:hover {
@@ -132,50 +133,66 @@ h1, h2, h3, h4 {
 .search-icons {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 30px;
+  flex: 1;
+  justify-content: flex-end;
 }
 
-.search-icons form {
+/* ===== Header Search ===== */
+.header-search-form {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.search-wrapper {
   position: relative;
   display: flex;
   align-items: center;
 }
 
 .search-box {
-  padding: 10px 40px 10px 18px;
+  width: 300px;
+  padding: 10px 70px 10px 18px;
   border-radius: 25px;
   border: 2px solid rgba(201, 164, 92, 0.2);
-  outline: none;
-  width: 220px;
   background: linear-gradient(145deg, #FFFFFF, #FAF8F3);
   font-size: 14px;
-  color: #2B2B2B;
   transition: all 0.3s ease;
-  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
 .search-box:focus {
   border-color: #C9A45C;
-  box-shadow: 
-    inset 0 2px 5px rgba(0, 0, 0, 0.05),
-    0 0 0 3px rgba(201, 164, 92, 0.1);
-  width: 260px;
+  width: 350px;
+  outline: none;
+  box-shadow: 0 4px 12px rgba(201, 164, 92, 0.2);
 }
 
-.search-icons form button {
+/* Search submit */
+.search-submit-btn {
   position: absolute;
   right: 12px;
   background: none;
   border: none;
-  color: #C9A45C;
-  font-size: 16px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  font-size: 16px;
+  color: #C9A45C;
 }
 
-.search-icons form button:hover {
-  color: #B89350;
-  transform: scale(1.1);
+/* Clear (✖) button */
+.clear-search-btn {
+  position: absolute;
+  right: 38px;
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  color: #999;
+  display: none;
+}
+
+.clear-search-btn:hover {
+  color: #e53935;
 }
 
 /* ===== Icon Links ===== */
@@ -404,11 +421,11 @@ footer a:hover {
   }
 
   .search-box {
-    width: 180px;
+    width: 220px;
   }
 
   .search-box:focus {
-    width: 220px;
+    width: 260px;
   }
 
   .bottom-nav ul {
@@ -431,13 +448,23 @@ footer a:hover {
     padding: 15px 4%;
   }
 
+  .logo,
+  .search-icons,
+  .header-search-form {
+    flex: none;
+  }
+
   .search-icons {
     flex-wrap: wrap;
     justify-content: center;
   }
 
   .search-box {
-    width: 200px;
+    width: 250px;
+  }
+
+  .search-box:focus {
+    width: 280px;
   }
 
   .bottom-nav ul {
@@ -477,8 +504,12 @@ footer a:hover {
   }
 
   .search-box {
-    width: 160px;
+    width: 200px;
     font-size: 13px;
+  }
+
+  .search-box:focus {
+    width: 220px;
   }
 
   .icon-links {
@@ -502,4 +533,3 @@ footer a:hover {
     gap: 30px;
   }
 }
-

@@ -848,6 +848,8 @@ const cancelOrderItems = async (req, res) => {
     const cancellable = ["Pending", "Confirmed", "Processing"];
     let cancelledCount = 0;
     let refundAmount = 0;
+    let revokedCouponAmount = 0;
+
 
     const now = new Date();
 
@@ -910,6 +912,63 @@ const cancelOrderItems = async (req, res) => {
       order.statusTimeline.cancelledAt = now;
     }
 
+    /* -------------------------------------------------
+   COUPON REVALIDATION AFTER CANCELLATION
+-------------------------------------------------- */
+
+if (order.couponId) {
+  const remainingItems = order.orderedItems.filter(
+    i => i.itemStatus !== "Cancelled" && i.itemStatus !== "Returned"
+  );
+
+  let remainingSubtotal = 0;
+
+  for (const item of remainingItems) {
+    const salePrice = item.salePrice || 0;
+    const discountAmount = item.discountAmount || 0;
+    const couponShare = item.couponShare || 0;
+    const qty = item.quantity;
+
+    const couponPerUnit = couponShare / qty;
+    const finalUnitPrice = salePrice - discountAmount - couponPerUnit;
+
+    remainingSubtotal += finalUnitPrice * qty;
+  }
+
+  const coupon = await Coupon.findById(order.couponId).session(session);
+
+  if (!allCancelled && coupon && remainingSubtotal < coupon.minPurchaseAmount) {
+
+   let remainingCouponShare = 0;
+
+remainingItems.forEach(item => {
+  remainingCouponShare += item.couponShare || 0;
+});
+
+revokedCouponAmount = remainingCouponShare;
+
+
+    const oldCouponId = order.couponId;
+
+    // Remove coupon from order
+    order.couponId = null;
+    order.couponDiscount = 0;
+
+    // Remove coupon share from all items
+    order.orderedItems.forEach(item => {
+      item.couponShare = 0;
+    });
+
+    // Reverse coupon usage count
+    await Coupon.updateOne(
+      { _id: oldCouponId },
+      { $inc: { currentUsageCount: -1 } },
+      { session }
+    );
+  }
+}
+
+
     //  refund  (wallet, razorpay)
     if (refundAmount > 0 && order.paymentStatus === "Paid") {
       const wallet = await Wallet.findOne({ userId }).session(session);
@@ -957,6 +1016,9 @@ const cancelOrderItems = async (req, res) => {
     return res.json({
       success: true,
       message: `${cancelledCount} item(s) cancelled successfully`,
+      message: revokedCouponAmount > 0
+    ? "Item cancelled. Coupon removed as minimum purchase not met."
+    : `${cancelledCount} item(s) cancelled successfully`,
       refund: refundAmount,
     });
 

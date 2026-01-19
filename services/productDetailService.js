@@ -9,7 +9,7 @@ import {
 
 export const getProductDetail = async (productId, userId = null) => {
   const [product] = await Product.aggregate([
-    { $match: { _id: new ObjectId(productId), isBlocked: false } },
+    { $match: { _id: new ObjectId(productId) } },
 
     // Category
     {
@@ -132,7 +132,7 @@ export const getProductDetail = async (productId, userId = null) => {
       }
     },
 
-    // 🔥 FIXED: Correct wishlist lookup
+
     ...(userId ? [{
       $lookup: {
         from: "wishlists",
@@ -161,7 +161,7 @@ export const getProductDetail = async (productId, userId = null) => {
       }
     }] : []),
 
-    // 🔥 FIXED: Map variant IDs correctly
+
     ...(userId ? [{
       $addFields: {
         wishlistedVariants: {
@@ -175,21 +175,34 @@ export const getProductDetail = async (productId, userId = null) => {
     }] : [])
   ]);
 
-  if (!product || !product.category.isListed || !product.brand.status) {
-    return null;
-  }
-
   const variant = product.variants.find((v) => v.stock > 0) || product.variants[0];
   const offer = getAppliedOffer(product, variant.salePrice);
 
+if (!product) return null;
+
+const isBlocked =
+  product.isBlocked ||
+  !product.category?.isListed ||
+  !product.brand?.status;
+
+if (isBlocked) {
+  return {
+    blocked: true,
+    message: "This product is currently unavailable.",
+    product ,
+     variant, 
+  };
+}
+
+  
+  
+
   const reviews = await findReviewsByProductId(product._id, 10);
   const { avgRating } = await getProductRatingSummary(product._id);
-  // 🔥 FIXED: Check if the selected variant is in wishlist
   const isInWishlist = userId && product.wishlistedVariants 
     ? product.wishlistedVariants.some(wv => wv.toString() === variant._id.toString())
     : false;
 
-  // 🔥 BONUS: Add wishlist status to product object for EJS
   product.isInWishlist = isInWishlist;
 
   return { 

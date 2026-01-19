@@ -57,11 +57,10 @@ export const getDeliveredSalesReportService = async ({
 
   const skip = (page - 1) * limit;
 
-  // ---------------- AGGREGATION ----------------
   const basePipeline = [
     { $match: dateFilter },
 
-    // Join user
+  
     {
       $lookup: {
         from: "users",
@@ -72,10 +71,9 @@ export const getDeliveredSalesReportService = async ({
     },
     { $unwind: "$user" },
 
-    // Flatten items
+    
     { $unwind: "$orderedItems" },
 
-    // 🔥 ONLY DELIVERED ITEMS
     {
       $match: {
         "orderedItems.itemStatus": {
@@ -84,20 +82,34 @@ export const getDeliveredSalesReportService = async ({
       },
     },
 
-    // ---------------- CALCULATIONS PER ITEM ----------------
-   // ---------------- CALCULATIONS PER ITEM (FIXED) ----------------
+    // ---------------- CALCULATIONS PER ITEM (FINAL FIX) ----------------
 {
   $addFields: {
-    // What customer ACTUALLY paid per unit
+    couponPerUnit: {
+      $cond: [
+        { $gt: ["$orderedItems.quantity", 0] },
+        { $divide: ["$orderedItems.couponShare", "$orderedItems.quantity"] },
+        0
+      ]
+    }
+  }
+},
+{
+  $addFields: {
     finalUnitPrice: {
-      $subtract: [
-        "$orderedItems.salePrice",
+      $max: [
         {
-          $add: [
-            "$orderedItems.discountAmount",
-            "$orderedItems.couponShare"
+          $subtract: [
+            "$orderedItems.salePrice",
+            {
+              $add: [
+                "$orderedItems.discountAmount",
+                "$couponPerUnit"
+              ]
+            }
           ]
-        }
+        },
+        0
       ]
     }
   }
@@ -112,21 +124,21 @@ export const getDeliveredSalesReportService = async ({
       ]
     },
 
-    // Total discount per item (offer + coupon ONLY)
+   
     itemDiscountTotal: {
-      $multiply: [
+      $add: [
         {
-          $add: [
+          $multiply: [
             "$orderedItems.discountAmount",
-            "$orderedItems.couponShare"
+            "$orderedItems.quantity"
           ]
         },
-        "$orderedItems.quantity"
+        "$orderedItems.couponShare"
       ]
     }
   }
-},
-
+}
+,
     // ---------------- GROUP BY ORDER ----------------
     {
       $group: {
