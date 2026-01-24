@@ -49,13 +49,13 @@ export const listProducts = async (req, res) => {
         products: data.products,
         currentPage: data.currentPage,
         totalPages: data.totalPages,
-        categories: data.categories,  // ADD THIS
-        brands: data.brands,          // ADD THIS
+        categories: data.categories,  
+        brands: data.brands,          
         query: req.query
       });
     }
     
-    // Return full page for regular requests
+   
     res.render("user/product-list", {
       layout: "layouts/user",
       title: "Products | Blumeva",
@@ -73,7 +73,6 @@ export const listProducts = async (req, res) => {
   } catch (error) {
     console.error("List Products Error:", error);
     
-    // Handle errors based on request type
     const isAjax = req.xhr || 
                    req.headers.accept?.includes('application/json') ||
                    req.headers['x-requested-with'] === 'XMLHttpRequest';
@@ -104,14 +103,11 @@ export const loadProductDetail = async (req, res) => {
     layout: "layouts/user",
     title: `${result.product.name} | Blumeva`,
     pageCSS: "/style/user/product-detail.css",
-
-    product: result.product, // ✅ category & brand exist
+    product: result.product, 
     blocked: true,
     warningMessage: result.message,
-
-    // safe defaults
-     variant: result.variant,   // ✅ IMPORTANT
-    offer: result.offer || 0,  // ✅ OPTIONAL
+     variant: result.variant,   
+    offer: result.offer || 0, 
     isInWishlist: false,
     reviews: [],
     avgRating: 0,
@@ -120,9 +116,6 @@ export const loadProductDetail = async (req, res) => {
 }
 
   
-
-  
-
   res.render("user/product-detail", {
     layout: "layouts/user",
     title: `${product.name} | Blumeva`,

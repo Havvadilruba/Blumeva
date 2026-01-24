@@ -1,140 +1,152 @@
-import { getDeliveredSalesReportService } from "../../services/salesReportService.js";
-import { generateSalesReportExcel } from "../../utils/salesReportExcel.js";
-import puppeteer from "puppeteer";
-import ejs from "ejs";
-import path from "path";
-import { fileURLToPath } from "url";
+import {
+  getSalesReportService,
+  generatePDFReportService,
+  generateExcelReportService,
+} from "../../services/salesReportService.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
-export const loadSalesReport = async (req, res, next) => {
+const getSalesReport = async (req, res) => {
   try {
     const {
-      reportType = "daily",
-      startDate,
-      endDate,
+      reportType = "all",
+      startDate = "",
+      endDate = "",
+      status = "",
       page = 1,
       limit = 10,
     } = req.query;
 
-    const data = await getDeliveredSalesReportService({
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 10;
+
+    const reportData = await getSalesReportService({
       reportType,
       startDate,
       endDate,
-      page: Number(page),
-      limit: Number(limit),
+      statusFilter: status,
+      page: pageNum,
+      limit: limitNum,
     });
 
-    res.render("admin/salesReport", {
-      layout: "layouts/admin",
-      title: "Sales Report",
-      pageCSS: "SalesReport",
-      activePage: "SalesReport",
-      ...data,
-      reportType,
-      startDate,
-      endDate,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
 
-export const loadSalesReportDownload = async (req, res, next) => {
-  try {
-    const { reportType = "daily", startDate, endDate } = req.query;
-
-    const MAX_EXCEL_LIMIT = 200000;
-
-    const data = await getDeliveredSalesReportService({
-      reportType,
-      startDate,
-      endDate,
-      page: 1,
-      limit: MAX_EXCEL_LIMIT,
-    });
-
-    return generateSalesReportExcel(res, data.salesData, reportType, startDate, endDate);
-  } catch (error) {
-    console.error("Excel generation error:", error);
-    next(error);
-  }
-};
-
-export const loadSalesReportPDF = async (req, res, next) => {
-  try {
-    const { 
-      reportType = "daily", 
-      startDate, 
-      endDate,
-      limit = 1000 
-    } = req.query;
-
-
-    const pdfLimit = Number(limit);
-    if (pdfLimit > 100000) {
-      return res.status(400).json({ 
-        error: "Maximum PDF download limit is 100,000 records" 
+    if (req.xhr || req.headers.accept?.includes('application/json')) {
+      return res.json({
+        success: true,
+        ...reportData,
+        currentPage: pageNum,
+        reportType,
+        startDate,
+        endDate,
+        statusFilter: status,
+        limit: limitNum,
       });
     }
 
-    const data = await getDeliveredSalesReportService({
+    res.render("admin/salesReport", {
+      layout: "layouts/admin",
+      title: "Sales Report | Admin",
+      pageCSS: "salesReport",
+      activePage: "salesReport",
+      ...reportData,
+      currentPage: pageNum,
       reportType,
       startDate,
       endDate,
-      page: 1,
-      limit: pdfLimit,
+      statusFilter: status,
+      limit: limitNum,
     });
+  } catch (err) {
+    console.error("Load sales report error:", err);
+    
+    if (req.xhr || req.headers.accept?.includes('application/json')) {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to load sales report data"
 
-    // EJS  to HTML 
-    const templatePath = path.join(__dirname, "../../views/admin/sales-report-pdf.ejs");
-    const html = await ejs.renderFile(templatePath, {
-      salesData: data.salesData,
+       
+      });
+       console.error("dvdvdjvd")
+    }
+    
+    res.status(500).render("admin/page-404", {
+      layout: "layouts/admin",
+      title: "Error | Admin",
+      pageCSS: "common",
+      activePage: "salesReport",
+      message: "Failed to load sales report",
+    });
+    console.error("dvdvdjggggggggvd")
+  }
+};
+
+const loadSalesReportPDF = async (req, res) => {
+  try {
+    const { 
+      reportType = "all", 
+      startDate = "", 
+      endDate = "", 
+      status = "",
+      limit = 100 
+    } = req.query;
+
+    const pdfBuffer = await generatePDFReportService({
       reportType,
       startDate,
       endDate,
+      statusFilter: status,
+      limit: parseInt(limit) || 100,
     });
 
-    // Generate PDF using puppeteer
-    const browser = await puppeteer.launch({
-      headless: "new",
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
+    const filename = `sales_report_${reportType}_${status || "all"}_${Date.now()}.pdf`;
 
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: "networkidle0" });
-
-    const pdfBuffer = await page.pdf({
-      format: "A4",
-      landscape: true, 
-      printBackground: true,
-      margin: {
-        top: "15mm",
-        right: "12mm",
-        bottom: "15mm",
-        left: "12mm",
-      },
-    });
-
-    await browser.close();
-
-    // Send PDF
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename=sales-report-${reportType}-${Date.now()}.pdf`
-    );
-    res.setHeader("Content-Length", pdfBuffer.length);
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
     res.send(pdfBuffer);
   } catch (err) {
     console.error("PDF generation error:", err);
-    next(err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to generate PDF report",
+    });
+  }
+};
+
+
+const loadSalesReportDownload = async (req, res) => {
+  try {
+    const { 
+      reportType = "all", 
+      startDate = "", 
+      endDate = "",
+      status = ""
+    } = req.query;
+
+    const excelBuffer = await generateExcelReportService({
+      reportType,
+      startDate,
+      endDate,
+      statusFilter: status,
+    });
+
+    const filename = `sales_report_${reportType}_${status || "all"}_${Date.now()}.xlsx`;
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.send(excelBuffer);
+  } catch (err) {
+    console.error("Excel generation error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to generate Excel report",
+    });
   }
 };
 
 export default {
-  loadSalesReport,
+  getSalesReport,
   loadSalesReportPDF,
   loadSalesReportDownload,
 };

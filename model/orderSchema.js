@@ -22,6 +22,11 @@ const orderedItemSchema = new mongoose.Schema({
   salePrice: { type: Number, required: true },
   discountAmount: { type: Number, default: 0 },
   couponShare: { type: Number, default: 0 },
+  refundProcessed: {
+  type: Boolean,
+  default: false,
+},
+
 
   itemStatus: {
     type: String,

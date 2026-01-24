@@ -1,4 +1,4 @@
-// services/productDetailService.js
+
 import Product from "../model/productSchema.js";
 import { ObjectId } from "mongodb";
 import { getAppliedOffer } from "../helpers/offerHelper.js";
@@ -143,14 +143,14 @@ export const getProductDetail = async (productId, userId = null) => {
               $expr: { $eq: ["$userId", new ObjectId(userId)] }
             }
           },
-          // Unwind the items array to check each item
+         
           { $unwind: "$items" },
           {
             $match: {
               $expr: { $eq: ["$items.productId", "$$productId"] }
             }
           },
-          // Project only the variantId we need
+        
           {
             $project: {
               variantId: "$items.variantId"

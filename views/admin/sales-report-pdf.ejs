@@ -1,3 +1,4 @@
+<!-- FILE: views/admin/sales-report-pdf.ejs -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,102 +6,203 @@
   <title>Sales Report</title>
 
   <style>
-    body {
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 12px;
-      color: #111;
-      margin: 24px;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
 
-    h1 {
-      margin: 0;
-      font-size: 20px;
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 10px;
+      color: #1f2937;
+      padding: 20px;
+      background: #fff;
+    }
+
+    .header {
+      text-align: center;
+      padding-bottom: 20px;
+      border-bottom: 3px solid #4f46e5;
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      color: #4f46e5;
+      margin-bottom: 5px;
+    }
+
+    .header .subtitle {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 5px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin-bottom: 25px;
+      page-break-inside: avoid;
+    }
+
+    .summary-card {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .summary-card .label {
+      font-size: 10px;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .summary-card .value {
+      font-size: 18px;
+      font-weight: 700;
+      color: #059669;
+    }
+
+    .summary-card .value.refund {
+      color: #dc2626;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      font-size: 9px;
+    }
+
+    thead {
+      background: #4f46e5;
+      color: white;
+    }
+
+    th {
+      padding: 10px 6px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    td {
+      padding: 8px 6px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    tbody tr:hover {
+      background: #f9fafb;
+    }
+
+    .text-right {
+      text-align: right;
     }
 
     .text-center {
       text-align: center;
     }
 
-    .muted {
-      color: #666;
-      font-size: 11px;
-    }
-
-    .header {
-      border-bottom: 2px solid #000;
-      padding-bottom: 12px;
-      margin-bottom: 20px;
-    }
-
-    .summary {
-      width: 100%;
-      margin-bottom: 20px;
-      border-collapse: collapse;
-    }
-
-    .summary td {
-      padding: 10px;
-      border: 1px solid #ccc;
-      text-align: center;
-    }
-
-    .summary .label {
-      font-size: 11px;
-      color: #555;
-    }
-
-    .summary .value {
-      font-size: 14px;
-      font-weight: bold;
-      margin-top: 4px;
-    }
-
-    table.report {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    table.report th,
-    table.report td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      vertical-align: top;
-    }
-
-    table.report th {
-      background: #f3f3f3;
-      font-size: 11px;
+    .status-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 8px;
+      font-weight: 600;
       text-transform: uppercase;
-      text-align: left;
     }
 
-    table.report td {
-      font-size: 12px;
+    .status-delivered {
+      background: #d1fae5;
+      color: #065f46;
     }
 
-    .right {
-      text-align: right;
+    .status-cancelled {
+      background: #fee2e2;
+      color: #991b1b;
     }
 
-    .center {
-      text-align: center;
+    .status-returned {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .status-partial {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .payment-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 8px;
+      font-weight: 600;
+    }
+
+    .payment-razorpay {
+      background: #10b981;
+      color: white;
+    }
+
+    .payment-cod {
+      background: #f59e0b;
+      color: white;
+    }
+
+    .payment-wallet {
+      background: #8b5cf6;
+      color: white;
+    }
+
+    .total-row {
+      background: #f3f4f6;
+      font-weight: 700;
+      border-top: 2px solid #4f46e5;
     }
 
     .total-row td {
-      font-weight: bold;
-      background: #f3f3f3;
+      padding: 12px 6px;
+      font-size: 10px;
     }
 
     .footer {
-      margin-top: 24px;
-      font-size: 11px;
-      color: #666;
+      margin-top: 30px;
+      padding-top: 15px;
+      border-top: 1px solid #e5e7eb;
       text-align: center;
+      font-size: 9px;
+      color: #9ca3af;
+    }
+
+    .refund-amount {
+      color: #dc2626;
+      font-weight: 600;
     }
 
     @media print {
-      button {
-        display: none;
+      body {
+        padding: 10px;
+      }
+      
+      .summary-grid {
+        page-break-inside: avoid;
+      }
+      
+      thead {
+        display: table-header-group;
+      }
+      
+      tr {
+        page-break-inside: avoid;
       }
     }
   </style>
@@ -109,85 +211,169 @@
 <body>
 
   <!-- HEADER -->
-  <div class="header text-center">
-    <h1>Sales Report</h1>
-    <div class="muted">
-      Generated on <%= new Date().toLocaleDateString('en-IN') %>
+  <div class="header">
+    <h1>SALES REPORT</h1>
+    <div class="subtitle">
+      <% if (reportType === 'custom' && startDate && endDate) { %>
+        Custom Range: <%= startDate %> to <%= endDate %>
+      <% } else { %>
+        Report Type: <%= reportType.toUpperCase() %>
+      <% } %>
+    </div>
+    <div class="subtitle">
+      Generated on <%= new Date().toLocaleDateString('en-IN', { dateStyle: 'full' }) %>
     </div>
   </div>
 
   <!-- SUMMARY -->
-  <table class="summary">
-    <tr>
-      <td>
-        <div class="label">Total Sales</div>
-        <div class="value">
-          ₹<%= salesData.totalSales.toLocaleString('en-IN') %>
-        </div>
-      </td>
-      <td>
-        <div class="label">Total Orders</div>
-        <div class="value"><%= salesData.totalOrders %></div>
-      </td>
-      <td>
-        <div class="label">Total Discounts</div>
-        <div class="value">
-          - ₹<%= salesData.totalDiscounts.toLocaleString('en-IN') %>
-        </div>
-      </td>
-    </tr>
-  </table>
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="label">Total Sales</div>
+      <div class="value">
+        ₹<%= (salesData.summary.totalSales || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+      </div>
+    </div>
+    
+    <div class="summary-card">
+      <div class="label">Total Orders</div>
+      <div class="value">
+        <%= salesData.summary.totalOrders || 0 %>
+      </div>
+    </div>
+    
+    <div class="summary-card">
+      <div class="label">Total Discounts</div>
+      <div class="value">
+        ₹<%= (salesData.summary.totalDiscounts || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+      </div>
+    </div>
+    
+    <div class="summary-card">
+      <div class="label">Total Refunds</div>
+      <div class="value refund">
+        ₹<%= (salesData.summary.totalRefunds || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+      </div>
+    </div>
+    
+    <div class="summary-card">
+      <div class="label">Products Sold</div>
+      <div class="value">
+        <%= salesData.summary.productsSold || 0 %>
+      </div>
+    </div>
+    
+    <div class="summary-card">
+      <div class="label">Avg Order Value</div>
+      <div class="value">
+        ₹<%= (salesData.summary.averageOrderValue || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+      </div>
+    </div>
+  </div>
 
   <!-- TABLE -->
-  <table class="report">
+  <table>
     <thead>
       <tr>
         <th>Date</th>
         <th>Order ID</th>
-        <th>Customer Email</th>
-        <th class="center">Items</th>
-        <th class="right">Amount</th>
-        <th class="right">Discount</th>
-        <th>Payment</th>
+        <th>Customer</th>
+        <th class="text-center">Items</th>
+        <th class="text-right">Net Amount</th>
+        <th class="text-right">Discount</th>
+        <th class="text-right">Refund</th>
+        <th class="text-right">Delivery</th>
+        <th class="text-right">Total</th>
+        <th class="text-center">Payment</th>
+        <th class="text-center">Status</th>
       </tr>
     </thead>
 
     <tbody>
-      <% salesData.transactions.forEach(t => { %>
+      <% if (salesData.transactions && salesData.transactions.length > 0) { %>
+        <% salesData.transactions.forEach(t => { %>
+          <tr>
+            <td><%= new Date(t.createdAt).toLocaleDateString('en-IN') %></td>
+            <td>#<%= t.orderId %></td>
+            <td>
+              <%= t.customerName || 'N/A' %><br>
+              <span style="font-size: 8px; color: #6b7280;"><%= t.customerEmail || '' %></span>
+            </td>
+            <td class="text-center"><%= t.itemCount %></td>
+            <td class="text-right">
+              ₹<%= (t.totalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+            </td>
+            <td class="text-right">
+              -₹<%= (t.discount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+            </td>
+            <td class="text-right refund-amount">
+              <% if ((t.refundAmount || 0) > 0) { %>
+                -₹<%= t.refundAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+              <% } else { %>
+                -
+              <% } %>
+            </td>
+            <td class="text-right">
+              ₹<%= (t.deliveryCharge || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+            </td>
+            <td class="text-right">
+              ₹<%= (t.finalOrderAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+            </td>
+            <td class="text-center">
+              <span class="payment-badge payment-<%= t.paymentMethod || 'cod' %>">
+                <%= (t.paymentMethod || 'N/A').toUpperCase() %>
+              </span>
+            </td>
+            <td class="text-center">
+              <% 
+                let statusClass = 'status-partial';
+                if (t.orderStatus === 'Delivered') statusClass = 'status-delivered';
+                else if (t.orderStatus && t.orderStatus.includes('Cancelled')) statusClass = 'status-cancelled';
+                else if (t.orderStatus && t.orderStatus.includes('Returned')) statusClass = 'status-returned';
+              %>
+              <span class="status-badge <%= statusClass %>">
+                <%= t.orderStatus || 'N/A' %>
+              </span>
+            </td>
+          </tr>
+        <% }) %>
+      <% } else { %>
         <tr>
-          <td><%= new Date(t.createdAt).toLocaleDateString('en-IN') %></td>
-          <td>#<%= t.orderId %></td>
-          <td><%= t.customerEmail || '-' %></td>
-          <td class="center"><%= t.itemCount %></td>
-          <td class="right">
-            ₹<%= t.totalAmount.toLocaleString('en-IN') %>
+          <td colspan="11" style="text-align: center; padding: 20px; color: #9ca3af;">
+            No sales transactions found for the selected period
           </td>
-          <td class="right">
-            - ₹<%= t.discount.toLocaleString('en-IN') %>
-          </td>
-          <td><%= t.paymentMethod %></td>
         </tr>
-      <% }) %>
-
-      <!-- TOTAL -->
-      <tr class="total-row">
-        <td colspan="4" class="right">TOTAL</td>
-        <td class="right">
-          ₹<%= salesData.totalSales.toLocaleString('en-IN') %>
-        </td>
-        <td class="right">
-          - ₹<%= salesData.totalDiscounts.toLocaleString('en-IN') %>
-        </td>
-        <td></td>
-      </tr>
+      <% } %>
     </tbody>
+
+    <!-- TOTAL -->
+    <tfoot>
+      <tr class="total-row">
+        <td colspan="4" class="text-right">TOTAL</td>
+        <td class="text-right">
+          ₹<%= (salesData.summary.totalSales || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+        </td>
+        <td class="text-right">
+          -₹<%= (salesData.summary.totalDiscounts || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+        </td>
+        <td class="text-right refund-amount">
+          -₹<%= (salesData.summary.totalRefunds || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+        </td>
+        <td class="text-right">
+          ₹<%= (salesData.summary.deliveryCharges || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+        </td>
+        <td class="text-right">
+          ₹<%= ((salesData.summary.totalSales || 0) + (salesData.summary.deliveryCharges || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+        </td>
+        <td colspan="2"></td>
+      </tr>
+    </tfoot>
   </table>
 
   <!-- FOOTER -->
   <div class="footer">
-    This report includes only successfully delivered orders.
+    This report includes all orders (Delivered, Cancelled, and Returned).<br>
+    Net amounts exclude cancelled and returned items. Refunds show the total amount refunded to customers.
   </div>
 
 </body>
 </html>
-

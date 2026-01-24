@@ -247,7 +247,6 @@ export const markItemReturnedService = async (id, itemId) => {
     const couponShare = item.couponShare || 0;
     const quantity = item.quantity || 1;
 
-    // ✅ couponShare is PER LINE ITEM → divide per unit
     const couponPerUnit = couponShare / quantity;
 
     const finalPricePerUnit =

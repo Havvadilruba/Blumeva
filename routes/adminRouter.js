@@ -16,7 +16,7 @@ import adminReferralController from "../controller/admin/adminReferralController
 import salesReportController from "../controller/admin/salesReportController.js";
 import dashboardController from "../controller/admin/dashboardController.js";
 import bannerController from "../controller/admin/bannerController.js";
-import controller from "../controller/admin/controller.js";
+
 
 const router = express.Router();
 
@@ -80,9 +80,9 @@ router.patch("/coupons/:couponId/toggle-status", adminAuth, couponController.tog
 router.delete("/coupons/:couponId", adminAuth, couponController.deleteCoupon);
 router.get("/referrals", adminAuth, adminReferralController.listReferrals);
 
-router.get("/salesReport", adminAuth, salesReportController.loadSalesReport);
-router.get("/sales-report/excel", adminAuth, salesReportController.loadSalesReportDownload);
-router.get("/sales-report/pdf", adminAuth, salesReportController.loadSalesReportPDF);
+router.get("/salesReport",adminAuth,salesReportController.getSalesReport);
+router.get("/sales-report/pdf",adminAuth,salesReportController.loadSalesReportPDF);
+router.get("/sales-report/excel",adminAuth,salesReportController.loadSalesReportDownload);
 
 router.get("/banners", adminAuth, bannerController.loadBanners);
 router.get("/banners/:id", adminAuth, bannerController.getBanner);
@@ -91,6 +91,6 @@ router.put("/banners/:id",adminAuth,upload.single("bannerImage"),bannerControlle
 router.patch("/banners/:id/toggle",adminAuth,bannerController.toggleBannerStatus);
 router.delete("/banners/:id",adminAuth,bannerController.deleteBanner);
 
-router.get("/couponn",adminAuth,controller.loadCoupon)
+
 
 export default router;

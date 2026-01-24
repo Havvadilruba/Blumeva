@@ -622,7 +622,6 @@ const retryPayment = async (req, res) => {
       });
     }
 
-    // Check if order is in retryable state
     if (tempOrder.razorpayStatus === "PAID") {
       await session.abortTransaction();
       return res.json({
@@ -639,7 +638,6 @@ const retryPayment = async (req, res) => {
 });
 
 
-    // Update temp order with new Razorpay order ID
     tempOrder.razorpayOrderId = razorpayOrder.id;
     tempOrder.razorpayStatus = "INITIATED";
     tempOrder.paymentStatus = "Pending";
@@ -666,9 +664,7 @@ const retryPayment = async (req, res) => {
   }
 };
 
-/**
- * Delete Temp Order
- */
+
 const deleteTempOrderController = async (req, res) => {
   try {
     const orderId = req.params.id;
@@ -698,7 +694,7 @@ const deleteTempOrderController = async (req, res) => {
       });
     }
 
-    // Only allow deletion of non-paid orders
+    
     if (tempOrder.razorpayStatus === "PAID") {
       return res.status(400).json({
         success: false,
@@ -848,7 +844,7 @@ const cancelOrderItems = async (req, res) => {
     const cancellable = ["Pending", "Confirmed", "Processing"];
     let cancelledCount = 0;
     let refundAmount = 0;
-    let revokedCouponAmount = 0;
+   
 
 
     const now = new Date();
@@ -876,13 +872,12 @@ const cancelOrderItems = async (req, res) => {
       cancelledCount++;
 
       // refund
-      if (order.paymentStatus === "Paid") {
+ if (order.paymentStatus === "Paid" && !item.refundProcessed) {
   const salePrice = item.salePrice || 0;
   const discountAmount = item.discountAmount || 0;
   const couponShare = item.couponShare || 0;
 
   const couponPerUnit = couponShare / item.quantity;
-
   const finalPricePerUnit =
     salePrice - discountAmount - couponPerUnit;
 
@@ -911,62 +906,6 @@ const cancelOrderItems = async (req, res) => {
       order.statusTimeline = order.statusTimeline || {};
       order.statusTimeline.cancelledAt = now;
     }
-
-    /* -------------------------------------------------
-   COUPON REVALIDATION AFTER CANCELLATION
--------------------------------------------------- */
-
-if (order.couponId) {
-  const remainingItems = order.orderedItems.filter(
-    i => i.itemStatus !== "Cancelled" && i.itemStatus !== "Returned"
-  );
-
-  let remainingSubtotal = 0;
-
-  for (const item of remainingItems) {
-    const salePrice = item.salePrice || 0;
-    const discountAmount = item.discountAmount || 0;
-    const couponShare = item.couponShare || 0;
-    const qty = item.quantity;
-
-    const couponPerUnit = couponShare / qty;
-    const finalUnitPrice = salePrice - discountAmount - couponPerUnit;
-
-    remainingSubtotal += finalUnitPrice * qty;
-  }
-
-  const coupon = await Coupon.findById(order.couponId).session(session);
-
-  if (!allCancelled && coupon && remainingSubtotal < coupon.minPurchaseAmount) {
-
-   let remainingCouponShare = 0;
-
-remainingItems.forEach(item => {
-  remainingCouponShare += item.couponShare || 0;
-});
-
-revokedCouponAmount = remainingCouponShare;
-
-
-    const oldCouponId = order.couponId;
-
-    // Remove coupon from order
-    order.couponId = null;
-    order.couponDiscount = 0;
-
-    // Remove coupon share from all items
-    order.orderedItems.forEach(item => {
-      item.couponShare = 0;
-    });
-
-    // Reverse coupon usage count
-    await Coupon.updateOne(
-      { _id: oldCouponId },
-      { $inc: { currentUsageCount: -1 } },
-      { session }
-    );
-  }
-}
 
 
     //  refund  (wallet, razorpay)
@@ -1014,13 +953,11 @@ revokedCouponAmount = remainingCouponShare;
     await session.commitTransaction();
 
     return res.json({
-      success: true,
-      message: `${cancelledCount} item(s) cancelled successfully`,
-      message: revokedCouponAmount > 0
-    ? "Item cancelled. Coupon removed as minimum purchase not met."
-    : `${cancelledCount} item(s) cancelled successfully`,
-      refund: refundAmount,
-    });
+  success: true,
+  message: `${cancelledCount} item(s) cancelled successfully`,
+  refund: refundAmount,
+});
+
 
   } catch (err) {
     console.error("Cancel Error:", err);
