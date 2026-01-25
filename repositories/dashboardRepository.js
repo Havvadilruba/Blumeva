@@ -52,9 +52,7 @@ export const getDashboardStatsRepo = async () => {
 };
 
 
-/* --------------------------------
-   SALES CHART
----------------------------------*/
+
 export const getSalesChartRepo = async (startDate, groupFormat) => {
   return Order.aggregate([
     {
@@ -107,34 +105,57 @@ export const getSalesChartRepo = async (startDate, groupFormat) => {
 };
 
 
-/* --------------------------------
-   ORDER STATUS
----------------------------------*/
+
 export const getOrderStatusRepo = async () => {
   return Order.aggregate([
     { $group: { _id: "$orderStatus", count: { $sum: 1 } } },
   ]);
 };
 
-/* --------------------------------
-   TOP PRODUCTS
----------------------------------*/
+
 export const getTopProductsRepo = async () => {
   return Order.aggregate([
     { $unwind: "$orderedItems" },
+
+    {
+      $match: {
+        "orderedItems.itemStatus": "Delivered",
+      },
+    },
+
     {
       $group: {
         _id: "$orderedItems.productId",
         sales: { $sum: "$orderedItems.quantity" },
         revenue: {
           $sum: {
-            $multiply: ["$orderedItems.salePrice", "$orderedItems.quantity"],
+            $multiply: [
+              {
+                $max: [
+                  {
+                    $subtract: [
+                      "$orderedItems.salePrice",
+                      {
+                        $add: [
+                          { $ifNull: ["$orderedItems.couponShare", 0] },
+                          { $ifNull: ["$orderedItems.discountAmount", 0] },
+                        ],
+                      },
+                    ],
+                  },
+                  0,
+                ],
+              },
+              "$orderedItems.quantity",
+            ],
           },
         },
       },
     },
-    { $sort: { sales: -1 } },
+
+    { $sort: { sales: -1, revenue: -1 } },
     { $limit: 10 },
+
     {
       $lookup: {
         from: "products",
@@ -147,12 +168,16 @@ export const getTopProductsRepo = async () => {
   ]);
 };
 
-/* --------------------------------
-   TOP BRANDS
----------------------------------*/
 export const getTopBrandsRepo = async () => {
   return Order.aggregate([
     { $unwind: "$orderedItems" },
+
+    {
+      $match: {
+        "orderedItems.itemStatus": "Delivered",
+      },
+    },
+
     {
       $lookup: {
         from: "products",
@@ -162,19 +187,40 @@ export const getTopBrandsRepo = async () => {
       },
     },
     { $unwind: "$product" },
+
     {
       $group: {
         _id: "$product.brand",
         sales: { $sum: "$orderedItems.quantity" },
         revenue: {
           $sum: {
-            $multiply: ["$orderedItems.salePrice", "$orderedItems.quantity"],
+            $multiply: [
+              {
+                $max: [
+                  {
+                    $subtract: [
+                      "$orderedItems.salePrice",
+                      {
+                        $add: [
+                          { $ifNull: ["$orderedItems.couponShare", 0] },
+                          { $ifNull: ["$orderedItems.discountAmount", 0] },
+                        ],
+                      },
+                    ],
+                  },
+                  0,
+                ],
+              },
+              "$orderedItems.quantity",
+            ],
           },
         },
       },
     },
+
     { $sort: { sales: -1 } },
     { $limit: 10 },
+
     {
       $lookup: {
         from: "brands",
@@ -186,12 +232,17 @@ export const getTopBrandsRepo = async () => {
     { $unwind: "$brand" },
   ]);
 };
-/* --------------------------------
-   TOP category
----------------------------------*/
+
 export const getTopCategoryRepo = async () => {
   return Order.aggregate([
     { $unwind: "$orderedItems" },
+
+    {
+      $match: {
+        "orderedItems.itemStatus": "Delivered",
+      },
+    },
+
     {
       $lookup: {
         from: "products",
@@ -201,19 +252,40 @@ export const getTopCategoryRepo = async () => {
       },
     },
     { $unwind: "$product" },
+
     {
       $group: {
         _id: "$product.category",
         sales: { $sum: "$orderedItems.quantity" },
         revenue: {
           $sum: {
-            $multiply: ["$orderedItems.salePrice", "$orderedItems.quantity"],
+            $multiply: [
+              {
+                $max: [
+                  {
+                    $subtract: [
+                      "$orderedItems.salePrice",
+                      {
+                        $add: [
+                          { $ifNull: ["$orderedItems.couponShare", 0] },
+                          { $ifNull: ["$orderedItems.discountAmount", 0] },
+                        ],
+                      },
+                    ],
+                  },
+                  0,
+                ],
+              },
+              "$orderedItems.quantity",
+            ],
           },
         },
       },
     },
+
     { $sort: { sales: -1 } },
     { $limit: 10 },
+
     {
       $lookup: {
         from: "categories",
@@ -226,9 +298,7 @@ export const getTopCategoryRepo = async () => {
   ]);
 };
 
-/* --------------------------------
-   RECENT ORDERS
----------------------------------*/
+
 export const getRecentOrdersRepo = async () => {
   return Order.find()
     .populate("userId", "name")

@@ -45,7 +45,7 @@ const couponSchema = new mongoose.Schema(
     maxDiscount: {
       type: Number,
       min: 0,
-      default: 0, // 0 means unlimited for fixed coupons
+      default: 0, 
     },
 
     minPurchaseAmount: {
@@ -57,13 +57,13 @@ const couponSchema = new mongoose.Schema(
     usageLimitPerUser: {
       type: Number,
       min: 0,
-      default: 1, // 0 unlimited
+      default: 1,
     },
 
     totalUsageLimit: {
       type: Number,
       min: 0,
-      default: 0, // 0 unlimited
+      default: 0, 
     },
 
     currentUsageCount: {
