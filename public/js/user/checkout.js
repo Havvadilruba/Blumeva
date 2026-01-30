@@ -303,12 +303,28 @@ async function placeOrder() {
       window.location.href = "/order/success/" + orderId;
       return;
     } else {
+
+       showToast(
+    verifyRes.data.message || "Payment failed",
+    "error"
+  );
+       setTimeout(() => {
       window.location.href = `/order/failure/${tempOrderId}`;
+    }, 1500);
     }
 
   } catch (err) {
     console.error("Payment verify error:", err);
-    window.location.href = `/order/failure/${tempOrderId}`;
+
+    const msg =
+      err.response?.data?.message ||
+      "Payment verification failed";
+
+    // 🔥 SHOW BACKEND MESSAGE
+    showToast(msg, "error");
+     setTimeout(() => {
+      window.location.href = `/order/failure/${tempOrderId}`;
+    }, 1800);
   }
 }
 ,
@@ -380,4 +396,26 @@ async function placeOrder() {
     placeBtn.disabled = false;
     placeBtn.innerHTML = '<i class="bi bi-check-circle"></i> Place Order';
   }
+}
+
+
+function showToast(message, type = "success") {
+  Toastify({
+    text: message,
+    duration: 3000,
+    gravity: "top",
+    position: "right",
+    close: true,
+    stopOnFocus: true,
+    style: {
+      background:
+        type === "success"
+          ? "#16a34a"
+          : type === "error"
+          ? "#ef4444"
+          : "#2563eb",
+      borderRadius: "6px",
+      fontSize: "14px",
+    },
+  }).showToast();
 }

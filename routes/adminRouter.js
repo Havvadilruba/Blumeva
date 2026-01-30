@@ -16,6 +16,7 @@ import adminReferralController from "../controller/admin/adminReferralController
 import salesReportController from "../controller/admin/salesReportController.js";
 import dashboardController from "../controller/admin/dashboardController.js";
 import bannerController from "../controller/admin/bannerController.js";
+import pageController from "../controller/admin/pageController.js";
 
 
 const router = express.Router();
@@ -91,6 +92,7 @@ router.put("/banners/:id",adminAuth,upload.single("bannerImage"),bannerControlle
 router.patch("/banners/:id/toggle",adminAuth,bannerController.toggleBannerStatus);
 router.delete("/banners/:id",adminAuth,bannerController.deleteBanner);
 
+router.get("/ordderss", adminAuth, pageController.getOrders);
 
 
 export default router;

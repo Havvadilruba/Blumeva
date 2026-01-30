@@ -533,3 +533,10 @@ footer a:hover {
     gap: 30px;
   }
 }
+
+.logo-icon {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}

@@ -151,8 +151,34 @@ export const getOrderTransactionsTotal = async (basePipeline) => {
           }
         },
        totalDiscounts: {
-  $sum: "$orderedItems.couponShare"
-},
+  $sum: {
+    $cond: [
+      {
+        $or: [
+          {
+            $and: [
+              { $in: ["$paymentMethod", ["razorpay", "wallet"]] },
+              {
+                $not: {
+                  $in: ["$orderedItems.itemStatus", ["Cancelled", "Returned"]]
+                }
+              }
+            ]
+          },
+          {
+            $and: [
+              { $eq: ["$paymentMethod", "cod"] },
+              { $eq: ["$orderedItems.itemStatus", "Delivered"] }
+            ]
+          }
+        ]
+      },
+      "$orderedItems.couponShare",
+      0
+    ]
+  }
+}
+,
       netSales: {
   $sum: {
     $cond: [

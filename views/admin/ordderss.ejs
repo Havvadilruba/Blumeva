@@ -1,0 +1,41 @@
+<table>
+    <thead>
+        <tr>
+            <th>Order ID</th>
+            <th>Price</th>
+        </tr>
+    </thead>
+    <tbody>
+        <% orders.forEach(order =>{ %>
+            <tr>
+                <td><%= order.orderId %></td>
+                <td><%= order.finalAmount %></td>
+            </tr>
+            
+            <%})%>
+    </tbody>
+</table>
+
+ <!-- Pagination -->
+  <div class="pagination">
+     <% if (currentPage > 1) { %>
+    <a href="?page=<%= currentPage - 1 %>" class="page-btn prev">« Prev</a>
+  <% } else { %>
+    <button disabled class="page-btn disabled prev">« Prev</button>
+  <% } %>
+
+    <% for (let i = 1; i <= totalPages; i++) { %>
+      <% if (i === currentPage) { %>
+        <button class="page-btn active"><%= i %></button>
+      <% } else { %>
+        <a href="?page=<%= i %>" class="page-btn"><%= i %></a>
+      <% } %>
+    <% } %>
+
+    <% if (currentPage < totalPages) { %>
+    <a href="?page=<%= currentPage + 1 %>" class="page-btn next">Next »</a>
+  <% } else { %>
+    <button disabled class="page-btn disabled next">Next »</button>
+  <% } %>
+  </div>
+</section>

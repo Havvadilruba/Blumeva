@@ -41,23 +41,23 @@ function changeQty(itemId, type) {
     return;
   }
 
-  // Only block increase if it exceeds stock
+  
   if (type === "plus" && newQty > stockLimit) {
     showToast(`Only ${stockLimit} items available`, "warning");
     return;
   }
 
-  // Allow decrease even if current quantity > stock
+  
   updateQty(itemId, newQty);
 }
 
 async function updateQty(itemId, newQty) {
-  // Clear any pending update
+  
   if (updateTimeout) {
     clearTimeout(updateTimeout);
   }
 
-  // Debounce rapid clicks
+ 
   updateTimeout = setTimeout(async () => {
     const row = document.getElementById(`item-${itemId}`);
     if (!row) return;
@@ -71,7 +71,7 @@ async function updateQty(itemId, newQty) {
     const minusBtn = buttons[0];
     const plusBtn = buttons[1];
 
-    // Disable buttons during request
+    
     minusBtn.disabled = true;
     plusBtn.disabled = true;
 
@@ -80,7 +80,7 @@ async function updateQty(itemId, newQty) {
       
       if (!res.data.success) {
         showToast(res.data.message, "warning");
-        // Re-enable buttons even on failure
+       
         minusBtn.disabled = false;
         plusBtn.disabled = false;
         return;
@@ -88,10 +88,10 @@ async function updateQty(itemId, newQty) {
 
       const { updatedItem, totals } = res.data;
 
-      // Update quantity display
+     
       qtyDisplay.innerText = updatedItem.quantity;
 
-      // Store stock in button for validation
+     
       plusBtn.dataset.stock = updatedItem.stock;
 
       // Handle out of stock
@@ -102,12 +102,12 @@ async function updateQty(itemId, newQty) {
       } else {
       
 
-// ===== Update price UI SAME as product card logic =====
+
 const regular = updatedItem.regularPrice || 0;
 const sale = updatedItem.salePrice || 0;
 const offerAmount = updatedItem.discountAmount || 0;
 
-// Current price calculation (SAME as product card)
+
 const current = sale - offerAmount;
 
 const hasDiscount = regular > current;
@@ -144,21 +144,21 @@ priceBox.innerHTML = `
 
   </div>
 `;
-        // Update button states
+        
         minusBtn.classList.toggle("disabled", updatedItem.quantity <= 1);
         minusBtn.disabled = updatedItem.quantity <= 1;
         
         plusBtn.classList.toggle("disabled", updatedItem.quantity >= updatedItem.stock);
         plusBtn.disabled = updatedItem.quantity >= updatedItem.stock;
 
-        // Update or remove stock warning message
+       
         updateStockWarning(row, updatedItem.quantity, updatedItem.stock);
 
-        // Check if quantity matches stock now
+        
         checkAndUpdateCheckoutButton();
       }
 
-      // Update cart summary
+      
       updateSummary(totals);
 
     } catch (err) {
@@ -172,7 +172,7 @@ priceBox.innerHTML = `
         showToast("Failed to update quantity", "error");
       }
     } finally {
-      // Re-enable buttons
+      
       minusBtn.disabled = false;
       plusBtn.disabled = false;
     }
@@ -199,13 +199,13 @@ function updateStockWarning(row, quantity, stock) {
   const details = row.querySelector(".cart-item-details");
   if (!details) return;
 
-  // Remove existing warning
+  
   const existingWarning = details.querySelector(".stock-warning");
   if (existingWarning) {
     existingWarning.remove();
   }
 
-  // Add warning if quantity > stock
+  
   if (quantity > stock) {
     const qtyBox = details.querySelector(".qty-box");
     if (qtyBox) {
@@ -217,7 +217,7 @@ function updateStockWarning(row, quantity, stock) {
       );
     }
   } else if (stock <= 5) {
-    // Show low stock warning
+    
     const qtyBox = details.querySelector(".qty-box");
     if (qtyBox) {
       qtyBox.insertAdjacentHTML(
@@ -259,7 +259,7 @@ function enableCheckout() {
     removeMessage.remove();
   }
 
-  // Check if we need to add checkout button back
+  
   if (summaryBox && !summaryBox.querySelector(".checkout-btn")) {
     summaryBox.insertAdjacentHTML(
       "beforeend",
@@ -274,12 +274,12 @@ function checkAndUpdateCheckoutButton() {
   let hasInsufficientStock = false;
 
   cartItems.forEach(item => {
-    // Check for main out of stock message in details only
+    
     if (item.querySelector(".cart-item-details .cart-out-of-stock")) {
       hasOutOfStock = true;
     }
 
-    // Check for insufficient stock
+   
     const qtyDisplay = item.querySelector(".qty-display");
     const plusBtn = item.querySelector(".qty-btn:last-child");
     
@@ -303,55 +303,58 @@ function checkAndUpdateCheckoutButton() {
 }
 
 async function removeItem(itemId) {
-  if (!confirm("Remove this item from cart?")) return;
-
   try {
+    // Optional: disable button to prevent double click
+    const btn = document.querySelector(`#item-${itemId} .remove-btn, #item-${itemId} .delete-btn`);
+    if (btn) btn.disabled = true;
+
     const res = await axios.delete(`/cart/delete/${itemId}`);
 
     if (!res.data.success) {
-      showToast(res.data.message, "error");
+      showToast(res.data.message || "Unable to remove item", "error");
+      if (btn) btn.disabled = false;
       return;
     }
 
-    // Remove from DOM
+    // Remove item from DOM
     const itemElement = document.getElementById(`item-${itemId}`);
     if (itemElement) {
       itemElement.remove();
     }
 
-    // Update summary
     const { totals, hasOutOfStock, hasInsufficientStock } = res.data;
-    updateSummary(totals);
 
+    updateSummary(totals);
     showToast("Item removed from cart", "success");
 
-    // Check if cart is empty
+    // Handle empty cart
     const remaining = document.querySelectorAll(".cart-item").length;
     if (remaining === 0) {
       const cartBox = document.querySelector(".cart-items-box");
       const checkoutBtn = document.querySelector(".checkout-btn");
       const removeMessage = document.querySelector(".remove-message");
-      
+
       if (cartBox) {
         cartBox.innerHTML = `<h2 class="empty-cart">Your Cart is Empty</h2>`;
       }
-      
+
       if (checkoutBtn) checkoutBtn.remove();
       if (removeMessage) removeMessage.remove();
+      return;
+    }
+
+    // Re-check checkout availability
+    if (!hasOutOfStock && !hasInsufficientStock) {
+      enableCheckout();
+    } else if (hasOutOfStock) {
+      disableCheckout("out-of-stock");
     } else {
-      // Update checkout button status
-      if (!hasOutOfStock && !hasInsufficientStock) {
-        enableCheckout();
-      } else if (hasOutOfStock) {
-        disableCheckout("out-of-stock");
-      } else if (hasInsufficientStock) {
-        disableCheckout("insufficient-stock");
-      }
+      disableCheckout("insufficient-stock");
     }
 
   } catch (err) {
     console.error("Remove item error:", err);
-    
+
     if (err.response?.data?.message) {
       showToast(err.response.data.message, "error");
     } else {
@@ -359,6 +362,7 @@ async function removeItem(itemId) {
     }
   }
 }
+
 
 function updateSummary(totals) {
   const subtotalEl = document.getElementById("summary-subtotal");

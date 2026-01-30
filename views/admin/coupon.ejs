@@ -570,5 +570,32 @@
     </div>
   </div>
 
+  <!-- Add this Confirmation Modal right before the closing script tag in your EJS file -->
+<!-- Place it after the View Details Modal and before <script src="/js/admin/coupon.js"></script> -->
+
+<!-- Confirmation Modal -->
+<div id="confirmModal" class="modal">
+  <div class="modal-content" style="max-width: 450px;">
+    <div class="modal-header">
+      <h2 id="confirmModalTitle">Confirm Action</h2>
+      <button type="button" class="close-btn" onclick="closeConfirmModal()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="modal-body" style="padding: 24px 20px;">
+      <p id="confirmModalMessage" style="margin: 0; font-size: 15px; color: #555; line-height: 1.6;"></p>
+    </div>
+    <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; padding: 15px 20px; border-top: 1px solid #e9ecef;">
+      <button type="button" class="btn-secondary" onclick="closeConfirmModal()" style="padding: 8px 20px;">
+        Cancel
+      </button>
+      <button type="button" class="btn-danger" id="confirmModalBtn" style="padding: 8px 20px;">
+        Confirm
+      </button>
+    </div>
+  </div>
+</div>
+
+
  
   <script src="/js/admin/coupon.js"></script>

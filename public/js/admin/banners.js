@@ -1,14 +1,9 @@
-// ===============================
-// Banner Management JavaScript
-// ===============================
+
 
 let isEditMode = false;
 let currentBannerId = null;
 let isSubmitting = false;
 
-// -------------------------------
-// Toast Helper
-// -------------------------------
 function showToast(message, type = "success") {
   Toastify({
     text: message,

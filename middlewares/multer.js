@@ -23,7 +23,7 @@ const storage = new CloudinaryStorage({
         "webp",
         "avif",
         "gif",
-        "svg" // ✅ ADD SVG
+        "svg" 
       ],
       public_id: file.originalname.split(".")[0] + "-" + Date.now(),
     };

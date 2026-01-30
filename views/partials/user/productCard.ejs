@@ -330,7 +330,9 @@
   </button>
 
   <!-- Product Image -->
-  <div class="image-container" onclick="goToProduct('<%= product._id %>')">
+  <a href="/product/<%= product._id %>" class="image-link">
+  <div class="image-container">
+
     <img 
       src="<%= product.images?.[0] %>" 
       alt="<%= product.name %>"
@@ -340,7 +342,9 @@
     <% if (hasDiscount) { %>
       <span class="offer-badge"><%= discountPercent %>% OFF</span>
     <% } %>
-  </div>
+    </div>
+</a>
+
 
   <!-- Product Title -->
   <h3 onclick="goToProduct('<%= product._id %>')">

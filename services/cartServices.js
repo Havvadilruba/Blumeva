@@ -30,17 +30,17 @@ export const calculateCartTotals = (items) => {
     const qty = item.quantity || 1;
 
     if (stock > 0) {
-      // ✅ Subtotal always uses regular price
+      
       subtotal += regular * qty;
 
-      // Base price (sale if exists, else regular)
+     
       const basePrice = sale > 0 ? sale : regular;
 
-      // Final selling price after offer
+      
       let currentPrice = basePrice - offer;
       if (currentPrice < 0) currentPrice = 0;
 
-      // Discount per unit
+     
       const perUnitDiscount = Math.max(regular - currentPrice, 0);
 
       discount += perUnitDiscount * qty;

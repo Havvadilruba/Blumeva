@@ -19,6 +19,8 @@ import {
   removeCartItem
 } from "../../services/cartServices.js";
 
+const MaxQuantity = 5;
+
 import { checkInWishlist, removeWishlistItem } from "../../Repositories/wishlistRepository.js";
 
 const addToCart = async (req, res) => {
@@ -29,8 +31,6 @@ const addToCart = async (req, res) => {
         message: "Login required"
       });
     }
-
-   
 
     const { error } = addToCartSchema.validate(req.body);
     if (error) {
@@ -72,6 +72,13 @@ const addToCart = async (req, res) => {
       });
     }
 
+    if (quantity > MaxQuantity) {
+      return res.status(400).json({
+        success: false,
+        message: `Maximum ${maxQuantity} items allowed per product`,
+      });
+    }
+
     const inWishlist = await checkInWishlist(userId, variant.productId._id, variant._id);
     if (inWishlist) {
       await removeWishlistItem(userId, variant.productId._id, variant._id);
@@ -90,10 +97,16 @@ const addToCart = async (req, res) => {
         });
       }
 
+        if (newQty > MaxQuantity) {
+        return res.status(400).json({
+          success: false,
+          message: `Maximum ${MaxQuantity} items allowed per product`,
+        });
+      }
 
-
-      
       exists.quantity = newQty;
+
+
       await exists.save();
 
       return res.status(200).json({
@@ -197,7 +210,14 @@ const updateCartItem = async (req, res) => {
       });
     }
 
-    // Allow decreasing even if > stock, but block increasing beyond stock
+      if (quantity > MaxQuantity && quantity > currentQty) {
+      return res.status(400).json({
+        success: false,
+        message: `Maximum ${MaxQuantity} items allowed per product`,
+      });
+    }
+
+    
     if (quantity > stock && quantity > currentQty) {
       return res.status(400).json({
         success: false,
@@ -210,7 +230,7 @@ const updateCartItem = async (req, res) => {
     const allItems = await getCartItems(req.session.user._id);
     const totals = calculateCartTotals(allItems);
 
-    // Get fresh discountAmount from aggregation
+  
     const updatedAggItem = allItems.find(
       i => i._id.toString() === cartItemId.toString()
     );

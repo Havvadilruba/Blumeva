@@ -17,7 +17,7 @@ export const categoryListService = async (search, page, limit) => {
 export const addCategoryService = async (name, imagePath) => {
   try {
 
-    // Check for existing category
+    
     const existing = await findCategoryByName(name);
     if (existing) {
       return { success: false, message: "Category already exists" };

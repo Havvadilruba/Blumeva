@@ -13,7 +13,8 @@ import { createLedgerEntry } from "../repositories/walletLedgerRepository.js";
 import { updateUserWalletBalance } from "../repositories/userRepository.js";
 
 export const getOrderListService = async (search, statusFilter, paymentFilter, page, limit) => {
-  let query = {};
+   let query = {};
+ 
   const skip = (page - 1) * limit;
 
   if (search) {

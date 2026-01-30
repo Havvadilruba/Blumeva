@@ -445,7 +445,7 @@ export const verifyPayment = async (req, res) => {
         await session.abortTransaction();
         return res.status(400).json({ 
           success: false, 
-          message: "Insufficient stock for one or more items" 
+          message: `Insufficient stock` 
         });
       }
     }
