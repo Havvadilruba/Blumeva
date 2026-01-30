@@ -17,7 +17,7 @@ import { findUserById } from "../repositories/userRepository.js";
 import { findVariantByIdWithProduct } from "../repositories/productRepository.js";
 import {findCartItemRepo  } from "../repositories/cartRepository.js";
 import { findBrandById } from "../repositories/brandRepository.js";
-import { findCategoryById } from "../repositories/CategoryRepository.js";
+import { findCategoryById } from "../repositories/categoryRepository.js";
 
 export const getWishlistData = async (userId, queryParams) => {
   const currentPage = parseInt(queryParams.page) || 1;
