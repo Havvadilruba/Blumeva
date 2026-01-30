@@ -21,7 +21,7 @@ import {
 
 const MaxQuantity = 5;
 
-import { checkInWishlist, removeWishlistItem } from "../../Repositories/wishlistRepository.js";
+import { checkInWishlist, removeWishlistItem } from "../../repositories/wishlistRepository.js";
 
 const addToCart = async (req, res) => {
   try {
