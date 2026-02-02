@@ -5,7 +5,7 @@ import cloudinary from "../config/cloudinary.js";
 
 const { CloudinaryStorage } = pkg;
 
-const storage = pkg({
+const storage =  new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
     let folder = "uploads";
