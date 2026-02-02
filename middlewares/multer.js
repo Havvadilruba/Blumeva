@@ -3,7 +3,12 @@ import { createRequire } from "module";
 import cloudinary from "../config/cloudinary.js";
 
 const require = createRequire(import.meta.url);
-const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const cloudinaryStoragePkg  = require("multer-storage-cloudinary");
+
+const CloudinaryStorage =
+  cloudinaryStoragePkg.CloudinaryStorage ||
+  cloudinaryStoragePkg.default ||
+  cloudinaryStoragePkg;
 
 const storage =  new CloudinaryStorage({
   cloudinary,
