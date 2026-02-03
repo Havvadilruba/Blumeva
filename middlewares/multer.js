@@ -1,54 +1,49 @@
-// import multer from "multer";
-// import { createRequire } from "module";
-// import cloudinary from "../config/cloudinary.js";
-
-// const require = createRequire(import.meta.url);
-// const cloudinaryStoragePkg  = require("multer-storage-cloudinary");
-
-// const CloudinaryStorage =
-//   cloudinaryStoragePkg.CloudinaryStorage ||
-//   cloudinaryStoragePkg.default ||
-//   cloudinaryStoragePkg;
-
-// const storage =  new CloudinaryStorage({
-//   cloudinary,
-//   params: async (req, file) => {
-//     let folder = "uploads";
-
-//     if (file.fieldname === "logo") folder = "brands";
-//     if (file.fieldname === "image") folder = "categories";
-//     if (file.fieldname === "bannerImage") folder = "banners";
-//     if (file.fieldname === "images") folder = "products";
-//     if (file.fieldname === "profileImage") folder = "profile";
-
-//     return {
-//       folder,
-//       resource_type: "image", 
-//       allowed_formats: [
-//         "jpg",
-//         "jpeg",
-//         "png",
-//         "webp",
-//         "avif",
-//         "gif",
-//         "svg" 
-//       ],
-//       public_id: file.originalname.split(".")[0] + "-" + Date.now(),
-//     };
-//   },
-// });
-
-// const upload = multer({ storage });
-
-// export default upload;
-
-
 import multer from "multer";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import cloudinary from "../config/cloudinary.js";
+
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: (req, file) => {
+    let folder = "uploads";
+
+    switch (file.fieldname) {
+      case "logo":
+        folder = "brands";
+        break;
+      case "image":
+        folder = "categories";
+        break;
+      case "bannerImage":
+        folder = "banners";
+        break;
+      case "images":
+        folder = "products";
+        break;
+      case "profileImage":
+        folder = "profile";
+        break;
+    }
+
+    return {
+      folder,
+      resource_type: "image",
+      public_id: `${Date.now()}-${file.originalname.replace(/\s+/g, "_")}`,
+    };
+  },
+});
+
+const fileFilter = (req, file, cb) => {
+  const allowed = /jpg|jpeg|png|webp|avif|gif|svg/;
+  const ext = file.mimetype.split("/")[1];
+
+  if (allowed.test(ext)) cb(null, true);
+  else cb(new Error("Invalid image format"), false);
+};
 
 const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  storage,
+  fileFilter,
 });
 
 export default upload;
-

@@ -154,38 +154,42 @@ document.addEventListener("click", (e) => {
   }
 });
 
-productForm.addEventListener("submit", async (e) => {
+  // SUBMIT FORM 
+  
+  productForm.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const formData = new FormData();
-
-  // append text fields manually (skip file input)
-  const rawFormData = new FormData(productForm);
-  rawFormData.forEach((value, key) => {
-    if (key !== "images") {
-      formData.append(key, value);
-    }
-  });
-
-  // append ONLY cropped images
-  croppedFiles.forEach((file) => {
-    formData.append("images", file);
-  });
+  const formData = new FormData(productForm);
+  croppedFiles.forEach((file) => formData.append("images", file));
 
   submitBtn.disabled = true;
   submitBtn.textContent = "Uploading...";
 
   try {
-    const res = await axios.post("/admin/products/add", formData);
+    const res = await axios.post("/admin/products/add", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
 
     if (res.data.success) {
       showToast("✅ Product added successfully!", "success");
       setTimeout(() => (window.location.href = res.data.redirectUrl), 1000);
     } else {
-      showToast(res.data.message?.[0] || "Upload failed", "error");
+    
+      if (Array.isArray(res.data.message) && res.data.message.length > 0) {
+        showToast(res.data.message[0], "error");
+      } else {
+        showToast(res.data.message || "Upload failed", "error");
+      }
     }
   } catch (err) {
-    showToast(err.response?.data?.message?.[0] || "Server error", "error");
+    console.error("❌ Upload error:", err);
+
+    const messages = err.response?.data?.message;
+    if (Array.isArray(messages) && messages.length > 0) {
+      showToast(messages[0], "error"); 
+    } else {
+      showToast(err.response?.data?.message || "Server error", "error");
+    }
   } finally {
     submitBtn.disabled = false;
     submitBtn.textContent = "Save Product";
