@@ -159,6 +159,16 @@ document.addEventListener("click", (e) => {
   productForm.addEventListener("submit", async (e) => {
   e.preventDefault();
 
+  if (croppingInProgress) {
+    showToast("Please finish cropping images", "warning");
+    return;
+  }
+
+  if (croppedFiles.length < 3) {
+    showToast("Please upload at least 3 images", "error");
+    return;
+  }
+
   const formData = new FormData(productForm);
   croppedFiles.forEach((file) => formData.append("images", file));
 
@@ -166,34 +176,21 @@ document.addEventListener("click", (e) => {
   submitBtn.textContent = "Uploading...";
 
   try {
-    const res = await axios.post("/admin/products/add", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    const res = await axios.post("/admin/products/add", formData);
 
     if (res.data.success) {
-      showToast("✅ Product added successfully!", "success");
+      showToast("Product added successfully", "success");
       setTimeout(() => (window.location.href = res.data.redirectUrl), 1000);
     } else {
-    
-      if (Array.isArray(res.data.message) && res.data.message.length > 0) {
-        showToast(res.data.message[0], "error");
-      } else {
-        showToast(res.data.message || "Upload failed", "error");
-      }
+      showToast(res.data.message?.[0] || "Upload failed", "error");
     }
   } catch (err) {
-    console.error("❌ Upload error:", err);
-
-    const messages = err.response?.data?.message;
-    if (Array.isArray(messages) && messages.length > 0) {
-      showToast(messages[0], "error"); 
-    } else {
-      showToast(err.response?.data?.message || "Server error", "error");
-    }
+    showToast("Server error", "error");
   } finally {
     submitBtn.disabled = false;
     submitBtn.textContent = "Save Product";
   }
 });
+
 
 });

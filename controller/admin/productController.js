@@ -70,6 +70,9 @@ const loadAddProduct = async (req, res) => {
 
 const addProduct = async (req, res) => {
   try {
+
+    console.log(req.files.map(f => f.originalname));
+
     const { name, brand, category, description } = req.body;
 
     // Validate product
