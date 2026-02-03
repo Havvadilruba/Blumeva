@@ -1,6 +1,9 @@
+
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import path from "path";
-import dotenv from "dotenv";
 import expressLayouts from "express-ejs-layouts";
 import passport from "./config/passport.js";
 import connectDB from "./config/db.js";
@@ -15,8 +18,6 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-
-dotenv.config();
 
 const app = express();
 
