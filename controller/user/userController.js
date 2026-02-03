@@ -59,7 +59,7 @@ export const listProducts = async (req, res) => {
     res.render("user/product-list", {
       layout: "layouts/user",
       title: "Products | Blumeva",
-      pageCSS: "/style/user/product-list.css",
+      pageCSS: "/style/user/product-List.css",
       ...data,
       query: req.query,
       pagination: {
