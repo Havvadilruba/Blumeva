@@ -93,7 +93,8 @@ const addProduct = async (req, res) => {
         return res.status(400).json({ success: false, message: [`Variant: ${error.details[0].message}`] });
     }
 
-    const files = req.files || [];
+    const files = req.files?.images || [];
+
 
 if (!files.length) {
   return res.status(400).json({

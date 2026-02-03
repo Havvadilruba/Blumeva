@@ -12,6 +12,8 @@ import {
   findVariantsByProduct,
 } from "../repositories/productRepository.js";
 
+import cloudinary from "../config/cloudinary.js";
+
 export const getProductListService = async (search, page, limit) => {
   const filter = search
     ? { name: { $regex: new RegExp(`^${search}`, "i") } }
@@ -44,7 +46,18 @@ export const addProductService = async (body, files, variants) => {
     return { success: false, message: ["Please upload at least 3 images"] };
   }
 
-  const imageUrls = files.map((file) => file.path);
+  // const imageUrls = files.map((file) => file.path);
+   const imageUrls = [];
+
+  // ✅ upload images manually
+  for (const file of files) {
+    const result = await cloudinary.uploader.upload(
+      `data:${file.mimetype};base64,${file.buffer.toString("base64")}`,
+      { folder: "products" }
+    );
+
+    imageUrls.push(result.secure_url);
+  }
 
   const newProduct = await createProduct({
     name,
