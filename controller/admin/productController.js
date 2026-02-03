@@ -93,6 +93,16 @@ const addProduct = async (req, res) => {
         return res.status(400).json({ success: false, message: [`Variant: ${error.details[0].message}`] });
     }
 
+    const files = req.files || [];
+
+if (!files.length) {
+  return res.status(400).json({
+    success: false,
+    message: ["No images received"]
+  });
+}
+
+    
     const result = await addProductService(req.body, req.files, variants);
     return res.status(result.success ? 200 : 400).json(result);
 

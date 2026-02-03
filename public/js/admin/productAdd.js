@@ -167,7 +167,6 @@ document.addEventListener("click", (e) => {
 
   try {
     const res = await axios.post("/admin/products/add", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
     });
 
     if (res.data.success) {
