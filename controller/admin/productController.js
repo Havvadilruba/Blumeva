@@ -70,7 +70,10 @@ const loadAddProduct = async (req, res) => {
 
 const addProduct = async (req, res) => {
   try {
+    console.log("🚀 ADD PRODUCT CONTROLLER HIT");
+
     const { name, brand, category, description } = req.body;
+
 
     // Validate product
     const { error: productError } = productValidation.validate(
@@ -94,6 +97,13 @@ const addProduct = async (req, res) => {
     }
 
     const files = req.files?.images || [];
+
+    console.log("📦 FILE CHECK:", {
+  hasFiles: !!req.files,
+  hasImages: !!req.files?.images,
+  count: files.length,
+  hasBuffer: files[0]?.buffer ? "YES" : "NO"
+});
 
 
 if (!files.length) {
