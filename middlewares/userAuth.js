@@ -3,9 +3,20 @@ import mongoose from "mongoose";
 
 const userAuth = async (req, res, next) => {
   try {
+
+     if (
+      req.path.startsWith("/css") ||
+      req.path.startsWith("/js") ||
+      req.path.startsWith("/images") ||
+      req.path.startsWith("/uploads") ||
+      req.path.startsWith("/assets")
+    ) {
+      return next();
+    }
     if (!req.session.user) {
 
-  // Detect AJAX / JSON requests properly
+      
+
   if (req.headers["content-type"]?.includes("application/json") ||
       req.headers.accept?.includes("application/json") ||
       req.xhr) {

@@ -23,7 +23,7 @@ const storage =  new CloudinaryStorage({
 
     return {
       folder,
-      resource_type: "image", // 🔑 REQUIRED for SVG
+      resource_type: "image", 
       allowed_formats: [
         "jpg",
         "jpeg",
