@@ -5,7 +5,7 @@ const userAuth = async (req, res, next) => {
   try {
 
      if (
-      req.path.startsWith("/css") ||
+      req.path.startsWith("/style") ||
       req.path.startsWith("/js") ||
       req.path.startsWith("/images") ||
       req.path.startsWith("/uploads") ||
