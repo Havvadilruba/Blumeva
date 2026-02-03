@@ -985,8 +985,7 @@
 .retry-btn:active {
   transform: translateY(-1px);
 }
-
-/* Mobile Adjustments */
+}
 @media (max-width: 768px) {
   .mini-spinner {
     top: 70px;
@@ -994,20 +993,16 @@
     padding: 8px 14px;
     font-size: 12px;
   }
-  
+
   .mini-spinner i {
     font-size: 12px;
   }
 }
-}
 
-
-
+/* Product card */
 .product-card {
   width: 100%;
   max-width: 100%;
-}
-.product-card {
   display: flex;
   flex-direction: column;
   background: #fff;
