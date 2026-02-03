@@ -40,11 +40,16 @@ export const addProductService = async (body, files, variants) => {
   const existing = await findProductByName(name);
   if (existing) return { success: false, message: ["Product name already exists"] };
 
-  if (!files.length || files.length < 3) {
-    return { success: false, message: ["Please upload at least 3 images"] };
+  const images = Array.isArray(files) ? files : [];
+
+  if (images.length < 3) {
+    return {
+      success: false,
+      message: ["Please upload at least 3 images"],
+    };
   }
 
-  const imageUrls = files.map((file) => file.path);
+  const imageUrls = images.map((file) => file.path);
 
   const newProduct = await createProduct({
     name,
