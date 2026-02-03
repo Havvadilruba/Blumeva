@@ -70,8 +70,7 @@ const loadAddProduct = async (req, res) => {
 
 const addProduct = async (req, res) => {
   try {
-
-    console.log(req.files.map(f => f.originalname));
+    console.log("FILES:", req.files);
 
     const { name, brand, category, description } = req.body;
 
