@@ -1,8 +1,11 @@
 import multer from "multer";
 import cloudinary from "../config/cloudinary.js";
-import pkg from "multer-storage-cloudinary";
+import CloudinaryStoragePkg from "multer-storage-cloudinary";
 
-const { CloudinaryStorage } = pkg;
+const CloudinaryStorage =
+  CloudinaryStoragePkg.CloudinaryStorage ||
+  CloudinaryStoragePkg.default ||
+  CloudinaryStoragePkg;
 
 const storage = new CloudinaryStorage({
   cloudinary,
@@ -36,7 +39,7 @@ const storage = new CloudinaryStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = [
+  const allowed = [
     "image/jpeg",
     "image/png",
     "image/webp",
@@ -45,16 +48,10 @@ const fileFilter = (req, file, cb) => {
     "image/svg+xml",
   ];
 
-  if (allowedTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error("Invalid image format"), false);
-  }
+  if (allowed.includes(file.mimetype)) cb(null, true);
+  else cb(new Error("Invalid image format"), false);
 };
 
-const upload = multer({
-  storage,
-  fileFilter,
-});
+const upload = multer({ storage, fileFilter });
 
 export default upload;
