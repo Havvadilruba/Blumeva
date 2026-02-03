@@ -54,7 +54,7 @@ router.patch("/brands/edit/:id", adminAuth, upload.single("logo"), brandControll
 router.get("/products/search", adminAuth, offerController.searchProducts);
 router.get("/products", adminAuth, productController.getProducts);
 router.get("/products/add", adminAuth, productController.loadAddProduct);
-router.post("/products/add", adminAuth, upload.array("images", 5), productController.addProduct);
+router.post("/products/add",adminAuth,upload.fields([{ name: "images", maxCount: 5 }]),productController.addProduct);
 router.get("/products/edit/:id", adminAuth, productController.loadEditProduct);
 router.patch("/products/:id", adminAuth, upload.array("images", 5), productController.updateProduct);
 router.patch("/products/toggle/:id", adminAuth, productController.toggleProductStatus);
