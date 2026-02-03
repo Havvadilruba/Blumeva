@@ -540,3 +540,6 @@ footer a:hover {
   object-fit: contain;
   display: block;
 }
+.site-header {
+  min-height: 110px;
+}
