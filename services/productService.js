@@ -37,28 +37,48 @@ export const loadAddProductService = async () => {
 export const addProductService = async (body, files, variants) => {
   const { name, brand, category, description } = body;
 
-  const existing = await findProductByName(name);
-  if (existing) return { success: false, message: ["Product name already exists"] };
+  try {
+    console.log('▶ addProductService called', { name, brand, category });
+    console.log('▶ Received files count:', Array.isArray(files) ? files.length : 0);
+    if (Array.isArray(files) && files.length > 0) {
+      console.log('▶ Sample file object:', files[0] && {
+        fieldname: files[0].fieldname,
+        originalname: files[0].originalname,
+        mimetype: files[0].mimetype,
+        path: files[0].path?.toString?.() || files[0].path,
+        size: files[0].size,
+      });
+    }
 
-  if (!files.length || files.length < 3) {
-    return { success: false, message: ["Please upload at least 3 images"] };
+    const existing = await findProductByName(name);
+    if (existing) return { success: false, message: ["Product name already exists"] };
+
+    if (!files || !files.length || files.length < 3) {
+      return { success: false, message: ["Please upload at least 3 images"] };
+    }
+
+    const imageUrls = files.map((file) => file.path);
+    console.log('▶ Image URLs to save:', imageUrls);
+
+    const newProduct = await createProduct({
+      name,
+      brand,
+      category,
+      description,
+      images: imageUrls,
+    });
+
+    console.log('▶ New product created id:', newProduct._id?.toString());
+
+    for (let v of variants) {
+      await createVariant({ productId: newProduct._id, ...v });
+    }
+
+    return { success: true, redirectUrl: "/admin/products" };
+  } catch (err) {
+    console.error('⚠️ addProductService error:', err);
+    return { success: false, message: [err.message || 'Unknown server error'] };
   }
-
-  const imageUrls = files.map((file) => file.path);
-
-  const newProduct = await createProduct({
-    name,
-    brand,
-    category,    
-    description,
-    images: imageUrls,
-  });
-
-  for (let v of variants) {
-    await createVariant({ productId: newProduct._id, ...v });
-  }
-
-  return { success: true, redirectUrl: "/admin/products" };
 };
 
 export const loadEditProductService = async (productDataPromise) => {
