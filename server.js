@@ -19,11 +19,6 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-console.log("🚀 [SERVER START] Checking Environment Variables...");
-console.log("✓ CLOUDINARY_CLOUD_NAME:", process.env.CLOUDINARY_CLOUD_NAME ? "✅ SET" : "❌ MISSING");
-console.log("✓ CLOUDINARY_API_KEY:", process.env.CLOUDINARY_API_KEY ? "✅ SET" : "❌ MISSING");
-console.log("✓ CLOUDINARY_API_SECRET:", process.env.CLOUDINARY_API_SECRET ? "✅ SET" : "❌ MISSING");
-console.log("✓ MONGODB_URI:", process.env.MONGODB_URI ? "✅ SET" : "❌ MISSING");
 
 const app = express();
 
@@ -34,9 +29,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// Request timeout: 5 minutes for file uploads
 app.use((req, res, next) => {
-  req.setTimeout(300000); // 5 minutes
+  req.setTimeout(300000); 
   res.setTimeout(300000);
   next();
 });
@@ -63,7 +57,6 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/", userRouter);
 app.use("/admin", adminRouter);
 
-// Multer error handling middleware
 app.use(multerErrorHandler);
 
 const PORT = process.env.PORT || 3000;
