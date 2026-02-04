@@ -5,9 +5,6 @@ dotenv.config();
 
 async function sendVerificationEmail(email, otp) {
   try {
-    // Always log OTP to console for debugging and visibility
-    console.log(`\n=== OTP Generated ===\nEmail: ${email}\nOTP Code: ${otp}\n====================\n`);
-
     const transporter = nodemailer.createTransport({
       service: "gmail",
       port: 587,
@@ -26,11 +23,9 @@ async function sendVerificationEmail(email, otp) {
       html: `<b>Your OTP is: ${otp}</b>`,
     });
 
-    console.log(`✓ Email sent successfully to ${email}`);
     return info.accepted.length > 0;
   } catch (error) {
-    console.error("⚠ Email send failed:", error.message);
-    console.log(`✓ OTP is still valid and available above. Use it manually in development.`);
+    console.error("Error sending verification email:", error);
     return false;
   }
 }
