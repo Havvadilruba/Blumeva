@@ -13,6 +13,7 @@ import assets from "./helpers/assets.js";
 import { sessionConfig } from "./middlewares/session.js";
 import { headerCountsMiddleware } from "./middlewares/headerCount.js";
 import { setUser } from "./middlewares/setUser.js";
+import { multerErrorHandler } from "./middlewares/multer.js";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -56,7 +57,9 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/", userRouter);
 app.use("/admin", adminRouter);
 
+// Multer error handling middleware
+app.use(multerErrorHandler);
 
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server  ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

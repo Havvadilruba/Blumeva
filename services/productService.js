@@ -49,7 +49,7 @@ export const addProductService = async (body, files, variants) => {
   const newProduct = await createProduct({
     name,
     brand,
-    category,
+    category,    
     description,
     images: imageUrls,
   });

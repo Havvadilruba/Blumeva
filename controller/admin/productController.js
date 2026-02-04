@@ -70,8 +70,6 @@ const loadAddProduct = async (req, res) => {
 
 const addProduct = async (req, res) => {
   try {
-    console.log("FILES:", req.files);
-
     const { name, brand, category, description } = req.body;
 
     // Validate product
@@ -100,7 +98,10 @@ const addProduct = async (req, res) => {
 
   } catch (error) {
     console.error("Add Product Error:", error);
-    return res.status(500).json({ success: false, message: ["Server error"] });
+    return res.status(500).json({ 
+      success: false, 
+      message: [error.message || "Server error during product upload. Check Cloudinary configuration."] 
+    });
   }
 };
 
