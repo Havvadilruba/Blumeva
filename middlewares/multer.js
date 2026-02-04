@@ -37,8 +37,6 @@ const upload = multer({
  */
 export const cloudinaryUpload = (fileBuffer, folder, filename) => {
   return new Promise((resolve, reject) => {
-    console.log(`📤 Starting Cloudinary upload: ${filename} -> ${folder}`);
-
     const upload_stream = cloudinary.uploader.upload_stream(
       {
         folder: `blumeva/${folder}`,
@@ -47,10 +45,9 @@ export const cloudinaryUpload = (fileBuffer, folder, filename) => {
       },
       (error, result) => {
         if (error) {
-          console.error(`❌ Cloudinary upload failed for ${filename}:`, error);
+          console.error(`Error uploading ${filename}:`, error.message);
           return reject(error);
         }
-        console.log(`✅ Cloudinary upload complete: ${filename} -> ${result.secure_url}`);
         resolve({
           secure_url: result.secure_url,
           public_id: result.public_id,

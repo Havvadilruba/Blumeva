@@ -71,9 +71,6 @@ const loadAddProduct = async (req, res) => {
 
 const addProduct = async (req, res) => {
   try {
-    console.log("🚀 ADD PRODUCT - Request received");
-    console.log("📦 Body:", { name: req.body.name, brand: req.body.brand, category: req.body.category });
-    console.log("📸 Files:", req.files ? `${req.files.length} files` : "NO FILES");
 
     const { name, brand, category, description } = req.body;
 
@@ -102,7 +99,6 @@ const addProduct = async (req, res) => {
     }
 
     // Upload files to Cloudinary in parallel
-    console.log(`📸 Uploading ${req.files?.length || 0} files to Cloudinary...`);
     let imageUrls = [];
     if (req.files && req.files.length > 0) {
       try {
@@ -111,7 +107,6 @@ const addProduct = async (req, res) => {
         );
         const uploadResults = await Promise.all(uploadPromises);
         imageUrls = uploadResults.map((result) => result.secure_url);
-        console.log(`✅ All files uploaded. URLs: ${imageUrls.length}`);
       } catch (uploadError) {
         console.error("❌ Cloudinary upload failed:", uploadError);
         return res.status(502).json({
@@ -121,20 +116,12 @@ const addProduct = async (req, res) => {
       }
     }
 
-    console.log("✅ All validations passed, calling service with image URLs...");
     const result = await addProductService(req.body, imageUrls, variants);
-    
-    if (result.success) {
-      console.log("✅ Product created successfully!");
-    } else {
-      console.error("❌ Service error:", result.message);
-    }
     
     return res.status(result.success ? 200 : 400).json(result);
 
   } catch (error) {
-    console.error("🔥 ADD PRODUCT ERROR:", error);
-    console.error("Stack:", error.stack);
+    console.error("Error in addProduct:", error.message);
     return res.status(500).json({ 
       success: false, 
       message: [error.message || "Server error during product upload. Check Cloudinary configuration."] 

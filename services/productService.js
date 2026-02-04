@@ -38,17 +38,12 @@ export const addProductService = async (body, imageUrls, variants) => {
   const { name, brand, category, description } = body;
 
   try {
-    console.log('▶ addProductService called', { name, brand, category });
-    console.log('▶ Received imageUrls:', Array.isArray(imageUrls) ? imageUrls.length : 0);
-
     const existing = await findProductByName(name);
     if (existing) return { success: false, message: ["Product name already exists"] };
 
     if (!imageUrls || !imageUrls.length || imageUrls.length < 3) {
       return { success: false, message: ["Please upload at least 3 images"] };
     }
-
-    console.log('▶ Image URLs to save:', imageUrls);
 
     const newProduct = await createProduct({
       name,
@@ -58,15 +53,13 @@ export const addProductService = async (body, imageUrls, variants) => {
       images: imageUrls,
     });
 
-    console.log('▶ New product created id:', newProduct._id?.toString());
-
     for (let v of variants) {
       await createVariant({ productId: newProduct._id, ...v });
     }
 
     return { success: true, redirectUrl: "/admin/products" };
   } catch (err) {
-    console.error('⚠️ addProductService error:', err);
+    console.error("Error in addProductService:", err.message);
     return { success: false, message: [err.message || 'Unknown server error'] };
   }
 };
