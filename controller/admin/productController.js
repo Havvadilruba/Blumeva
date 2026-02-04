@@ -1,4 +1,5 @@
 import cloudinary from "../../config/cloudinary.js";
+import { cloudinaryUpload } from "../../middlewares/multer.js";
 import productValidation from "../../validations/productValidation.js";
 import variantValidation from "../../validations/variantValidation.js";
 import {
@@ -100,8 +101,28 @@ const addProduct = async (req, res) => {
       }
     }
 
-    console.log("✅ All validations passed, calling service...");
-    const result = await addProductService(req.body, req.files, variants);
+    // Upload files to Cloudinary in parallel
+    console.log(`📸 Uploading ${req.files?.length || 0} files to Cloudinary...`);
+    let imageUrls = [];
+    if (req.files && req.files.length > 0) {
+      try {
+        const uploadPromises = req.files.map((file) =>
+          cloudinaryUpload(file.buffer, "products", file.originalname)
+        );
+        const uploadResults = await Promise.all(uploadPromises);
+        imageUrls = uploadResults.map((result) => result.secure_url);
+        console.log(`✅ All files uploaded. URLs: ${imageUrls.length}`);
+      } catch (uploadError) {
+        console.error("❌ Cloudinary upload failed:", uploadError);
+        return res.status(502).json({
+          success: false,
+          message: ["Failed to upload images to cloud storage"],
+        });
+      }
+    }
+
+    console.log("✅ All validations passed, calling service with image URLs...");
+    const result = await addProductService(req.body, imageUrls, variants);
     
     if (result.success) {
       console.log("✅ Product created successfully!");
