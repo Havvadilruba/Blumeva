@@ -62,6 +62,9 @@ const upload = multer({
 
 // Error handling middleware for multer
 export const multerErrorHandler = (err, req, res, next) => {
+  // If no error, pass to next middleware
+  if (!err) return next();
+
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({ 
@@ -89,14 +92,12 @@ export const multerErrorHandler = (err, req, res, next) => {
   }
 
   if (err) {
-    console.error('Multer/Upload Error:', err);
+    console.error('Upload Error:', err);
     return res.status(500).json({ 
       success: false, 
       message: 'Server error during file upload. Check Cloudinary configuration.' 
     });
   }
-  
-  next();
 };
 
 export default upload;
