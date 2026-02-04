@@ -70,6 +70,10 @@ const loadAddProduct = async (req, res) => {
 
 const addProduct = async (req, res) => {
   try {
+    console.log("🚀 ADD PRODUCT - Request received");
+    console.log("📦 Body:", { name: req.body.name, brand: req.body.brand, category: req.body.category });
+    console.log("📸 Files:", req.files ? `${req.files.length} files` : "NO FILES");
+
     const { name, brand, category, description } = req.body;
 
     // Validate product
@@ -79,6 +83,7 @@ const addProduct = async (req, res) => {
     );
 
     if (productError) {
+      console.error("❌ Product validation failed:", productError.details[0].message);
       return res.status(400).json({
         success: false,
         message: [productError.details[0].message],
@@ -89,15 +94,26 @@ const addProduct = async (req, res) => {
 
     for (const v of variants) {
       const { error } = variantValidation.validate(v);
-      if (error)
+      if (error) {
+        console.error("❌ Variant validation failed:", error.details[0].message);
         return res.status(400).json({ success: false, message: [`Variant: ${error.details[0].message}`] });
+      }
     }
 
+    console.log("✅ All validations passed, calling service...");
     const result = await addProductService(req.body, req.files, variants);
+    
+    if (result.success) {
+      console.log("✅ Product created successfully!");
+    } else {
+      console.error("❌ Service error:", result.message);
+    }
+    
     return res.status(result.success ? 200 : 400).json(result);
 
   } catch (error) {
-    console.error("Add Product Error:", error);
+    console.error("🔥 ADD PRODUCT ERROR:", error);
+    console.error("Stack:", error.stack);
     return res.status(500).json({ 
       success: false, 
       message: [error.message || "Server error during product upload. Check Cloudinary configuration."] 
