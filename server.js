@@ -34,6 +34,13 @@ app.use((req, res, next) => {
   next();
 });
 
+// Request timeout: 5 minutes for file uploads
+app.use((req, res, next) => {
+  req.setTimeout(300000); // 5 minutes
+  res.setTimeout(300000);
+  next();
+});
+
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 

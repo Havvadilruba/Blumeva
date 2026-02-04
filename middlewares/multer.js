@@ -9,7 +9,7 @@ const CloudinaryStorage =
 
 const storage = new CloudinaryStorage({
   cloudinary,
-  params: (req, file) => {
+  params: async (req, file) => {
     let folder = "uploads";
 
     switch (file.fieldname) {
@@ -30,10 +30,13 @@ const storage = new CloudinaryStorage({
         break;
     }
 
+    console.log(`📤 Uploading to Cloudinary: ${file.originalname} -> ${folder}`);
+
     return {
       folder,
       resource_type: "image",
       public_id: `${Date.now()}-${file.originalname.replace(/\s+/g, "_")}`,
+      timeout: 120000, // 2 minutes for Cloudinary upload
     };
   },
 });
@@ -56,7 +59,8 @@ const upload = multer({
   storage, 
   fileFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB limit per file
+    fileSize: 10 * 1024 * 1024, // 10MB limit per file
+    fieldSize: 50 * 1024 * 1024  // 50MB for form fields
   }
 });
 
@@ -98,6 +102,8 @@ export const multerErrorHandler = (err, req, res, next) => {
       message: 'Server error during file upload. Check Cloudinary configuration.' 
     });
   }
+  
+  next();
 };
 
 export default upload;
