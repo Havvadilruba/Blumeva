@@ -1,6 +1,9 @@
 import { v2 as cloudinary } from "cloudinary";
+import dotenv from "dotenv";
 
-// Environment variables are loaded in server.js
+// Load .env if not already loaded (e.g., for standalone scripts)
+dotenv.config();
+
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
