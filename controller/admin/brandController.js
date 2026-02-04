@@ -1,4 +1,5 @@
 import brandValidation from "../../validations/brandValidation.js";
+import { cloudinaryUpload } from "../../middlewares/multer.js";
 import {
   getBrandListService,
   addBrandService,
@@ -43,7 +44,21 @@ const addBrand = async (req, res) => {
     const { error } = brandValidation.validate(req.body);
     if (error) return res.status(400).json({ success: false, message: error.details[0].message });
 
-    const result = await addBrandService(req.body.name, req.body.status, req.file?.path);
+    let logoUrl;
+    if (req.file) {
+      try {
+        const uploadResult = await cloudinaryUpload(req.file.buffer, "brands", req.file.originalname);
+        logoUrl = uploadResult.secure_url;
+      } catch (uploadError) {
+        console.error("❌ Cloudinary upload failed:", uploadError);
+        return res.status(502).json({
+          success: false,
+          message: "Failed to upload image to cloud storage",
+        });
+      }
+    }
+
+    const result = await addBrandService(req.body.name, req.body.status, logoUrl);
     if (!result.success) return res.status(400).json(result);
 
     res.status(201).json({
@@ -62,7 +77,21 @@ const editBrand = async (req, res) => {
     const { error } = brandValidation.validate({ name: req.body.name });
     if (error) return res.status(400).json({ success: false, message: error.details[0].message });
 
-    const result = await editBrandService(req.params.id, req.body.name, req.body.status, req.file?.path);
+    let logoUrl;
+    if (req.file) {
+      try {
+        const uploadResult = await cloudinaryUpload(req.file.buffer, "brands", req.file.originalname);
+        logoUrl = uploadResult.secure_url;
+      } catch (uploadError) {
+        console.error("❌ Cloudinary upload failed:", uploadError);
+        return res.status(502).json({
+          success: false,
+          message: "Failed to upload image to cloud storage",
+        });
+      }
+    }
+
+    const result = await editBrandService(req.params.id, req.body.name, req.body.status, logoUrl);
     if (!result.success) return res.status(400).json(result);
 
     res.status(200).json({ success: true, message: "Brand updated successfully" });

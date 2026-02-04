@@ -1,4 +1,5 @@
 import categoryValidation from "../../validations/categoryValidation.js";
+import { cloudinaryUpload } from "../../middlewares/multer.js";
 import {
   categoryListService,
   addCategoryService,
@@ -65,8 +66,21 @@ const addCategory = async (req, res) => {
       });
     }
 
-    // Call service
-    const result = await addCategoryService(name, req.file.path);
+    // Upload file buffer to Cloudinary
+    let imageUrl;
+    try {
+      const uploadResult = await cloudinaryUpload(req.file.buffer, "categories", req.file.originalname);
+      imageUrl = uploadResult.secure_url;
+    } catch (uploadError) {
+      console.error("❌ Cloudinary upload failed:", uploadError);
+      return res.status(502).json({
+        success: false,
+        message: "Failed to upload image to cloud storage",
+      });
+    }
+
+    // Call service with image URL
+    const result = await addCategoryService(name, imageUrl);
   
 
     if (!result.success) {
@@ -113,7 +127,22 @@ const updateCategory = async (req, res) => {
     const { error } = categoryValidation.validate({ name });
     if (error) return res.status(400).json({ success: false, message: error.details[0].message });
 
-    const result = await updateCategoryService(req.params.id, name, req.file?.path);
+    // Upload new image if provided
+    let imageUrl;
+    if (req.file) {
+      try {
+        const uploadResult = await cloudinaryUpload(req.file.buffer, "categories", req.file.originalname);
+        imageUrl = uploadResult.secure_url;
+      } catch (uploadError) {
+        console.error("❌ Cloudinary upload failed:", uploadError);
+        return res.status(502).json({
+          success: false,
+          message: "Failed to upload image to cloud storage",
+        });
+      }
+    }
+
+    const result = await updateCategoryService(req.params.id, name, imageUrl);
     if (!result.success) return res.status(400).json(result);
 
     res.json({ success: true, message: "Category updated successfully", redirectUrl: "/admin/category" });

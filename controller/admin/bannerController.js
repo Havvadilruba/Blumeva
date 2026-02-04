@@ -1,4 +1,5 @@
 import { createBannerSchema, updateBannerSchema } from "../../validations/bannerValidation.js";
+import { cloudinaryUpload } from "../../middlewares/multer.js";
 import {
   createBannerService,
   getAllBannersService,
@@ -87,10 +88,21 @@ export const addBanner = async (req, res) => {
 
     console.log("Validated data:", value);
 
-   
+    // Upload banner image to Cloudinary
+    let imageUrl;
+    try {
+      const uploadResult = await cloudinaryUpload(req.file.buffer, "banners", req.file.originalname);
+      imageUrl = uploadResult.secure_url;
+    } catch (uploadError) {
+      console.error("❌ Cloudinary upload failed:", uploadError);
+      return res.status(502).json({
+        message: "Failed to upload banner image to cloud storage"
+      });
+    }
+
     const newBanner = await createBannerService({
       ...value,
-      image: req.file.path 
+      image: imageUrl 
     });
 
     console.log("Banner created:", newBanner);
@@ -157,8 +169,16 @@ export const updateBanner = async (req, res) => {
     }
 
     if (req.file) {
-      value.image = req.file.path;
-      console.log("New image uploaded:", req.file.path);
+      try {
+        const uploadResult = await cloudinaryUpload(req.file.buffer, "banners", req.file.originalname);
+        value.image = uploadResult.secure_url;
+        console.log("New image uploaded:", value.image);
+      } catch (uploadError) {
+        console.error("❌ Cloudinary upload failed:", uploadError);
+        return res.status(502).json({
+          message: "Failed to upload banner image to cloud storage"
+        });
+      }
     }
 
     console.log("Final update data:", value);
