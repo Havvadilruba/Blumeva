@@ -910,12 +910,26 @@ const cancelOrderItems = async (req, res) => {
 
     //  refund  (wallet, razorpay)
     if (refundAmount > 0 && order.paymentStatus === "Paid") {
-      const wallet = await Wallet.findOne({ userId }).session(session);
-      
-      if (!wallet) {
-        await session.abortTransaction();
-        return res.json({ success: false, message: "Wallet not found" });
-      }
+      let wallet = await Wallet.findOne({ userId }).session(session);
+
+// Auto-create wallet if not exists
+if (!wallet) {
+  const [newWallet] = await Wallet.create(
+    [
+      {
+        userId,
+        balance: 0,
+        holdBalance: 0,
+        totalCredits: 0,
+        totalDebits: 0,
+      },
+    ],
+    { session }
+  );
+
+  wallet = newWallet; // ✅ Now allowed because it's "let"
+}
+
 
       // Credit wallet
       await Wallet.updateOne(
